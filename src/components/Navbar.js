@@ -15,7 +15,9 @@ export default function Navbar() {
 
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 py-4 border-b bg-white">
-            <img src={logoNavbar} alt="Logo" className="h-12" />
+            <span onClick={() => navigate("/dashboard")} className="cursor-pointer">
+                <img src={logoNavbar} alt="Logo" className="h-12" />
+            </span>
             <ul className="flex gap-20 ml-12 text-lg">
                 
                 {links.map(link => (

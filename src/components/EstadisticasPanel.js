@@ -26,9 +26,9 @@ export default function EstadisticasPanel() {
 
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 border rounded-2xl shadow-md p-4">
                 {stats.map((item, i) => (
-                    <div key={i} className="bg-gray-200 rounded-full px-4 py-3 flex justify-between">
+                    <div key={i} className="bg-gray-200 rounded-2xl px-4 py-3 flex justify-between">
                         <span>{item.label}</span>
                         <span>{item.value}</span>
                     </div>

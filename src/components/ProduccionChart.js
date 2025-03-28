@@ -30,8 +30,8 @@ export default function ProduccionChart() {
                 </select>
             </div>
 
-            <div className="mt-8">
-                <ResponsiveContainer width="100%" height={250}>
+            <div className="mt-8 border rounded-2xl shadow-md p-4">
+                <ResponsiveContainer width="100%" height={223}>
                     <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
