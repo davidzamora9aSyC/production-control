@@ -8,6 +8,7 @@ export const AspectRatioProvider = ({ children }) => {
   useEffect(() => {
     const updateRatio = () => {
       const ratio = window.innerWidth / window.innerHeight;
+      console.log(ratio);
       if (ratio > 1.74 && ratio < 1.78) {
         setAspectRatio("16:9");
       } else if (ratio > 1.50 && ratio < 1.62) {
