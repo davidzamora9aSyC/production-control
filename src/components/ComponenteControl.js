@@ -26,8 +26,8 @@ const Gauge = ({ value, label }) => {
                     <line x1="50" y1="50" x2="50" y2="10" stroke="black" strokeWidth="3" strokeLinecap="round" transform={`rotate(${angle}, 50, 50)`} />
                 </svg>
             </div>
-            <div className="text-sm text-center mb-1">{label}</div>
-            <div className="text-sm text-semibold mt-1">{value}</div>
+            <div className="text-md text-center mb-1">{label}</div>
+            <div className="text-md text-semibold mt-1">{value}</div>
         </div>
     );
 };
@@ -46,8 +46,8 @@ const Area = ({ nombre, trabajadores }) => {
   
     return (
       <div className="mb-6">
-        <h3 className="text-blue-600 text-xl font-bold mb-2">{nombre}</h3>
-        <table className="w-full text-sm mb-4 border border-dashed border-gray-400">
+        <h3 className="text-blue-600 text-2xl font-bold mb-2">{nombre}</h3>
+        <table className="w-full text-md mb-4 border border-dashed border-gray-400">
           <thead>
             <tr>
               <th className="text-left border border-dashed border-gray-400 px-2 py-1">Máquina</th>
@@ -126,7 +126,7 @@ export default function ComponenteControl() {
       
     return (
         <div className="w-full ">
-            <div className="flex justify-between items-center pb-8  text-sm ">
+            <div className="flex justify-between items-center pb-8  text-md ">
                 <h2 className="text-2xl font-semibold">Control</h2>
                 <div className="flex items-center gap-2">
                     <span className="font-bold">De</span>
@@ -139,7 +139,7 @@ export default function ComponenteControl() {
 
             <div className="border rounded-2xl shadow-md p-4 w-full - max-h-[320px] overflow-y-scroll">
                 <div className="mb-6">
-                    <h3 className="text-lg mb-4 font-semibold">Estadísticas globales</h3>
+                    <h3 className="text-xl mb-4 font-semibold">Estadísticas globales</h3>
                     <div className="grid grid-cols-3 gap-4">
                         <Gauge label="AVG prod. speed" value="30" />
                         <Gauge label="Defects" value="2" />

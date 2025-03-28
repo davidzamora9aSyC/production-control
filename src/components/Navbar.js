@@ -7,29 +7,29 @@ export default function Navbar() {
     const navigate = useNavigate();
 
     const links = [
-        { path: "/", label: "Resumen General" },
+        { path: "/dashboard", label: "Resumen General" },
         { path: "/recursos", label: "Recursos" },
         { path: "/ordenes", label: "Órdenes de producción" },
         { path: "/alertas", label: "Alertas" },
     ];
 
     return (
-        <nav className="flex justify-between items-center px-6 py-4 border-b">
+        <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 py-4 border-b bg-white">
             <img src={logoNavbar} alt="Logo" className="h-12" />
             <ul className="flex gap-20 ml-12 text-lg">
                 
                 {links.map(link => (
                     <li key={link.path}>
-                        <Link
-                            to={link.path}
-                            className={`${
+                        <span
+                            onClick={() => navigate(link.path)}
+                            className={`cursor-pointer transition-colors transition-[font-weight] duration-500 ${
                                 location.pathname === link.path
                                     ? "font-bold text-black text-xl"
                                     : "text-gray-600 text-xl font-semibold"
                             }`}
                         >
                             {link.label}
-                        </Link>
+                        </span>
                     </li>
                 ))}
             </ul>
