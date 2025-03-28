@@ -17,7 +17,7 @@ export default function EstadisticasPanel() {
                 <select
                     value={proceso}
                     onChange={e => setProceso(e.target.value)}
-                    className="border-b border-black focus:outline-none"
+                    className="border-b border-black text-2xl focus:outline-none"
                 >
                     <option>Troquelado</option>
                     <option>Inyección</option>

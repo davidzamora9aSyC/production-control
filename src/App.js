@@ -7,9 +7,11 @@ import Alertas from "./pages/Alertas";
 import Navbar from "./components/Navbar";
 import Recursos from "./pages/Recursos";
 import Maquina from "./pages/Maquina";
+import ScrollToTop from "./components/ScrollToTop";
 
 const ProtectedLayout = ({ children }) => (
   <>
+    <ScrollToTop />
     <Navbar />
     <div className="mt-20">
       {children}

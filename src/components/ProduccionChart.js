@@ -13,7 +13,7 @@ export default function ProduccionChart() {
 
     return (
         <div className="w-full max-h-[40%] mb-16">
-            <div className="flex justify-between items-center ">
+            <div className="flex justify-between items-center mb-6 ">
                 <div>
                     <span className="font-semibold text-2xl mr-4 ">Producción por</span>
                     <select value={proceso} onChange={e => setProceso(e.target.value)} className="border-b border-black focus:outline-none">
@@ -24,13 +24,13 @@ export default function ProduccionChart() {
 
                 </div>
 
-                <select value={periodo} onChange={e => setPeriodo(e.target.value)} className="bg-gray-200 px-4 py-1 rounded-full text-sm">
+                <select value={periodo} onChange={e => setPeriodo(e.target.value)} className="bg-gray-200 px-4 py-1 rounded-full text-md">
                     <option>Meses</option>
                     <option>Días</option>
                 </select>
             </div>
 
-            <div className="mt-8 border rounded-2xl shadow-md p-4">
+            <div className="border rounded-2xl shadow-md pl-1 pr-5 pb-4 pt-6">
                 <ResponsiveContainer width="100%" height={223}>
                     <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" />
