@@ -1,15 +1,20 @@
-// src/context/AspectRatioContext.js
 import { createContext, useContext, useEffect, useState } from "react";
 
 const AspectRatioContext = createContext();
 
 export const AspectRatioProvider = ({ children }) => {
-  const [isMacbookRatio, setIsMacbookRatio] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState("");
 
   useEffect(() => {
     const updateRatio = () => {
       const ratio = window.innerWidth / window.innerHeight;
-      setIsMacbookRatio(ratio > 1.50 && ratio < 1.62);
+      if (ratio > 1.74 && ratio < 1.78) {
+        setAspectRatio("16:9");
+      } else if (ratio > 1.50 && ratio < 1.62) {
+        setAspectRatio("16:10");
+      } else {
+        setAspectRatio("other");
+      }
     };
 
     updateRatio();
@@ -18,7 +23,7 @@ export const AspectRatioProvider = ({ children }) => {
   }, []);
 
   return (
-    <AspectRatioContext.Provider value={{ isMacbookRatio }}>
+    <AspectRatioContext.Provider value={{ aspectRatio }}>
       {children}
     </AspectRatioContext.Provider>
   );
