@@ -47,7 +47,7 @@ const Area = ({ nombre, trabajadores }) => {
     return (
       <div className="mb-6">
         <h3 className="text-blue-600 text-xl font-bold mb-2">{nombre}</h3>
-        <table className="w-full text-sm mb-2 border border-dashed border-gray-400">
+        <table className="w-full text-sm mb-4 border border-dashed border-gray-400">
           <thead>
             <tr>
               <th className="text-left border border-dashed border-gray-400 px-2 py-1">Máquina</th>
