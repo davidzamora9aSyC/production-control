@@ -24,21 +24,22 @@ export default function Alertas() {
 
     return (
         <div>
-            <h2 className="text-2xl font-semibold pb-10">Alertas</h2>
-            <section className="border rounded-xl px-4 bg-white h-[320px] shadow-md flex flex-col">
-                <div className="flex gap-4 mb-4 text-base py-4">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold">Alertas</h2>
+                <div className="flex gap-4 text-base items-center">
                     <label>De <input type="date" value={desde} onChange={e => setDesde(e.target.value)} className="ml-1 border px-2 py-1 rounded" /></label>
                     <label>A <input type="date" value={hasta} onChange={e => setHasta(e.target.value)} className="ml-1 border px-2 py-1 rounded" /></label>
-                    <div className="ml-auto">
-                        <button
-                            onClick={() => navigate("/alertas")}
-                            className="bg-blue-600 text-white px-4 py-1 rounded-2xl hover:bg-blue-700 transition-colors duration-300"
-                        >
-                            Ver detalle
-                        </button>
-                    </div>
                 </div>
-
+            </div>
+            <section className="border rounded-xl p-4 bg-white h-[320px] shadow-md flex flex-col relative">
+                <div className="absolute top-1 right-1">
+                    <button
+                        onClick={() => navigate("/alertas")}
+                        className="bg-blue-600 text-sm text-white px-4 py-1 rounded-2xl hover:bg-blue-700 transition-colors duration-300"
+                    >
+                        Ver detalle
+                    </button>
+                </div>
                 <div className="text-base pr-2 pb-2 overflow-y-auto grow">
                     <div className="grid grid-cols-4 font-semibold border-b pb-2">
                         <span>Tipo</span>
@@ -60,7 +61,6 @@ export default function Alertas() {
                     ))}
                 </div>
             </section>
-
         </div>
     );
 }

@@ -13,7 +13,7 @@ const Gauge = ({ value, label }) => {
   const labelMap = {
     "Vel. prod. promedio": "Velocidad promedio de producción",
     "Defectos": "Cantidad de defectos",
-    "TPN promedio (min)": "Tiempo perdido neto promedio (minutos)"
+    "TPN promedio (min)": "Tiempo perdido promedio (minutos)"
   };
 
   return (
@@ -32,11 +32,11 @@ const Gauge = ({ value, label }) => {
         </svg>
       </div>
       <div className="text-md text-center mb-1 flex items-center justify-center gap-1 relative group">
-  <span className="cursor-pointer">{label}</span>
-  <div className="absolute top-full mt-1 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 max-w-[160px] text-center break-words">
-    {labelMap[label]}
-  </div>
-</div>
+        <span className="cursor-pointer">{label}</span>
+        <div className="absolute top-full mt-1 px-2 py-1 bg-white text-black text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 max-w-[160px] text-center break-words">
+          {labelMap[label]}
+        </div>
+      </div>
       <div className="text-md text-semibold mt-1">{value}</div>
     </div>
   );
@@ -138,13 +138,10 @@ export default function ComponenteControl() {
     <div className="w-full ">
       <div className="flex justify-between items-center pb-8  text-md ">
         <h2 className="text-2xl font-semibold">Control</h2>
-        <div className="flex items-center gap-2">
-          <span className="font-bold">De</span>
-          <input type="date" className="border-b border-black outline-none px-2 py-1" />
-          <span className="font-bold">A</span>
-          <input type="date" className="border-b border-black outline-none px-2 py-1" />
+        <div className="flex items-center gap-4 text-base">
+          <label>De <input type="date" className="ml-1 border px-2 py-1 rounded text-black" /></label>
+          <label>A <input type="date" className="ml-1 border px-2 py-1 rounded text-black" /></label>
         </div>
-
       </div>
 
       <div className="border rounded-2xl shadow-md p-4 w-full - max-h-[320px] overflow-y-scroll">
