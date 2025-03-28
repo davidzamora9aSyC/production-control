@@ -47,7 +47,11 @@ export default function Alertas() {
                         <span>Hora</span>
                     </div>
                     {alertas.map((a, i) => (
-                        <div key={i} className="grid grid-cols-4 py-2 border-b last:border-b-0">
+                        <div
+                            key={i}
+                            className="grid grid-cols-4 py-2 border-b last:border-b-0 cursor-pointer"
+                            onClick={() => a.tipo === "Máquina detenida" && navigate(`/maquina/${i}`)}
+                        >
                             <span className="text-blue-600 cursor-pointer hover:underline">{a.tipo}</span>
                             <span>{a.entidad}</span>
                             <span>{a.fecha}</span>
