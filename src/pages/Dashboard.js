@@ -10,11 +10,11 @@ export default function Dashboard() {
     const { aspectRatio } = useAspectRatio();
     console.log(aspectRatio);
     return (
-        <div className={`h-screen bg-white relative ${aspectRatio === "16:10" ? "mb-40" : ""}`}>
+        <div className={`h-screen bg-white relative ${aspectRatio === "16:9" ? "mb-40" : ""}`}>
 
             <Navbar />
-            <div className={`absolute left-1/2 ${aspectRatio === "16:9" ? "top-[15%]" : "top-[20%]"} w-px h-[calc(100%-200px)] border-l-2 border-dashed border-gray-400 z-0 pointer-events-none`} />
-            <div className={`absolute left-1/2 ${aspectRatio === "16:9" ? "top-[55%]" : "top-[62%]"} -translate-x-1/2 h-px w-[90%] border-t-2 border-dashed border-gray-400 z-0 pointer-events-none`} />
+            <div className={`absolute left-1/2 ${aspectRatio === "16:10" ? "top-[15%]" : "top-[20%]"} w-px h-[calc(100%-200px)] border-l-2 border-dashed border-gray-400 z-0 pointer-events-none`} />
+            <div className={`absolute left-1/2 ${aspectRatio === "16:10" ? "top-[55%]" : "top-[62%]"} -translate-x-1/2 h-px w-[90%] border-t-2 border-dashed border-gray-400 z-0 pointer-events-none`} />
 
 
             <div className="px-20 py-6 text-xl h-[calc(100%-80px)]">
