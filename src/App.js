@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useParams } from "react-router-dom";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import Dashboard from "./pages/Dashboard";
@@ -8,6 +8,8 @@ import Navbar from "./components/Navbar";
 import Recursos from "./pages/Recursos";
 import Maquina from "./pages/Maquina";
 import ScrollToTop from "./components/ScrollToTop";
+import OrdenesProduccion from "./pages/OrdenesProduccion";
+import DetalleOrden from "./pages/DetalleOrden";
 
 const ProtectedLayout = ({ children }) => (
   <>
@@ -31,6 +33,8 @@ function App() {
           <Route path="*" element={<ProtectedLayout><h1>Page not found</h1></ProtectedLayout>} />
           <Route path="/maquina/:id" element={<ProtectedLayout><Maquina /></ProtectedLayout>} />
           <Route path="/recursos" element={<ProtectedLayout><Recursos/></ProtectedLayout>} />
+          <Route path="/ordenes" element={<ProtectedLayout><OrdenesProduccion/></ProtectedLayout>} />
+          <Route path="/ordenes/:id" element={<ProtectedLayout><DetalleOrden /></ProtectedLayout>} />
         </Routes>
       </Router>
     </AspectRatioProvider>
