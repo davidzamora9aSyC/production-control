@@ -14,13 +14,19 @@ export default function NuevaMinuta() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("https://worldtimeapi.org/api/timezone/America/Bogota")
-      .then(res => res.json())
-      .then(data => {
-        const date = new Date(data.datetime);
-        const format = date.toLocaleString("es-CO", { hour12: false });
-        setFechaHora(format);
-      });
+    const date = new Date();
+    const options = {
+      timeZone: "America/Bogota",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    };
+    const format = new Intl.DateTimeFormat("es-CO", options).format(date);
+    setFechaHora(format.replace(",", ""));
   }, []);
 
   const cumplimiento = meta ? ((piezas / meta) * 100).toFixed(1) : "";

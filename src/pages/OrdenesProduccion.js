@@ -43,12 +43,29 @@ export default function OrdenesProduccion() {
 
                 <div className="flex justify-between items-center mb-6">
                     <div className="text-3xl font-semibold">Órdenes de Producción</div>
-                    <button
-                        className="bg-blue-600 text-white text-2xl px-4 py-1 rounded-full"
-                        onClick={() => setMostrarCargarOrden(true)}
-                    >
-                        +
-                    </button>
+                    <div className="flex items-center">
+                        <button
+                            className="bg-blue-600 text-white text-2xl px-4 py-1 rounded-full"
+                            onClick={() => setMostrarCargarOrden(true)}
+                        >
+                            +
+                        </button>
+                        <button
+                            className="bg-gray-300 text-black text-base px-4 py-1 rounded-full ml-4"
+                            onClick={() => {
+                                const desde = document.querySelector('input[type="date"]:first-of-type')?.value;
+                                const hasta = document.querySelector('input[type="date"]:last-of-type')?.value;
+                                if (desde && hasta) {
+                                    console.log(`Generando reporte desde ${desde} hasta ${hasta}`);
+                                    // Aquí podrías llamar a una función que genere el reporte real
+                                } else {
+                                    alert("Selecciona un rango de fechas válido.");
+                                }
+                            }}
+                        >
+                            Generar reporte
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex gap-4 mb-4 text-base py-4 items-center">
