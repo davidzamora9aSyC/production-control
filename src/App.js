@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useParams } from "react-router-dom";
 import Login from "./components/Login";
+import NuevaMinuta from "./pages/NuevaMinuta";
 import Signup from "./components/Signup";
 import Dashboard from "./pages/Dashboard";
 import { AspectRatioProvider } from "./context/AspectRatioContext";
@@ -10,6 +11,8 @@ import Maquina from "./pages/Maquina";
 import ScrollToTop from "./components/ScrollToTop";
 import OrdenesProduccion from "./pages/OrdenesProduccion";
 import DetalleOrden from "./pages/DetalleOrden";
+import Personas from "./pages/Personas";
+import Equipos from "./pages/Equipos";
 
 const ProtectedLayout = ({ children }) => (
   <>
@@ -26,7 +29,8 @@ function App() {
     <AspectRatioProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Login />} />
+          <Route path="/" element={<NuevaMinuta />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />
           <Route path="/dashboard" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
           <Route path="/alertas" element={<ProtectedLayout><Alertas /></ProtectedLayout>} />
@@ -35,6 +39,8 @@ function App() {
           <Route path="/recursos" element={<ProtectedLayout><Recursos/></ProtectedLayout>} />
           <Route path="/ordenes" element={<ProtectedLayout><OrdenesProduccion/></ProtectedLayout>} />
           <Route path="/ordenes/:id" element={<ProtectedLayout><DetalleOrden /></ProtectedLayout>} />
+          <Route path="/recursos/personas" element={<ProtectedLayout><Personas/></ProtectedLayout>} />
+          <Route path="/recursos/equipos" element={<ProtectedLayout><Equipos/></ProtectedLayout>} />
         </Routes>
       </Router>
     </AspectRatioProvider>

@@ -24,7 +24,6 @@ export default function Navbar() {
         { path: "/dashboard", label: "Resumen General" },
         { path: "/ordenes", label: "Órdenes de producción" },
         { path: "/alertas", label: "Alertas" },
-        { path: "/minuta", label: "Nueva minuta" },
     ];
 
     return (
@@ -33,6 +32,20 @@ export default function Navbar() {
                 <img src={logoNavbar} alt="Logo" className="h-12" />
             </span>
             <ul className="flex gap-16 ml-12 text-lg">
+                {links.map(link => (
+                  <li key={link.path} className="relative">
+                    <span
+                      onClick={() => navigate(link.path)}
+                      className={`cursor-pointer transition-colors transition-[font-weight] duration-500 ${
+                        location.pathname === link.path
+                          ? "font-bold text-black text-xl"
+                          : "text-gray-600 text-xl font-semibold"
+                      }`}
+                    >
+                      {link.label}
+                    </span>
+                  </li>
+                ))}
                 <li key="recursos" className="relative" ref={dropdownRef}>
                   <span
                     onClick={() => setDropdownAbierto(prev => !prev)}
@@ -64,22 +77,8 @@ export default function Navbar() {
                     </ul>
                   )}
                 </li>
-                {links.map(link => (
-                  <li key={link.path} className="relative">
-                    <span
-                      onClick={() => navigate(link.path)}
-                      className={`cursor-pointer transition-colors transition-[font-weight] duration-500 ${
-                        location.pathname === link.path
-                          ? "font-bold text-black text-xl"
-                          : "text-gray-600 text-xl font-semibold"
-                      }`}
-                    >
-                      {link.label}
-                    </span>
-                  </li>
-                ))}
             </ul>
-            <button onClick={()=>navigate("/")} className="text-xl font-bold">Cerrar sesión</button>
+            <button onClick={()=>navigate("/login")} className="text-xl font-bold">Cerrar sesión</button>
         </nav>
     );
 }

@@ -1,7 +1,7 @@
 import Navbar from "../components/Navbar";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import CargarOrden from "../components/CargarOrden";
+import ModalCargarCSV from "../components/ModalCargarCSV";
 
 const procesos = ["troquelado", "corte", "embuticion", "alistamiento", "adhesivo", "vulcanizado", "refilado", "pintura", "almacenamiento"];
 
@@ -102,10 +102,17 @@ export default function OrdenesProduccion() {
                 </div>
             </div>
             {mostrarCargarOrden && (
-                <CargarOrden
+                <ModalCargarCSV
+                    titulo="Cargar nueva orden"
                     onClose={() => setMostrarCargarOrden(false)}
                     onUpload={(archivo) => {
                         console.log("Archivo CSV cargado:", archivo);
+                        // Aquí se asume que se genera un nuevo archivo para descargar
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(archivo);
+                        a.download = archivo.name.replace(/\.csv$/, '') + "_Modificado.csv";
+                        a.click();
+                        URL.revokeObjectURL(a.href);
                         setMostrarCargarOrden(false);
                     }}
                 />

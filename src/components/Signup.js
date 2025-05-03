@@ -26,7 +26,7 @@ export default function Signup() {
                     <input type="password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} className="w-full p-4 mb-10 rounded-full bg-gray-200 outline-none" />
 
                     <button className="w-full bg-black text-white p-4 rounded-full">Crear cuenta</button>
-                    <Link to="/" className="block mt-4 text-blue-700 text-sm text-center">Ya tengo cuenta</Link>
+                    <Link to="/" className="block mt-4 text-blue-700 text-sm text-center">Crear nueva minuta</Link>
                 </div>
             </div>
         </div>

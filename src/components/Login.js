@@ -29,6 +29,7 @@ export default function Login() {
 
                     <button onClick={handleLogin} className="w-full bg-black text-white p-4 rounded-full">Iniciar sesión</button>
                     <Link to="/register" className="block mt-4 text-blue-700 text-sm text-center">Aún no tengo cuenta</Link>
+                    <Link to="/" className="block mt-4 text-blue-700 text-sm text-center">Crear nueva minuta</Link>
                 </div>
             </div>
         </div>
