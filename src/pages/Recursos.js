@@ -22,6 +22,33 @@ export default function Recursos() {
     const totalPaginas = Math.ceil(datos.length / ITEMS_POR_PAGINA);
     const mostrar = datos.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
 
+    function generarCSV() {
+        const headers = ["Máquina", "Último Trabajador", "Grupo", "Estado", "AVG. speed (parts/hr)", "NPT (Min)", "Defectos", "NPT (Min/day)", "Producción total"];
+        const rows = mostrar.map(item => [
+            item.maquina,
+            item.trabajador,
+            item.grupo,
+            item.estado,
+            item.avg,
+            item.npt,
+            item.defectos,
+            item.nptDia,
+            item.total
+        ]);
+        const csvContent = [headers, ...rows]
+            .map(e => e.map(a => `"${String(a).replace(/"/g, '""')}"`).join(","))
+            .join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `reporte_pagina_${pagina}.csv`);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     return (
         <div className="bg-white h-screen overflow-hidden animate-slideLeft">
 
@@ -34,10 +61,12 @@ export default function Recursos() {
                     &larr; Volver
                 </button>
 
-                <div className="text-3xl font-semibold mb-6">Recursos</div>
-                <div className="flex gap-4 mb-4 text-base py-4">
-                    <label>De <input type="date" className="ml-1 border px-2 py-1 rounded" defaultValue="2024-01-01" /></label>
-                    <label>A <input type="date" className="ml-1 border px-2 py-1 rounded" defaultValue="2024-12-01" /></label>
+                <div className="text-3xl font-semibold mb-6">Recursos Actuales</div>
+
+                <div className="flex justify-end mb-2">
+                    <button onClick={generarCSV} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Generar reporte
+                    </button>
                 </div>
 
                 <div className="overflow-x-auto border rounded-xl shadow-md">

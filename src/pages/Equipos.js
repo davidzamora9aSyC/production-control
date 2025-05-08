@@ -1,11 +1,9 @@
-
-
 import Navbar from "../components/Navbar";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ModalCargarCSV from "../components/ModalCargarCSV";
 
-// Datos simulados de máquinas
+
 const datos = Array(20).fill().map((_, i) => ({
     id: i + 1,
     nombre: `Máquina ${i + 1}`,
@@ -40,6 +38,30 @@ export default function Equipos() {
         };
     }, []);
 
+    const generarCSV = () => {
+        const headers = ["ID", "Nombre", "Tipo", "Estado", "Ubicación", "Fecha instalación", "Horas de uso", "Último mantenimiento"];
+        const rows = mostrar.map(item => [
+            item.id,
+            item.nombre,
+            item.tipo,
+            item.estado,
+            item.ubicacion,
+            item.fechaInstalacion,
+            item.usoHoras,
+            item.ultimaMantencion
+        ]);
+        const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `reporte_equipos_pagina_${pagina}.csv`);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="bg-white h-screen overflow-hidden animate-slideLeft">
             <div className="px-20 pt-10">
@@ -52,14 +74,17 @@ export default function Equipos() {
 
                 <div className="flex justify-between items-center mb-6">
                     <div className="text-3xl font-semibold">Equipos Registrados</div>
-                    <div className="relative" ref={menuRef}>
-                        <button onClick={() => setMenuAbierto(p => !p)} className="bg-blue-600 text-white text-2xl px-4 py-1 rounded-full">+</button>
-                        {menuAbierto && (
-                            <div className="absolute flex flex-col gap-1 right-0 top-full mt-2 bg-white border rounded shadow-lg z-10">
-                                <button onClick={() => alert("Abrir formulario")} className="text-left px-4 py-2 hover:bg-gray-100 whitespace-nowrap">Registrar manualmente</button>
-                                <button onClick={() => { setMostrarCargarCSV(true); setMenuAbierto(false); }} className="text-left px-4 py-2 hover:bg-gray-100 whitespace-nowrap">Cargar CSV</button>
-                            </div>
-                        )}
+                    <div className="flex items-center gap-2">
+                        <button onClick={generarCSV} className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">Generar reporte</button>
+                        <div className="relative" ref={menuRef}>
+                            <button onClick={() => setMenuAbierto(p => !p)} className="bg-blue-600 text-white text-2xl px-4 py-1 rounded-full">+</button>
+                            {menuAbierto && (
+                                <div className="absolute flex flex-col gap-1 right-0 top-full mt-2 bg-white border rounded shadow-lg z-10">
+                                    <button onClick={() => alert("Abrir formulario")} className="text-left px-4 py-2 hover:bg-gray-100 whitespace-nowrap">Registrar manualmente</button>
+                                    <button onClick={() => { setMostrarCargarCSV(true); setMenuAbierto(false); }} className="text-left px-4 py-2 hover:bg-gray-100 whitespace-nowrap">Cargar CSV</button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 

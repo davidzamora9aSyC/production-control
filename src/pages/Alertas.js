@@ -63,6 +63,23 @@ function Alertas() {
     const tipos = ["Todos", ...new Set(alertas.map(a => a.tipo))];
     const alertasFiltradas = tipoSeleccionado === "Todos" ? alertas : alertas.filter(a => a.tipo === tipoSeleccionado);
 
+    const generarCSV = () => {
+        const headers = ["Tipo de alerta", "Fecha de alerta", "Detalles"];
+        const rows = alertasFiltradas.map(a => [a.tipo, a.fecha, a.detalle]);
+
+        let csvContent = "data:text/csv;charset=utf-8," 
+            + headers.join(",") + "\n"
+            + rows.map(e => e.map(field => `"${field.replace(/"/g, '""')}"`).join(",")).join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "alertas_reporte.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="bg-white min-h-screen animate-slideLeft">
 
@@ -92,6 +109,12 @@ function Alertas() {
                         <input type="date" className="border px-2 py-1 rounded" defaultValue="2024-01-01" />
                         <span>A</span>
                         <input type="date" className="border px-2 py-1 rounded" defaultValue="2024-12-01" />
+                        <button
+                            onClick={generarCSV}
+                            className="ml-4 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                        >
+                            Generar reporte
+                        </button>
                     </div>
                 </div>
                 <table className="w-full text-left text-sm border-t border-b border-black">

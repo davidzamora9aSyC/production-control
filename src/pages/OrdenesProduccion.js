@@ -31,6 +31,28 @@ export default function OrdenesProduccion() {
     const totalPaginas = Math.ceil(datos.length / ITEMS_POR_PAGINA);
     const mostrar = datos.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
 
+    const generarCSV = () => {
+        const headers = ["Orden", "Producto", "Cantidad", "Estado", "Responsable proceso actual", "Fecha Inicio", "Proceso actual", "Avanzado hasta"];
+        const rows = mostrar.map(item => [
+            item.orden,
+            item.producto,
+            item.cantidad,
+            item.estado,
+            item.responsable,
+            item.fechaInicio,
+            item.procesoActual,
+            item.avance
+        ]);
+        const csvContent = [headers, ...rows].map(e => e.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ordenes_pagina_${pagina}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div className="bg-white h-screen overflow-hidden animate-slideLeft">
             <div className="px-20 pt-10">
@@ -52,16 +74,7 @@ export default function OrdenesProduccion() {
                         </button>
                         <button
                             className="bg-gray-300 text-black text-base px-4 py-1 rounded-full ml-4"
-                            onClick={() => {
-                                const desde = document.querySelector('input[type="date"]:first-of-type')?.value;
-                                const hasta = document.querySelector('input[type="date"]:last-of-type')?.value;
-                                if (desde && hasta) {
-                                    console.log(`Generando reporte desde ${desde} hasta ${hasta}`);
-                                    // Aquí podrías llamar a una función que genere el reporte real
-                                } else {
-                                    alert("Selecciona un rango de fechas válido.");
-                                }
-                            }}
+                            onClick={generarCSV}
                         >
                             Generar reporte
                         </button>

@@ -7,14 +7,12 @@ export default function NuevaMinuta() {
   const [meta, setMeta] = useState("");
   const [npt, setNpt] = useState("");
   const [accion, setAccion] = useState("");
-  const [mostrarMeta, setMostrarMeta] = useState(false);
   const [codigoOrden, setCodigoOrden] = useState("");
   const [proceso, setProceso] = useState("");
   const [procesosDisponibles, setProcesosDisponibles] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const date = new Date();
     const options = {
       timeZone: "America/Bogota",
       year: "numeric",
@@ -25,8 +23,12 @@ export default function NuevaMinuta() {
       second: "2-digit",
       hour12: false,
     };
-    const format = new Intl.DateTimeFormat("es-CO", options).format(date);
-    setFechaHora(format.replace(",", ""));
+    const intervalId = setInterval(() => {
+      const date = new Date();
+      const format = new Intl.DateTimeFormat("es-CO", options).format(date);
+      setFechaHora(format.replace(",", ""));
+    }, 1000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const cumplimiento = meta ? ((piezas / meta) * 100).toFixed(1) : "";
@@ -41,7 +43,9 @@ export default function NuevaMinuta() {
       cumplimiento,
       npt,
       nptPorcentaje,
-      accion
+      accion,
+      codigoOrden,
+      proceso
     };
     console.log("Minuta enviada:", minuta);
   };
@@ -59,118 +63,6 @@ export default function NuevaMinuta() {
       <div className="bg-white rounded-xl shadow-md p-6">
         <h1 className="text-2xl font-semibold mb-6">Nueva Minuta</h1>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div>
-            <label className="block font-medium">Código del trabajador</label>
-            <input
-              type="text"
-              className="w-full border rounded-full px-4 py-2"
-              placeholder="Ingrese el código del trabajador"
-            />
-          </div>
-
-          {/* 1. Fecha y hora actual */}
-          <div>
-            <label className="block font-medium">Fecha y hora</label>
-            <input
-              type="text"
-              value={fechaHora}
-              readOnly
-              className="w-full border rounded-full px-4 py-2 bg-gray-100"
-            />
-          </div>
-
-          {/* 2. Cantidad de piezas hechas */}
-          <div>
-            <label className="block font-medium">Cantidad de piezas hechas</label>
-            <input
-              type="number"
-              value={piezas}
-              onChange={e => setPiezas(e.target.value)}
-              className="w-full border rounded-full px-4 py-2"
-            />
-          </div>
-
-          <div>
-            <label className="inline-flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={mostrarMeta}
-                onChange={() => setMostrarMeta(!mostrarMeta)}
-              />
-              Nueva orden de producción
-            </label>
-            {mostrarMeta ? (
-              <div className="mt-2 space-y-4">
-                <div>
-                  <label className="block font-medium">Código de orden de producción</label>
-                  <input
-                    type="text"
-                    value={codigoOrden}
-                    onChange={e => {
-                      setCodigoOrden(e.target.value);
-                      // Simula fetch de procesos
-                      setProcesosDisponibles(["Corte", "Soldadura", "Ensamble"]);
-                    }}
-                    className="w-full border rounded-full px-4 py-2"
-                    placeholder="Ingrese el código de la orden"
-                  />
-                </div>
-                <div>
-                  <label className="block font-medium">Proceso a realizar</label>
-                  <select
-                    value={proceso}
-                    onChange={e => setProceso(e.target.value)}
-                    className="w-full border rounded-full px-4 py-2"
-                  >
-                    <option value="">Seleccione un proceso</option>
-                    {procesosDisponibles.map(p => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-2 space-y-2">
-                <p className="text-sm text-gray-700">Orden actual: <strong>{codigoOrden || "No definida"}</strong></p>
-                <p className="text-sm text-gray-700">Proceso actual: <strong>{proceso || "No definido"}</strong></p>
-              </div>
-            )}
-          </div>
-
-          {/* 4. % de cumplimiento (indicativo, no editable) */}
-          <div>
-            <label className="block font-medium">% de cumplimiento</label>
-            <input
-              type="text"
-              value={cumplimiento ? `${cumplimiento}%` : ""}
-              readOnly
-              className="w-full border rounded-full px-4 py-2 bg-gray-100"
-              tabIndex={-1}
-            />
-          </div>
-
-          {/* 5. NPT (min) */}
-          <div>
-            <label className="block font-medium">NPT (min)</label>
-            <input
-              type="number"
-              value={npt}
-              onChange={e => setNpt(e.target.value)}
-              className="w-full border rounded-full px-4 py-2"
-            />
-          </div>
-
-          {/* 6. % de NPT (indicativo) */}
-          <div>
-            <label className="block font-medium">% de NPT</label>
-            <input
-              type="text"
-              value={nptPorcentaje ? `${nptPorcentaje}%` : ""}
-              readOnly
-              className="w-full border rounded-full px-4 py-2 bg-gray-100"
-              tabIndex={-1}
-            />
-          </div>
 
           <div>
             <label className="block font-medium">Acción rápida</label>
@@ -194,6 +86,123 @@ export default function NuevaMinuta() {
               ))}
             </div>
           </div>
+
+          {/* 1. Fecha y hora actual */}
+          <div>
+            <label className="block font-medium">Fecha y hora</label>
+            <input
+              type="text"
+              value={fechaHora}
+              readOnly
+              className="w-full border rounded-full px-4 py-2 bg-gray-100"
+            />
+          </div>
+
+          {["Iniciar turno", "Volver del descanso", "Fin de mantenimiento"].includes(accion) && (
+            <div className="mt-2 space-y-4">
+              <div>
+                <label className="block font-medium">Código de orden de producción</label>
+                <input
+                  type="text"
+                  value={codigoOrden}
+                  onChange={e => {
+                    setCodigoOrden(e.target.value);
+                    // Simula fetch de procesos
+                    setProcesosDisponibles(["Corte", "Soldadura", "Ensamble"]);
+                  }}
+                  className="w-full border rounded-full px-4 py-2"
+                  placeholder="Ingrese el código de la orden"
+                />
+              </div>
+              <div>
+                <label className="block font-medium">Proceso a realizar</label>
+                <select
+                  value={proceso}
+                  onChange={e => setProceso(e.target.value)}
+                  className="w-full border rounded-full px-4 py-2"
+                >
+                  <option value="">Seleccione un proceso</option>
+                  {procesosDisponibles.map(p => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {!["Iniciar turno", "Volver del descanso", "Fin de mantenimiento"].includes(accion) && (
+            <>
+              <div>
+                <label className="block font-medium">Código del trabajador</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-full px-4 py-2"
+                  placeholder="Ingrese el código del trabajador"
+                />
+              </div>
+
+              {["Terminar turno", "Salir a descanso", "Inicio de mantenimiento"].includes(accion) && (
+                <>
+                  {/* 2. Cantidad de piezas hechas */}
+                  <div>
+                    <label className="block font-medium">Cantidad de piezas hechas</label>
+                    <input
+                      type="number"
+                      value={piezas}
+                      onChange={e => setPiezas(e.target.value)}
+                      className="w-full border rounded-full px-4 py-2"
+                    />
+                  </div>
+
+                  {/* Meta */}
+                  <div>
+                    <label className="block font-medium">Meta</label>
+                    <input
+                      type="number"
+                      value={meta}
+                      onChange={e => setMeta(e.target.value)}
+                      className="w-full border rounded-full px-4 py-2"
+                    />
+                  </div>
+
+                  {/* 4. % de cumplimiento (indicativo, no editable) */}
+                  <div>
+                    <label className="block font-medium">% de cumplimiento</label>
+                    <input
+                      type="text"
+                      value={cumplimiento ? `${cumplimiento}%` : ""}
+                      readOnly
+                      className="w-full border rounded-full px-4 py-2 bg-gray-100"
+                      tabIndex={-1}
+                    />
+                  </div>
+
+                  {/* 5. NPT (min) */}
+                  <div>
+                    <label className="block font-medium">NPT (min)</label>
+                    <input
+                      type="number"
+                      value={npt}
+                      onChange={e => setNpt(e.target.value)}
+                      className="w-full border rounded-full px-4 py-2"
+                    />
+                  </div>
+
+                  {/* 6. % de NPT (indicativo) */}
+                  <div>
+                    <label className="block font-medium">% de NPT</label>
+                    <input
+                      type="text"
+                      value={nptPorcentaje ? `${nptPorcentaje}%` : ""}
+                      readOnly
+                      className="w-full border rounded-full px-4 py-2 bg-gray-100"
+                      tabIndex={-1}
+                    />
+                  </div>
+                </>
+              )}
+            </>
+          )}
 
           <button
             type="submit"
