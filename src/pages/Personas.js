@@ -242,6 +242,7 @@ export default function Personas() {
                                 const limpio = { ...editar };
                                 delete limpio.createdAt;
                                 delete limpio.updatedAt;
+                                delete limpio.id;
                                 console.log("Enviando trabajador editado:", limpio);
                                 fetch(`https://smartindustries.org/trabajadores/${editar.id}`, {
                                     method: 'PUT',
