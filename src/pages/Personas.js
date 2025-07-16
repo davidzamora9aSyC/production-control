@@ -62,8 +62,17 @@ export default function Personas() {
 
     const iniciarBorrado = (id) => {
         timeoutRefs.current[id] = setTimeout(() => {
-            setTrabajadores(prev => prev.filter(t => t.id !== id));
-            setProgresos(prev => ({ ...prev, [id]: 0 }));
+            fetch(`https://smartindustries.org/trabajadores/${id}`, {
+                method: 'DELETE',
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Error al borrar trabajador");
+                setTrabajadores(prev => prev.filter(t => t.id !== id));
+            })
+            .catch(err => console.error("Error al borrar:", err))
+            .finally(() => {
+                setProgresos(prev => ({ ...prev, [id]: 0 }));
+            });
         }, tiempoBorrado);
 
         let inicio = Date.now();
