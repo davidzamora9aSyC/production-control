@@ -13,6 +13,7 @@ export default function Personas() {
     const [mostrarCargarCSV, setMostrarCargarCSV] = useState(false);
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [trabajadores, setTrabajadores] = useState([]);
+    const [progresos, setProgresos] = useState({});
     const navigate = useNavigate();
     const totalPaginas = Math.ceil(trabajadores.length / ITEMS_POR_PAGINA);
     const mostrar = trabajadores.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
@@ -56,6 +57,30 @@ export default function Personas() {
         saveAs(blob, `trabajadores_pagina_${pagina}.csv`);
     };
 
+    const tiempoBorrado = 10000;
+    const timeoutRefs = useRef({});
+
+    const iniciarBorrado = (id) => {
+        timeoutRefs.current[id] = setTimeout(() => {
+            setTrabajadores(prev => prev.filter(t => t.id !== id));
+            setProgresos(prev => ({ ...prev, [id]: 0 }));
+        }, tiempoBorrado);
+
+        let inicio = Date.now();
+        const intervalo = setInterval(() => {
+            const transcurrido = Date.now() - inicio;
+            setProgresos(prev => ({ ...prev, [id]: Math.min(transcurrido / tiempoBorrado, 1) }));
+            if (transcurrido >= tiempoBorrado) clearInterval(intervalo);
+        }, 100);
+        timeoutRefs.current[`interval-${id}`] = intervalo;
+    };
+
+    const cancelarBorrado = (id) => {
+        clearTimeout(timeoutRefs.current[id]);
+        clearInterval(timeoutRefs.current[`interval-${id}`]);
+        setProgresos(prev => ({ ...prev, [id]: 0 }));
+    };
+
     return (
         <div className="bg-white h-screen overflow-hidden animate-slideLeft">
             <div className="px-20 pt-10">
@@ -92,7 +117,8 @@ export default function Personas() {
                                 <th className="px-4 py-2 border-r">Grupo</th>
                                 <th className="px-4 py-2 border-r">Turno</th>
                                 <th className="px-4 py-2 border-r">Estado</th>
-                                <th className="px-4 py-2">Fecha de inicio</th>
+                                <th className="px-4 py-2 border-r">Fecha de inicio</th>
+                                <th className="px-4 py-2">Borrar</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -105,6 +131,19 @@ export default function Personas() {
                                     <td className="px-4 py-2 border-r">{item.turno}</td>
                                     <td className="px-4 py-2 border-r">{item.estado}</td>
                                     <td className="px-4 py-2">{item.fechaInicio}</td>
+                                    <td className="px-4 py-2">
+                                        <button
+                                            onMouseDown={() => iniciarBorrado(item.id)}
+                                            onMouseUp={() => cancelarBorrado(item.id)}
+                                            onMouseLeave={() => cancelarBorrado(item.id)}
+                                            className="relative bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                                        >
+                                            🗑️
+                                            {progresos[item.id] > 0 && (
+                                                <div className="absolute bottom-0 left-0 h-1 bg-white" style={{ width: `${progresos[item.id] * 100}%` }} />
+                                            )}
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>

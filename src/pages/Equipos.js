@@ -3,28 +3,26 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ModalCargarCSV from "../components/ModalCargarCSV";
 
-
-const datos = Array(20).fill().map((_, i) => ({
-    id: i + 1,
-    nombre: `Máquina ${i + 1}`,
-    tipo: "Industrial",
-    estado: i % 2 === 0 ? "Operativa" : "En mantenimiento",
-    ubicacion: "Planta 1",
-    fechaInstalacion: "2020-01-01",
-    usoHoras: Math.floor(Math.random() * 10000),
-    ultimaMantencion: "2024-01-01"
-}));
-
 const ITEMS_POR_PAGINA = 8;
 
 export default function Equipos() {
     const [pagina, setPagina] = useState(1);
     const [menuAbierto, setMenuAbierto] = useState(false);
     const [mostrarCargarCSV, setMostrarCargarCSV] = useState(false);
+    const [equipos, setEquipos] = useState([]);
+    const [progresos, setProgresos] = useState({});
+    const timeoutRefs = useRef({});
     const navigate = useNavigate();
-    const totalPaginas = Math.ceil(datos.length / ITEMS_POR_PAGINA);
-    const mostrar = datos.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
+    const totalPaginas = Math.ceil(equipos.length / ITEMS_POR_PAGINA);
+    const mostrar = equipos.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
     const menuRef = useRef();
+
+    useEffect(() => {
+        fetch("https://smartindustries.org/maquinas")
+            .then(res => res.json())
+            .then(setEquipos)
+            .catch(err => console.error("Error al obtener máquinas:", err));
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -37,6 +35,29 @@ export default function Equipos() {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
+
+    const iniciarBorrado = (id) => {
+        timeoutRefs.current[id] = setTimeout(() => {
+            fetch(`https://smartindustries.org/maquinas/${id}`, { method: 'DELETE' })
+                .then(() => setEquipos(prev => prev.filter(e => e.id !== id)))
+                .catch(err => console.error("Error al borrar:", err));
+            setProgresos(prev => ({ ...prev, [id]: 0 }));
+        }, 10000);
+
+        let inicio = Date.now();
+        const intervalo = setInterval(() => {
+            const transcurrido = Date.now() - inicio;
+            setProgresos(prev => ({ ...prev, [id]: Math.min(transcurrido / 10000, 1) }));
+            if (transcurrido >= 10000) clearInterval(intervalo);
+        }, 100);
+        timeoutRefs.current[`interval-${id}`] = intervalo;
+    };
+
+    const cancelarBorrado = (id) => {
+        clearTimeout(timeoutRefs.current[id]);
+        clearInterval(timeoutRefs.current[`interval-${id}`]);
+        setProgresos(prev => ({ ...prev, [id]: 0 }));
+    };
 
     const generarCSV = () => {
         const headers = ["ID", "Nombre", "Tipo", "Estado", "Ubicación", "Fecha instalación", "Horas de uso", "Último mantenimiento"];
@@ -99,7 +120,8 @@ export default function Equipos() {
                                 <th className="px-4 py-2 border-r">Ubicación</th>
                                 <th className="px-4 py-2 border-r">Fecha instalación</th>
                                 <th className="px-4 py-2 border-r">Horas de uso</th>
-                                <th className="px-4 py-2">Último mantenimiento</th>
+                                <th className="px-4 py-2 border-r">Último mantenimiento</th>
+                                <th className="px-4 py-2">Borrar</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -113,6 +135,19 @@ export default function Equipos() {
                                     <td className="px-4 py-2 border-r">{item.fechaInstalacion}</td>
                                     <td className="px-4 py-2 border-r">{item.usoHoras}</td>
                                     <td className="px-4 py-2">{item.ultimaMantencion}</td>
+                                    <td className="px-4 py-2">
+                                        <button
+                                            onMouseDown={() => iniciarBorrado(item.id)}
+                                            onMouseUp={() => cancelarBorrado(item.id)}
+                                            onMouseLeave={() => cancelarBorrado(item.id)}
+                                            className="relative bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                                        >
+                                            🗑️
+                                            {progresos[item.id] > 0 && (
+                                                <div className="absolute bottom-0 left-0 h-1 bg-white" style={{ width: `${progresos[item.id] * 100}%` }} />
+                                            )}
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
