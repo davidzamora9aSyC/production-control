@@ -1,10 +1,10 @@
-
-
 import { useState } from "react";
 
 export default function MaquinaForm({ onSave, onClose, equipo }) {
   const [form, setForm] = useState({
     nombre: equipo?.nombre || "",
+    estado: equipo?.estado || "activa",
+    tipo: equipo?.tipo || "troqueladora",
     ubicacion: equipo?.ubicacion || "",
     fechaInstalacion: equipo?.fechaInstalacion || "",
     observaciones: equipo?.observaciones || ""
@@ -39,6 +39,16 @@ export default function MaquinaForm({ onSave, onClose, equipo }) {
         <h2 className="text-xl font-semibold mb-4">{equipo ? "Editar máquina" : "Registrar máquina"}</h2>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <input name="nombre" placeholder="Nombre de la máquina" value={form.nombre} onChange={handleChange} className="border px-3 py-2 rounded" required />
+          <select name="estado" value={form.estado} onChange={handleChange} className="border px-3 py-2 rounded" required>
+            <option value="activa">Activa</option>
+            <option value="no activa">No activa</option>
+          </select>
+          <select name="tipo" value={form.tipo} onChange={handleChange} className="border px-3 py-2 rounded" required>
+            <option value="troqueladora">Troqueladora</option>
+            <option value="taladro">Taladro</option>
+            <option value="horno">Horno</option>
+            <option value="vulcanizadora">Vulcanizadora</option>
+          </select>
           <input name="ubicacion" placeholder="Ubicación" value={form.ubicacion} onChange={handleChange} className="border px-3 py-2 rounded" required />
           <input type="date" name="fechaInstalacion" value={form.fechaInstalacion} onChange={handleChange} className="border px-3 py-2 rounded" required />
           <textarea name="observaciones" placeholder="Observaciones" value={form.observaciones} onChange={handleChange} className="border px-3 py-2 rounded" rows={3} />
