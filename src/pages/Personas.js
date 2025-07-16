@@ -189,8 +189,22 @@ export default function Personas() {
                 <TrabajadorForm
                     onCancel={() => setMostrarFormulario(false)}
                     onSubmit={(data) => {
-                        console.log("Nuevo trabajador registrado:", data);
-                        setMostrarFormulario(false);
+                        fetch(`https://smartindustries.org/trabajadores/${data.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data)
+                        })
+                        .then(res => {
+                            if (!res.ok) throw new Error("Error al actualizar");
+                            return res.json();
+                        })
+                        .then(updated => {
+                            setTrabajadores(prev => prev.map(t => t.id === updated.id ? updated : t));
+                            setMostrarFormulario(false);
+                        })
+                        .catch(err => {
+                            console.error("Error al actualizar trabajador:", err);
+                        });
                     }}
                 />
             )}
