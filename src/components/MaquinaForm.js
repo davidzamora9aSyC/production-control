@@ -1,0 +1,53 @@
+
+
+import { useState } from "react";
+
+export default function MaquinaForm({ onSave, onClose, equipo }) {
+  const [form, setForm] = useState({
+    nombre: equipo?.nombre || "",
+    ubicacion: equipo?.ubicacion || "",
+    fechaInstalacion: equipo?.fechaInstalacion || "",
+    observaciones: equipo?.observaciones || ""
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const method = equipo ? 'PUT' : 'POST';
+    const url = equipo ? `https://smartindustries.org/maquinas/${equipo.id}` : 'https://smartindustries.org/maquinas';
+
+    fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form)
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("Error al guardar");
+      return res.json();
+    })
+    .then(onSave)
+    .catch(err => console.error("Error al guardar máquina:", err));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+        <h2 className="text-xl font-semibold mb-4">{equipo ? "Editar máquina" : "Registrar máquina"}</h2>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <input name="nombre" placeholder="Nombre de la máquina" value={form.nombre} onChange={handleChange} className="border px-3 py-2 rounded" required />
+          <input name="ubicacion" placeholder="Ubicación" value={form.ubicacion} onChange={handleChange} className="border px-3 py-2 rounded" required />
+          <input type="date" name="fechaInstalacion" value={form.fechaInstalacion} onChange={handleChange} className="border px-3 py-2 rounded" required />
+          <textarea name="observaciones" placeholder="Observaciones" value={form.observaciones} onChange={handleChange} className="border px-3 py-2 rounded" rows={3} />
+          <div className="flex justify-end gap-4 mt-4">
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400">Cancelar</button>
+            <button type="submit" className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">{equipo ? "Actualizar" : "Registrar"}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
