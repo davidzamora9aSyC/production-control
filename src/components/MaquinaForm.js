@@ -20,10 +20,14 @@ export default function MaquinaForm({ onSave, onClose, equipo, modo }) {
     const method = modo === 'editar' ? 'PUT' : 'POST';
     const url = modo === 'editar' ? `https://smartindustries.org/maquinas/${equipo.id}` : 'https://smartindustries.org/maquinas';
 
+    const formLimpio = { ...form };
+    delete formLimpio.createdAt;
+    delete formLimpio.updatedAt;
+
     fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form)
+      body: JSON.stringify(formLimpio)
     })
     .then(res => {
       if (!res.ok) throw new Error("Error al guardar");

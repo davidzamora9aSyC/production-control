@@ -69,14 +69,15 @@ export default function Equipos() {
     };
 
     const generarCSV = () => {
-        const headers = ["ID", "Nombre", "Tipo", "Estado", "Ubicación", "Fecha instalación"];
+        const headers = ["ID", "Nombre", "Tipo", "Estado", "Ubicación", "Fecha instalación", "Observaciones"];
         const rows = mostrar.map(item => [
             item.id,
             item.nombre,
             item.tipo,
             item.estado,
             item.ubicacion,
-            item.fechaInstalacion
+            item.fechaInstalacion,
+            item.observaciones || ""
         ]);
         const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
