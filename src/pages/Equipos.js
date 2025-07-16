@@ -2,6 +2,7 @@ import Navbar from "../components/Navbar";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ModalCargarCSV from "../components/ModalCargarCSV";
+import MaquinaForm from "../components/MaquinaForm";
 
 const ITEMS_POR_PAGINA = 8;
 
@@ -9,19 +10,25 @@ export default function Equipos() {
     const [pagina, setPagina] = useState(1);
     const [menuAbierto, setMenuAbierto] = useState(false);
     const [mostrarCargarCSV, setMostrarCargarCSV] = useState(false);
+    const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [equipos, setEquipos] = useState([]);
     const [progresos, setProgresos] = useState({});
+    const [equipoEditar, setEquipoEditar] = useState(null);
     const timeoutRefs = useRef({});
     const navigate = useNavigate();
     const totalPaginas = Math.ceil(equipos.length / ITEMS_POR_PAGINA);
     const mostrar = equipos.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
     const menuRef = useRef();
 
-    useEffect(() => {
+    const cargarEquipos = () => {
         fetch("https://smartindustries.org/maquinas")
             .then(res => res.json())
             .then(setEquipos)
             .catch(err => console.error("Error al obtener máquinas:", err));
+    };
+
+    useEffect(() => {
+        cargarEquipos();
     }, []);
 
     useEffect(() => {
@@ -39,7 +46,9 @@ export default function Equipos() {
     const iniciarBorrado = (id) => {
         timeoutRefs.current[id] = setTimeout(() => {
             fetch(`https://smartindustries.org/maquinas/${id}`, { method: 'DELETE' })
-                .then(() => setEquipos(prev => prev.filter(e => e.id !== id)))
+                .then(() => {
+                    setEquipos(prev => prev.filter(e => e.id !== id));
+                })
                 .catch(err => console.error("Error al borrar:", err));
             setProgresos(prev => ({ ...prev, [id]: 0 }));
         }, 10000);
@@ -60,16 +69,14 @@ export default function Equipos() {
     };
 
     const generarCSV = () => {
-        const headers = ["ID", "Nombre", "Tipo", "Estado", "Ubicación", "Fecha instalación", "Horas de uso", "Último mantenimiento"];
+        const headers = ["ID", "Nombre", "Tipo", "Estado", "Ubicación", "Fecha instalación"];
         const rows = mostrar.map(item => [
             item.id,
             item.nombre,
             item.tipo,
             item.estado,
             item.ubicacion,
-            item.fechaInstalacion,
-            item.usoHoras,
-            item.ultimaMantencion
+            item.fechaInstalacion
         ]);
         const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -101,7 +108,7 @@ export default function Equipos() {
                             <button onClick={() => setMenuAbierto(p => !p)} className="bg-blue-600 text-white text-2xl px-4 py-1 rounded-full">+</button>
                             {menuAbierto && (
                                 <div className="absolute flex flex-col gap-1 right-0 top-full mt-2 bg-white border rounded shadow-lg z-10">
-                                    <button onClick={() => alert("Abrir formulario")} className="text-left px-4 py-2 hover:bg-gray-100 whitespace-nowrap">Registrar manualmente</button>
+                                    <button onClick={() => { setMostrarFormulario(true); setMenuAbierto(false); }} className="text-left px-4 py-2 hover:bg-gray-100 whitespace-nowrap">Registrar manualmente</button>
                                     <button onClick={() => { setMostrarCargarCSV(true); setMenuAbierto(false); }} className="text-left px-4 py-2 hover:bg-gray-100 whitespace-nowrap">Cargar CSV</button>
                                 </div>
                             )}
@@ -119,9 +126,7 @@ export default function Equipos() {
                                 <th className="px-4 py-2 border-r">Estado</th>
                                 <th className="px-4 py-2 border-r">Ubicación</th>
                                 <th className="px-4 py-2 border-r">Fecha instalación</th>
-                                <th className="px-4 py-2 border-r">Horas de uso</th>
-                                <th className="px-4 py-2 border-r">Último mantenimiento</th>
-                                <th className="px-4 py-2">Borrar</th>
+                                <th className="px-4 py-2">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -133,13 +138,17 @@ export default function Equipos() {
                                     <td className="px-4 py-2 border-r">{item.estado}</td>
                                     <td className="px-4 py-2 border-r">{item.ubicacion}</td>
                                     <td className="px-4 py-2 border-r">{item.fechaInstalacion}</td>
-                                    <td className="px-4 py-2 border-r">{item.usoHoras}</td>
-                                    <td className="px-4 py-2">{item.ultimaMantencion}</td>
-                                    <td className="px-4 py-2">
+                                    <td className="px-4 py-2 flex gap-2 justify-center">
                                         <button
-                                            onMouseDown={() => iniciarBorrado(item.id)}
-                                            onMouseUp={() => cancelarBorrado(item.id)}
-                                            onMouseLeave={() => cancelarBorrado(item.id)}
+                                            onClick={(e) => { e.stopPropagation(); setEquipoEditar(item); setMostrarFormulario(true); }}
+                                            className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600"
+                                        >
+                                            ✏️
+                                        </button>
+                                        <button
+                                            onMouseDown={(e) => { e.stopPropagation(); iniciarBorrado(item.id); }}
+                                            onMouseUp={(e) => { e.stopPropagation(); cancelarBorrado(item.id); }}
+                                            onMouseLeave={(e) => { e.stopPropagation(); cancelarBorrado(item.id); }}
                                             className="relative bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
                                         >
                                             🗑️
@@ -168,6 +177,19 @@ export default function Equipos() {
                     onUpload={(archivo) => {
                         console.log("Archivo de equipos cargado:", archivo);
                         setMostrarCargarCSV(false);
+                        cargarEquipos();
+                    }}
+                />
+            )}
+
+            {mostrarFormulario && (
+                <MaquinaForm
+                    equipo={equipoEditar}
+                    onClose={() => { setMostrarFormulario(false); setEquipoEditar(null); }}
+                    onSave={() => {
+                        setMostrarFormulario(false);
+                        setEquipoEditar(null);
+                        cargarEquipos();
                     }}
                 />
             )}
