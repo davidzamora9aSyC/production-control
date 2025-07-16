@@ -189,21 +189,21 @@ export default function Personas() {
                 <TrabajadorForm
                     onCancel={() => setMostrarFormulario(false)}
                     onSubmit={(data) => {
-                        fetch(`https://smartindustries.org/trabajadores/${data.id}`, {
-                            method: 'PUT',
+                        fetch(`https://smartindustries.org/trabajadores`, {
+                            method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(data)
                         })
                         .then(res => {
-                            if (!res.ok) throw new Error("Error al actualizar");
+                            if (!res.ok) throw new Error("Error al crear");
                             return res.json();
                         })
-                        .then(updated => {
-                            setTrabajadores(prev => prev.map(t => t.id === updated.id ? updated : t));
+                        .then(created => {
+                            setTrabajadores(prev => [...prev, created]);
                             setMostrarFormulario(false);
                         })
                         .catch(err => {
-                            console.error("Error al actualizar trabajador:", err);
+                            console.error("Error al crear trabajador:", err);
                         });
                     }}
                 />
