@@ -239,10 +239,14 @@ export default function Personas() {
                         <div className="flex justify-end gap-2 mt-4">
                             <button onClick={() => setEditar(null)} className="border px-3 py-1 rounded">Cancelar</button>
                             <button onClick={() => {
+                                const limpio = { ...editar };
+                                delete limpio.createdAt;
+                                delete limpio.updatedAt;
+                                console.log("Enviando trabajador editado:", limpio);
                                 fetch(`https://smartindustries.org/trabajadores/${editar.id}`, {
                                     method: 'PUT',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify(editar)
+                                    body: JSON.stringify(limpio)
                                 })
                                 .then(() => {
                                     setTrabajadores(prev => prev.map(t => t.id === editar.id ? editar : t));
