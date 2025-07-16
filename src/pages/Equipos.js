@@ -24,7 +24,7 @@ export default function Equipos() {
         fetch("https://smartindustries.org/maquinas")
             .then(res => res.json())
             .then(setEquipos)
-            .catch(err => console.error("Error al obtener máquinas:", err));
+            .catch(err => console.error("Error al obtener máquinas:", err)); 
     };
 
     useEffect(() => {
