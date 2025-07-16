@@ -198,8 +198,11 @@ export default function Personas() {
                             if (!res.ok) throw new Error("Error al crear");
                             return res.json();
                         })
-                        .then(created => {
-                            setTrabajadores(prev => [...prev, created]);
+                        .then(() => {
+                            fetch("https://smartindustries.org/trabajadores")
+                                .then(res => res.json())
+                                .then(setTrabajadores)
+                                .catch(err => console.error("Error al actualizar lista de trabajadores:", err));
                             setMostrarFormulario(false);
                         })
                         .catch(err => {
