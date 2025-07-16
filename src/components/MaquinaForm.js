@@ -24,6 +24,8 @@ export default function MaquinaForm({ onSave, onClose, equipo, modo }) {
     delete formLimpio.createdAt;
     delete formLimpio.updatedAt;
 
+    console.log("Enviando datos:", formLimpio);
+
     fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },

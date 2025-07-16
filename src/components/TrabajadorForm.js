@@ -17,7 +17,12 @@ export default function TrabajadorForm({ onSubmit, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(form);
+    const formLimpio = { ...form };
+    delete formLimpio.id;
+    delete formLimpio.createdAt;
+    delete formLimpio.updatedAt;
+    console.log("Enviando datos trabajador:", formLimpio);
+    onSubmit(formLimpio);
   };
 
   return (
