@@ -126,6 +126,7 @@ export default function Equipos() {
                                 <th className="px-4 py-2 border-r">Estado</th>
                                 <th className="px-4 py-2 border-r">Ubicación</th>
                                 <th className="px-4 py-2 border-r">Fecha instalación</th>
+                                <th className="px-4 py-2 border-r">Observaciones</th>
                                 <th className="px-4 py-2">Acciones</th>
                             </tr>
                         </thead>
@@ -138,6 +139,7 @@ export default function Equipos() {
                                     <td className="px-4 py-2 border-r">{item.estado}</td>
                                     <td className="px-4 py-2 border-r">{item.ubicacion}</td>
                                     <td className="px-4 py-2 border-r">{item.fechaInstalacion}</td>
+                                    <td className="px-4 py-2 border-r">{item.observaciones || "-"}</td>
                                     <td className="px-4 py-2 flex gap-2 justify-center">
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setEquipoEditar(item); setMostrarFormulario(true); }}
