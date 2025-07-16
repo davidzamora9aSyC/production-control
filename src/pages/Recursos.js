@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const datos = Array(20).fill().map((_, i) => ({
-    maquina: i + 1,
+    id: i + 1,
+    nombre: `Máquina ${i + 1}`,
     trabajador: "Nombre Apellido",
     grupo: "Embutido",
     estado: "En producción",
@@ -18,14 +19,16 @@ const ITEMS_POR_PAGINA = 8;
 
 export default function Recursos() {
     const [pagina, setPagina] = useState(1);
+    const [editar, setEditar] = useState(null);
+    const [equipos, setEquipos] = useState(datos);
     const navigate = useNavigate();
-    const totalPaginas = Math.ceil(datos.length / ITEMS_POR_PAGINA);
-    const mostrar = datos.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
+    const totalPaginas = Math.ceil(equipos.length / ITEMS_POR_PAGINA);
+    const mostrar = equipos.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
 
     function generarCSV() {
         const headers = ["Máquina", "Último Trabajador", "Grupo", "Estado", "AVG. speed (parts/hr)", "NPT (Min)", "Defectos", "NPT (Min/day)", "Producción total"];
         const rows = mostrar.map(item => [
-            item.maquina,
+            item.nombre,
             item.trabajador,
             item.grupo,
             item.estado,
@@ -82,12 +85,13 @@ export default function Recursos() {
                                 <th className="px-4 py-2 border-r">Defectos</th>
                                 <th className="px-4 py-2 border-r">NPT (Min/day)</th>
                                 <th className="px-4 py-2">Producción total</th>
+                                <th className="px-4 py-2">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {mostrar.map((item, i) => (
-                                <tr key={i} className="border-b cursor-pointer" onClick={() => navigate(`/maquina/${item.maquina}`)}>
-                                    <td className="sticky left-0 bg-white px-4 py-2 border-r z-0">{item.maquina}</td>
+                                <tr key={i} className="border-b cursor-pointer" onClick={() => navigate(`/maquina/${item.id}`)}>
+                                    <td className="sticky left-0 bg-white px-4 py-2 border-r z-0">{item.nombre}</td>
                                     <td className="sticky left-16 bg-white px-4 py-2 border-r z-0">{item.trabajador}</td>
                                     <td className="px-4 py-2 border-r">{item.grupo}</td>
                                     <td className="px-4 py-2 border-r">{item.estado}</td>
@@ -96,6 +100,26 @@ export default function Recursos() {
                                     <td className="px-4 py-2 border-r">{item.defectos}</td>
                                     <td className="px-4 py-2 border-r">{item.nptDia}</td>
                                     <td className="px-4 py-2">{item.total}</td>
+                                    <td className="px-4 py-2 flex items-center">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                // Aquí puede ir la función para borrar
+                                            }}
+                                            className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 mr-1"
+                                        >
+                                            🗑️
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setEditar(item);
+                                            }}
+                                            className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 mr-1"
+                                        >
+                                            ✏️
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -108,6 +132,40 @@ export default function Recursos() {
                     <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} className="px-3 py-1 border rounded">Siguiente</button>
                 </div>
             </div>
+
+            {editar && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                    <div className="bg-white p-6 rounded shadow-md w-80">
+                        <h2 className="text-lg font-bold mb-4">Editar Máquina</h2>
+                        <label className="block mb-2 text-sm">Nombre</label>
+                        <input
+                            value={editar.nombre}
+                            onChange={(e) => setEditar({ ...editar, nombre: e.target.value })}
+                            className="w-full border rounded px-2 py-1 mb-4"
+                        />
+                        <label className="block mb-2 text-sm">Estado</label>
+                        <input
+                            value={editar.estado}
+                            onChange={(e) => setEditar({ ...editar, estado: e.target.value })}
+                            className="w-full border rounded px-2 py-1 mb-4"
+                        />
+                        <div className="flex justify-end gap-2">
+                            <button onClick={() => setEditar(null)} className="px-3 py-1 border rounded">Cancelar</button>
+                            <button onClick={() => {
+                                fetch(`https://smartindustries.org/maquinas/${editar.id}`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ nombre: editar.nombre, estado: editar.estado }),
+                                })
+                                .then(() => {
+                                    setEquipos(prev => prev.map(m => m.id === editar.id ? editar : m));
+                                    setEditar(null);
+                                });
+                            }} className="px-3 py-1 bg-blue-600 text-white rounded">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
