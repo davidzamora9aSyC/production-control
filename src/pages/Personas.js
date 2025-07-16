@@ -14,6 +14,7 @@ export default function Personas() {
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [trabajadores, setTrabajadores] = useState([]);
     const [progresos, setProgresos] = useState({});
+    const [editar, setEditar] = useState(null);
     const navigate = useNavigate();
     const totalPaginas = Math.ceil(trabajadores.length / ITEMS_POR_PAGINA);
     const mostrar = trabajadores.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
@@ -67,7 +68,7 @@ export default function Personas() {
             })
             .then(res => {
                 if (!res.ok) throw new Error("Error al borrar trabajador");
-                setTrabajadores(prev => prev.filter(t => t.id !== id));
+                setTrabajadores(prevs => prevs.filter(t => t.id !== id));
             })
             .catch(err => console.error("Error al borrar:", err))
             .finally(() => {
@@ -128,6 +129,7 @@ export default function Personas() {
                                 <th className="px-4 py-2 border-r">Estado</th>
                                 <th className="px-4 py-2 border-r">Fecha de inicio</th>
                                 <th className="px-4 py-2">Borrar</th>
+                                <th className="px-4 py-2">Editar</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -151,6 +153,14 @@ export default function Personas() {
                                             {progresos[item.id] > 0 && (
                                                 <div className="absolute bottom-0 left-0 h-1 bg-white" style={{ width: `${progresos[item.id] * 100}%` }} />
                                             )}
+                                        </button>
+                                    </td>
+                                    <td className="px-4 py-2">
+                                        <button
+                                            onClick={() => setEditar(item)}
+                                            className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                                        >
+                                            ✏️
                                         </button>
                                     </td>
                                 </tr>
@@ -183,6 +193,48 @@ export default function Personas() {
                         setMostrarFormulario(false);
                     }}
                 />
+            )}
+            {editar && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                    <div className="bg-white p-6 rounded shadow-md w-96">
+                        <h2 className="text-lg font-bold mb-4">Editar Trabajador</h2>
+                        <div className="grid grid-cols-1 gap-2">
+                            <input value={editar.nombre} onChange={e => setEditar({...editar, nombre: e.target.value})} placeholder="Nombre" className="border px-2 py-1 rounded" />
+                            <input value={editar.identificacion} onChange={e => setEditar({...editar, identificacion: e.target.value})} placeholder="Identificación" className="border px-2 py-1 rounded" />
+                            <select value={editar.grupo} onChange={e => setEditar({...editar, grupo: e.target.value})} className="border px-2 py-1 rounded">
+                                <option value="produccion">produccion</option>
+                                <option value="admin">admin</option>
+                            </select>
+                            <select value={editar.turno} onChange={e => setEditar({...editar, turno: e.target.value})} className="border px-2 py-1 rounded">
+                                <option value="mañana">mañana</option>
+                                <option value="tarde">tarde</option>
+                                <option value="noche">noche</option>
+                            </select>
+                            <input type="date" value={editar.fechaInicio} onChange={e => setEditar({...editar, fechaInicio: e.target.value})} className="border px-2 py-1 rounded" />
+                            <select value={editar.estado} onChange={e => setEditar({...editar, estado: e.target.value})} className="border px-2 py-1 rounded">
+                                <option value="creado">creado</option>
+                                <option value="en produccion">en produccion</option>
+                                <option value="en descanso">en descanso</option>
+                                <option value="fuera de turno">fuera de turno</option>
+                                <option value="inactivo en turno">inactivo en turno</option>
+                            </select>
+                        </div>
+                        <div className="flex justify-end gap-2 mt-4">
+                            <button onClick={() => setEditar(null)} className="border px-3 py-1 rounded">Cancelar</button>
+                            <button onClick={() => {
+                                fetch(`https://smartindustries.org/trabajadores/${editar.id}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(editar)
+                                })
+                                .then(() => {
+                                    setTrabajadores(prev => prev.map(t => t.id === editar.id ? editar : t));
+                                    setEditar(null);
+                                });
+                            }} className="bg-blue-600 text-white px-3 py-1 rounded">Guardar</button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
