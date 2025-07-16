@@ -5,16 +5,6 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver";
 
-const datos = Array(20).fill().map((_, i) => ({
-    id: i + 1,
-    nombre: "Nombre Apellido",
-    documento: `CC${10000000 + i}`,
-    grupo: "Producción",
-    turno: "Mañana",
-    estado: "Activo",
-    antiguedadMeses: Math.floor(Math.random() * 60) + 1
-}));
-
 const ITEMS_POR_PAGINA = 8;
 
 export default function Personas() {
@@ -22,10 +12,18 @@ export default function Personas() {
     const [menuAbierto, setMenuAbierto] = useState(false);
     const [mostrarCargarCSV, setMostrarCargarCSV] = useState(false);
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
+    const [trabajadores, setTrabajadores] = useState([]);
     const navigate = useNavigate();
-    const totalPaginas = Math.ceil(datos.length / ITEMS_POR_PAGINA);
-    const mostrar = datos.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
+    const totalPaginas = Math.ceil(trabajadores.length / ITEMS_POR_PAGINA);
+    const mostrar = trabajadores.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
     const menuRef = useRef();
+
+    useEffect(() => {
+        fetch("https://smartindustries.org/trabajadores")
+            .then(res => res.json())
+            .then(setTrabajadores)
+            .catch(err => console.error("Error al obtener trabajadores:", err));
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -40,15 +38,15 @@ export default function Personas() {
     }, []);
 
     const generarCSV = () => {
-        const headers = ["ID", "Nombre", "Documento", "Grupo", "Turno", "Estado", "Antigüedad (meses)"];
+        const headers = ["ID", "Nombre", "Identificación", "Grupo", "Turno", "Estado", "Fecha de inicio"];
         const rows = mostrar.map(item => [
             item.id,
             item.nombre,
-            item.documento,
+            item.identificacion,
             item.grupo,
             item.turno,
             item.estado,
-            item.antiguedadMeses
+            item.fechaInicio
         ]);
         const csvContent = [
             headers.join(","),
@@ -90,11 +88,11 @@ export default function Personas() {
                             <tr className="bg-gray-100 border-b">
                                 <th className="px-4 py-2 border-r">ID</th>
                                 <th className="px-4 py-2 border-r">Nombre</th>
-                                <th className="px-4 py-2 border-r">Documento</th>
+                                <th className="px-4 py-2 border-r">Identificación</th>
                                 <th className="px-4 py-2 border-r">Grupo</th>
                                 <th className="px-4 py-2 border-r">Turno</th>
                                 <th className="px-4 py-2 border-r">Estado</th>
-                                <th className="px-4 py-2">Antigüedad (meses)</th>
+                                <th className="px-4 py-2">Fecha de inicio</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -102,11 +100,11 @@ export default function Personas() {
                                 <tr key={i} className="border-b">
                                     <td className="px-4 py-2 border-r">{item.id}</td>
                                     <td className="px-4 py-2 border-r">{item.nombre}</td>
-                                    <td className="px-4 py-2 border-r">{item.documento}</td>
+                                    <td className="px-4 py-2 border-r">{item.identificacion}</td>
                                     <td className="px-4 py-2 border-r">{item.grupo}</td>
                                     <td className="px-4 py-2 border-r">{item.turno}</td>
                                     <td className="px-4 py-2 border-r">{item.estado}</td>
-                                    <td className="px-4 py-2">{item.antiguedadMeses}</td>
+                                    <td className="px-4 py-2">{item.fechaInicio}</td>
                                 </tr>
                             ))}
                         </tbody>
