@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ModalCargarCSV from "../components/ModalCargarCSV";
 import MaquinaForm from "../components/MaquinaForm";
+import { API_BASE_URL } from "../api";
 
 const ITEMS_POR_PAGINA = 8;
 
@@ -21,10 +22,10 @@ export default function Equipos() {
     const menuRef = useRef();
 
     const cargarEquipos = () => {
-        fetch("https://smartindustries.org/maquinas")
+        fetch(`${API_BASE_URL}/maquinas`)
             .then(res => res.json())
             .then(setEquipos)
-            .catch(err => console.error("Error al obtener máquinas:", err)); 
+            .catch(err => console.error("Error al obtener máquinas:", err));
     };
 
     useEffect(() => {
@@ -45,7 +46,7 @@ export default function Equipos() {
 
     const iniciarBorrado = (id) => {
         timeoutRefs.current[id] = setTimeout(() => {
-            fetch(`https://smartindustries.org/maquinas/${id}`, { method: 'DELETE' })
+            fetch(`${API_BASE_URL}/maquinas/${id}`, { method: 'DELETE' })
                 .then(() => {
                     setEquipos(prev => prev.filter(e => e.id !== id));
                 })

@@ -4,6 +4,7 @@ import TrabajadorForm from "../components/TrabajadorForm";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver";
+import { API_BASE_URL } from "../api";
 
 const ITEMS_POR_PAGINA = 8;
 
@@ -21,7 +22,7 @@ export default function Personas() {
     const menuRef = useRef();
 
     useEffect(() => {
-        fetch("https://smartindustries.org/trabajadores")
+        fetch(`${API_BASE_URL}/trabajadores`)
             .then(res => res.json())
             .then(setTrabajadores)
             .catch(err => console.error("Error al obtener trabajadores:", err));
@@ -63,7 +64,7 @@ export default function Personas() {
 
     const iniciarBorrado = (id) => {
         timeoutRefs.current[id] = setTimeout(() => {
-            fetch(`https://smartindustries.org/trabajadores/${id}`, {
+            fetch(`${API_BASE_URL}/trabajadores/${id}`, {
                 method: 'DELETE',
             })
             .then(res => {
@@ -189,7 +190,7 @@ export default function Personas() {
                 <TrabajadorForm
                     onCancel={() => setMostrarFormulario(false)}
                     onSubmit={(data) => {
-                        fetch(`https://smartindustries.org/trabajadores`, {
+                        fetch(`${API_BASE_URL}/trabajadores`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(data)
@@ -199,7 +200,7 @@ export default function Personas() {
                             return res.json();
                         })
                         .then(() => {
-                            fetch("https://smartindustries.org/trabajadores")
+                            fetch(`${API_BASE_URL}/trabajadores`)
                                 .then(res => res.json())
                                 .then(setTrabajadores)
                                 .catch(err => console.error("Error al actualizar lista de trabajadores:", err));
@@ -244,7 +245,7 @@ export default function Personas() {
                                 delete limpio.updatedAt;
                                 delete limpio.id;
                                 console.log("Enviando trabajador editado:", limpio);
-                                fetch(`https://smartindustries.org/trabajadores/${editar.id}`, {
+                                fetch(`${API_BASE_URL}/trabajadores/${editar.id}`, {
                                     method: 'PUT',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify(limpio)

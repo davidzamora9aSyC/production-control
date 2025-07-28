@@ -1,43 +1,45 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import EditarAsignacion from "../components/EditarAsignacion";
-
-const procesos = ["Embutido", "Corte", "Troquelado", "Alistamiento"];
-
-const datosPorProceso = {
-  Embutido: [
-    { maquina: 2, trabajador: "Carlos Pérez", referencia: "NIF0TSMU8T", completado: 50, asignado: 200 },
-    { maquina: 3, trabajador: "Juan Pérez", referencia: "NIF0TSMU8T", completado: 70, asignado: 200 },
-  ],
-  Corte: [
-    { maquina: 4, trabajador: "Laura Gómez", referencia: "NIF0TSMU8T", completado: 80, asignado: 200 },
-    { maquina: 5, trabajador: "Mario Díaz", referencia: "NIF0TSMU8T", completado: 60, asignado: 200 },
-  ],
-  Troquelado: [],
-  Alistamiento: [],
-};
+import { API_BASE_URL } from "../api";
 
 export default function DetalleOrden() {
+  const [pasos, setPasos] = useState([]);
+  const [orden, setOrden] = useState(null);
   const [procesoIndex, setProcesoIndex] = useState(0);
   const [mostrarEditor, setMostrarEditor] = useState(false);
-  const procesoActual = procesos[procesoIndex];
-  const datos = datosPorProceso[procesoActual];
   const navigate = useNavigate();
+  const { id } = useParams();
 
-  const totalCompletado = datos.reduce((a, b) => a + b.completado, 0);
-  const totalAsignado = datos.reduce((a, b) => a + b.asignado, 0);
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/ordenes/${id}`)
+      .then(res => res.json())
+      .then(setOrden)
+      .catch(err => console.error("Error al obtener orden:", err));
+    fetch(`${API_BASE_URL}/pasos/orden/${id}`)
+      .then(res => res.json())
+      .then(setPasos)
+      .catch(err => console.error("Error al obtener pasos:", err));
+  }, [id]);
+
+  const procesos = Array.from(new Set(pasos.map(p => p.nombre)));
+  const procesoActual = procesos[procesoIndex] || "";
+  const datos = pasos.filter(p => p.nombre === procesoActual);
+  const totalCompletado = datos.reduce((a, b) => a + (b.cantidadProducida || 0), 0);
+  const totalAsignado = datos.reduce((a, b) => a + (b.cantidadRequerida || 0), 0);
+  const avance = totalAsignado ? ((totalCompletado / totalAsignado) * 100).toFixed(0) : 0;
 
   return (
     <div className="p-8">
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <div className="bg-gray-100 px-4 py-2 rounded-full text-sm text-gray-800 font-medium">
-          ID: GG921IAEMC
+          ID: {orden?.numero}
         </div>
         <div className="bg-gray-100 px-4 py-2 rounded-full text-sm text-gray-800 font-medium flex items-center gap-4">
-          <span>Avance: 25% (50/200)</span>
+          <span>Avance: {avance}% ({totalCompletado}/{totalAsignado})</span>
           <span className="h-2 w-2 bg-green-500 rounded-full"></span>
-          <span>Estado: Activo</span>
-          <span>06/01/2025 03:27 PM</span>
+          <span>Estado: {orden?.estado}</span>
+          <span>{orden ? new Date(orden.fechaOrden).toLocaleString() : ''}</span>
         </div>
       </div>
 
@@ -57,27 +59,28 @@ export default function DetalleOrden() {
         <table className="min-w-full text-sm">
           <thead className="bg-gray-100">
             <tr>
-              <th className="px-4 py-2 border-r">Máquina</th>
-              <th className="px-4 py-2 border-r">Trabajador</th>
-              <th className="px-4 py-2 border-r">Referencia en producción</th>
-              <th className="px-4 py-2 border-r">Cantidad completada</th>
-              <th className="px-4 py-2">Cantidad asignada</th>
+              <th className="px-4 py-2 border-r">Nombre</th>
+              <th className="px-4 py-2 border-r">Código</th>
+              <th className="px-4 py-2 border-r">Cantidad producida</th>
+              <th className="px-4 py-2 border-r">Cantidad requerida</th>
+              <th className="px-4 py-2">Estado</th>
             </tr>
           </thead>
           <tbody>
             {datos.map((item, i) => (
               <tr key={i} className="border-t">
-                <td className="px-4 py-2 border-r">{item.maquina}</td>
-                <td className="px-4 py-2 border-r">{item.trabajador}</td>
-                <td className="px-4 py-2 border-r">{item.referencia}</td>
-                <td className="px-4 py-2 border-r">{item.completado}</td>
-                <td className="px-4 py-2">{item.asignado}</td>
+                <td className="px-4 py-2 border-r">{item.nombre}</td>
+                <td className="px-4 py-2 border-r">{item.codigoInterno}</td>
+                <td className="px-4 py-2 border-r">{item.cantidadProducida}</td>
+                <td className="px-4 py-2 border-r">{item.cantidadRequerida}</td>
+                <td className="px-4 py-2">{item.estado}</td>
               </tr>
             ))}
             <tr className="font-semibold bg-gray-50">
-              <td colSpan={3} className="px-4 py-2 text-right border-r">Total</td>
+              <td colSpan={2} className="px-4 py-2 text-right border-r">Total</td>
               <td className="px-4 py-2 border-r">{totalCompletado}</td>
-              <td className="px-4 py-2">{totalAsignado}</td>
+              <td className="px-4 py-2 border-r">{totalAsignado}</td>
+              <td className="px-4 py-2"></td>
             </tr>
           </tbody>
         </table>
