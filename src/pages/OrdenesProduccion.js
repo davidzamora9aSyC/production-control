@@ -1,25 +1,8 @@
 import Navbar from "../components/Navbar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ModalCargarCSV from "../components/ModalCargarCSV";
-
-const procesos = ["troquelado", "corte", "embuticion", "alistamiento", "adhesivo", "vulcanizado", "refilado", "pintura", "almacenamiento"];
-
-const datos = Array(20).fill().map((_, i) => {
-    const denom = Math.floor(Math.random() * 4) + 5;
-    const numer = Math.floor(Math.random() * (denom + 1));
-    const proceso = procesos[Math.floor(Math.random() * procesos.length)];
-    return {
-        orden: `ORD-${1000 + i}`,
-        producto: "Producto X",
-        cantidad: 1000,
-        estado: i % 2 === 0 ? "Activa" : "Finalizada",
-        responsable: "Nombre Apellido",
-        fechaInicio: "2024-01-01",
-        procesoActual: proceso,
-        avance: `${numer}/${denom}`
-    };
-});
+import { API_BASE_URL } from "../api";
 
 const ITEMS_POR_PAGINA = 8;
 
@@ -27,21 +10,28 @@ export default function OrdenesProduccion() {
     const [pagina, setPagina] = useState(1);
     const [tipo, setTipo] = useState("actuales");
     const [mostrarCargarOrden, setMostrarCargarOrden] = useState(false);
+    const [ordenes, setOrdenes] = useState([]);
     const navigate = useNavigate();
-    const totalPaginas = Math.ceil(datos.length / ITEMS_POR_PAGINA);
-    const mostrar = datos.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
+
+    useEffect(() => {
+        fetch(`${API_BASE_URL}/ordenes`)
+            .then(res => res.json())
+            .then(setOrdenes)
+            .catch(err => console.error("Error al obtener órdenes:", err));
+    }, []);
+
+    const totalPaginas = Math.ceil(ordenes.length / ITEMS_POR_PAGINA);
+    const mostrar = ordenes.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
 
     const generarCSV = () => {
-        const headers = ["Orden", "Producto", "Cantidad", "Estado", "Responsable proceso actual", "Fecha Inicio", "Proceso actual", "Avanzado hasta"];
+        const headers = ["Número", "Producto", "Cantidad", "Fecha Orden", "Fecha Vencimiento", "Estado"];
         const rows = mostrar.map(item => [
-            item.orden,
+            item.numero,
             item.producto,
-            item.cantidad,
+            item.cantidadAProducir,
+            item.fechaOrden,
+            item.fechaVencimiento,
             item.estado,
-            item.responsable,
-            item.fechaInicio,
-            item.procesoActual,
-            item.avance
         ]);
         const csvContent = [headers, ...rows].map(e => e.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",")).join("\n");
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -98,27 +88,23 @@ export default function OrdenesProduccion() {
                     <table className="min-w-max w-full text-sm">
                         <thead>
                             <tr className="bg-gray-100 border-b">
-                                <th className="px-4 py-2 border-r">Orden</th>
+                                <th className="px-4 py-2 border-r">Número</th>
                                 <th className="px-4 py-2 border-r">Producto</th>
                                 <th className="px-4 py-2 border-r">Cantidad</th>
-                                <th className="px-4 py-2 border-r">Estado</th>
-                                <th className="px-4 py-2 border-r">Responsable proceso actual</th>
-                                <th className="px-4 py-2 border-r">Fecha Inicio</th>
-                                <th className="px-4 py-2 border-r">Proceso actual</th>
-                                <th className="px-4 py-2">Avanzado hasta</th>
+                                <th className="px-4 py-2 border-r">Fecha Orden</th>
+                                <th className="px-4 py-2 border-r">Fecha Vencimiento</th>
+                                <th className="px-4 py-2">Estado</th>
                             </tr>
                         </thead>
                         <tbody>
                             {mostrar.map((item, i) => (
-                                <tr key={i} className="border-b cursor-pointer" onClick={() => navigate(`/ordenes/${item.orden}`)}>
-                                    <td className="px-4 py-2 border-r">{item.orden}</td>
+                                <tr key={i} className="border-b cursor-pointer" onClick={() => navigate(`/ordenes/${item.id || item.numero}`)}>
+                                    <td className="px-4 py-2 border-r">{item.numero}</td>
                                     <td className="px-4 py-2 border-r">{item.producto}</td>
-                                    <td className="px-4 py-2 border-r">{item.cantidad}</td>
-                                    <td className="px-4 py-2 border-r">{item.estado}</td>
-                                    <td className="px-4 py-2 border-r">{item.responsable}</td>
-                                    <td className="px-4 py-2 border-r">{item.fechaInicio}</td>
-                                    <td className="px-4 py-2 border-r">{item.procesoActual}</td>
-                                    <td className="px-4 py-2">{item.avance}</td>
+                                    <td className="px-4 py-2 border-r">{item.cantidadAProducir}</td>
+                                    <td className="px-4 py-2 border-r">{new Date(item.fechaOrden).toLocaleDateString()}</td>
+                                    <td className="px-4 py-2 border-r">{new Date(item.fechaVencimiento).toLocaleDateString()}</td>
+                                    <td className="px-4 py-2">{item.estado}</td>
                                 </tr>
                             ))}
                         </tbody>

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { useParams } from "react-router-dom";
+import { API_BASE_URL } from "../api";
 
 
 const generarData = () => {
@@ -39,11 +41,20 @@ const generarData = () => {
 export default function Maquina() {
     const [fechaHora, setFechaHora] = useState(new Date());
     const [data, setData] = useState(generarData());
+    const [maquina, setMaquina] = useState(null);
+    const { id } = useParams();
 
     useEffect(() => {
         const intervalo = setInterval(() => setFechaHora(new Date()), 1000);
         return () => clearInterval(intervalo);
     }, []);
+
+    useEffect(() => {
+        fetch(`${API_BASE_URL}/maquinas/${id}`)
+            .then(res => res.json())
+            .then(setMaquina)
+            .catch(err => console.error('Error al obtener maquina:', err));
+    }, [id]);
 
     useEffect(() => {
         const intervalo = setInterval(() => {
@@ -75,14 +86,14 @@ export default function Maquina() {
 
             <div className="grid grid-cols-2 gap-6 mb-6">
                 <div className="bg-white p-4 rounded-lg shadow">
-                    <p><strong>Número de máquina:</strong> 2</p>
-                    <p><strong>Operario actual:</strong> Carlos Pérez</p>
-                    <p><strong>Tipo de máquina:</strong> Troqueladora</p>
+                    <p><strong>Número de máquina:</strong> {maquina?.id}</p>
+                    <p><strong>Operario actual:</strong> {maquina?.operario || '-'}</p>
+                    <p><strong>Tipo de máquina:</strong> {maquina?.tipo}</p>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow">
-                    <p><strong>Orden de producción actual:</strong> <a href="#" className="text-blue-600">GG921IAEMC</a></p>
-                    <p><strong>Avance:</strong> 25%</p>
-                    <p><strong>50/200 piezas</strong></p>
+                    <p><strong>Orden de producción actual:</strong> <a href="#" className="text-blue-600">{maquina?.ordenActual || '-'}</a></p>
+                    <p><strong>Avance:</strong> {maquina?.avance || '-'}%</p>
+                    <p><strong>{maquina?.producidas || 0}/{maquina?.requeridas || 0} piezas</strong></p>
                 </div>
             </div>
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../api";
 
 export default function NuevaMinuta() {
   const [fechaHora, setFechaHora] = useState("");
@@ -47,7 +48,17 @@ export default function NuevaMinuta() {
       codigoOrden,
       proceso
     };
-    console.log("Minuta enviada:", minuta);
+    fetch(`${API_BASE_URL}/minutas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(minuta)
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Error al enviar minuta');
+      return res.json();
+    })
+    .then(() => console.log('Minuta enviada'))
+    .catch(err => console.error('Error al enviar minuta:', err));
   };
 
   return (
