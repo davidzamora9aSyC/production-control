@@ -1,24 +1,22 @@
 import Navbar from "../components/Navbar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
-const datos = Array(20).fill().map((_, i) => ({
-    maquina: i + 1,
-    trabajador: "Nombre Apellido",
-    grupo: "Embutido",
-    estado: "En producción",
-    avg: 500,
-    npt: 500,
-    defectos: 500,
-    nptDia: 500,
-    total: 500
-}));
+import { API_BASE_URL } from "../api";
 
 const ITEMS_POR_PAGINA = 8;
 
 export default function Recursos() {
     const [pagina, setPagina] = useState(1);
+    const [datos, setDatos] = useState([]);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        fetch(`${API_BASE_URL}/recursos/actuales`)
+            .then(res => res.json())
+            .then(setDatos)
+            .catch(err => console.error("Error al obtener recursos:", err));
+    }, []);
+
     const totalPaginas = Math.ceil(datos.length / ITEMS_POR_PAGINA);
     const mostrar = datos.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { API_BASE_URL } from "../api";
 
 export default function MaquinaForm({ onSave, onClose, equipo, modo }) {
   const [form, setForm] = useState({
@@ -18,7 +19,7 @@ export default function MaquinaForm({ onSave, onClose, equipo, modo }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const method = modo === 'editar' ? 'PUT' : 'POST';
-    const url = modo === 'editar' ? `https://smartindustries.org/maquinas/${equipo.id}` : 'https://smartindustries.org/maquinas';
+    const url = modo === 'editar' ? `${API_BASE_URL}/maquinas/${equipo.id}` : `${API_BASE_URL}/maquinas`;
 
     const formLimpio = { ...form };
     delete formLimpio.createdAt;
