@@ -23,8 +23,6 @@ export default function Dashboard() {
 
     return (
         <div className={`h-screen bg-white relative ${entradaReturn ? "animate-slideRight" : ""} ${aspectRatio === "16:9" ? "mb-40" : ""}`}>
-            <div className={`absolute left-1/2 ${aspectRatio === "16:10" ? "top-[15%]" : "top-[10%]"} w-px h-[calc(95%)] border-r-2 border-dashed border-gray-400 z-0 pointer-events-none`} />
-            <div className={`absolute left-1/2 ${aspectRatio === "16:10" ? "top-[47%]" : "top-[53%]"} -translate-x-1/2 h-px w-[90%] border-b-2 border-dashed border-gray-400 z-0 pointer-events-none`} />
 
             <div className="px-20 py-6 text-xl h-[calc(100%-80px)]">
                 <div className="flex justify-between items-center mb-2 px-4">
