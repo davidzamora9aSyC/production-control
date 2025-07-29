@@ -5,16 +5,16 @@ import { useState } from "react";
 const trabajadoresDisponibles = ["Carlos Pérez", "Juan Pérez", "Laura Gómez", "Mario Díaz"];
 
 export default function EditarAsignacion({ recursosIniciales, onClose, onSave }) {
-  const [recursos, setRecursos] = useState(recursosIniciales);
+  const [recursos, setSesiones] = useState(recursosIniciales);
 
   const handleChange = (index, field, value) => {
     const nuevos = [...recursos];
     nuevos[index][field] = value;
-    setRecursos(nuevos);
+    setSesiones(nuevos);
   };
 
   const agregarRecurso = () => {
-    setRecursos([...recursos, {
+    setSesiones([...recursos, {
       maquina: "",
       trabajador: trabajadoresDisponibles[0],
       referencia: recursos[0]?.referencia || "N/A",

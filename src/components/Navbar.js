@@ -46,19 +46,19 @@ export default function Navbar() {
                     </span>
                   </li>
                 ))}
-                <li key="recursos" className="relative" ref={dropdownRef}>
+                <li key="sesiones" className="relative" ref={dropdownRef}>
                   <span
                     onClick={() => setDropdownAbierto(prev => !prev)}
                     className={`cursor-pointer transition-colors duration-300 text-xl font-semibold text-gray-600 hover:text-black`}
                   >
-                    Recursos
+                    Sesiones
                   </span>
                   {dropdownAbierto && (
                     <ul className="absolute bg-white shadow-lg rounded mt-2 w-52 z-50">
                       {[
-                        { path: "/recursos", label: "Recursos actuales" },
-                        { path: "/recursos/personas", label: "Personas" },
-                        { path: "/recursos/equipos", label: "Equipos" },
+                        { path: "/sesiones", label: "Sesiones actuales" },
+                        { path: "/sesiones/personas", label: "Personas" },
+                        { path: "/sesiones/equipos", label: "Equipos" },
                       ].map(sub => (
                         <li key={sub.path} className="border-b last:border-none">
                           <span

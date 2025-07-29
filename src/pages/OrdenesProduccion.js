@@ -7,132 +7,201 @@ import { API_BASE_URL } from "../api";
 const ITEMS_POR_PAGINA = 8;
 
 export default function OrdenesProduccion() {
-    const [pagina, setPagina] = useState(1);
-    const [tipo, setTipo] = useState("actuales");
-    const [mostrarCargarOrden, setMostrarCargarOrden] = useState(false);
-    const [ordenes, setOrdenes] = useState([]);
-    const navigate = useNavigate();
+  const [pagina, setPagina] = useState(1);
+  const [tipo, setTipo] = useState("actuales");
+  const [mostrarCargarOrden, setMostrarCargarOrden] = useState(false);
+  const [ordenes, setOrdenes] = useState([]);
+  const [respuestaCarga, setRespuestaCarga] = useState(null);
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        fetch(`${API_BASE_URL}/ordenes`)
-            .then(res => res.json())
-            .then(setOrdenes)
-            .catch(err => console.error("Error al obtener órdenes:", err));
-    }, []);
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/ordenes`)
+      .then(res => res.json())
+      .then(setOrdenes)
+      .catch(err => console.error("Error al obtener órdenes:", err));
+  }, []);
 
-    const totalPaginas = Math.ceil(ordenes.length / ITEMS_POR_PAGINA);
-    const mostrar = ordenes.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
+  const totalPaginas = Math.ceil(ordenes.length / ITEMS_POR_PAGINA);
+  const mostrar = ordenes.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
 
-    const generarCSV = () => {
-        const headers = ["Número", "Producto", "Cantidad", "Fecha Orden", "Fecha Vencimiento", "Estado"];
-        const rows = mostrar.map(item => [
-            item.numero,
-            item.producto,
-            item.cantidadAProducir,
-            item.fechaOrden,
-            item.fechaVencimiento,
-            item.estado,
-        ]);
-        const csvContent = [headers, ...rows].map(e => e.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",")).join("\n");
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `ordenes_pagina_${pagina}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-    };
+  const generarCSV = () => {
+    const headers = ["Número", "Producto", "Cantidad", "Fecha Orden", "Fecha Vencimiento", "Estado"];
+    const rows = mostrar.map(item => [
+      item.numero,
+      item.producto,
+      item.cantidadAProducir,
+      item.fechaOrden,
+      item.fechaVencimiento,
+      item.estado,
+    ]);
+    const csvContent = [headers, ...rows].map(e => e.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ordenes_pagina_${pagina}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
-    return (
-        <div className="bg-white h-screen overflow-hidden animate-slideLeft">
-            <div className="px-20 pt-10">
-                <button
-                    onClick={() => navigate("/dashboard", { state: { entradaReturn: true } })}
-                    className="text-blue-600 text-xl mb-4 hover:underline"
-                >
-                    &larr; Volver
-                </button>
+  const onUpload = async (archivo) => {
+    const loading = document.createElement("div");
+    loading.textContent = "Cargando órdenes...";
+    loading.className = "fixed top-0 left-0 w-full h-full bg-white bg-opacity-80 flex justify-center items-center text-2xl";
+    loading.id = "cargando-ordenes";
+    document.body.appendChild(loading);
 
-                <div className="flex justify-between items-center mb-6">
-                    <div className="text-3xl font-semibold">Órdenes de Producción</div>
-                    <div className="flex items-center">
-                        <button
-                            className="bg-blue-600 text-white text-2xl px-4 py-1 rounded-full"
-                            onClick={() => setMostrarCargarOrden(true)}
-                        >
-                            +
-                        </button>
-                        <button
-                            className="bg-gray-300 text-black text-base px-4 py-1 rounded-full ml-4"
-                            onClick={generarCSV}
-                        >
-                            Generar reporte
-                        </button>
-                    </div>
-                </div>
+    const texto = await archivo.text();
+    const filas = texto.split(/\r?\n/).map(f => f.trim()).filter(Boolean);
+    const headers = filas[0].split(",").map(h => h.trim());
+    const idx = h => headers.indexOf(h);
+    const data = filas.slice(1).map((f, i) => {
+      const v = f.split(",").map(x => x.trim()); return {
+        linea: i + 2, numero: v[idx("numero")], producto: v[idx("producto")],
+        cantidadAProducir: parseInt(v[idx("cantidadAProducir")], 10),
+        fechaOrden: new Date(v[idx("fechaOrden")]), fechaVencimiento: new Date(v[idx("fechaVencimiento")]),
+        estado: v[idx("estado")], maquina: (v[idx("maquina")] || "").trim(),
+        nombre: v[idx("nombre")], codigoInterno: v[idx("codigoInterno")],
+        cantidadRequerida: parseInt(v[idx("cantidadRequerida")], 10),
+        cantidadProducida: v[idx("cantidadProducida")] ? parseInt(v[idx("cantidadProducida")], 10) : 0,
+        estadoPaso: v[idx("estadoPaso")] || "pendiente"
+      }
+    });
+    const pasosAgrupados = {};
+    for (const fila of data) {
+      if (!pasosAgrupados[fila.numero]) pasosAgrupados[fila.numero] = { numero: fila.numero, producto: fila.producto, cantidadAProducir: fila.cantidadAProducir, fechaOrden: fila.fechaOrden, fechaVencimiento: fila.fechaVencimiento, estado: fila.estado, maquina: fila.maquina, pasos: [] };
+      pasosAgrupados[fila.numero].pasos.push({ nombre: fila.nombre, codigoInterno: fila.codigoInterno, cantidadRequerida: fila.cantidadRequerida, cantidadProducida: fila.cantidadProducida, estado: fila.estadoPaso });
+    }
+    const ordenes = Object.values(pasosAgrupados).map(o => ({ ...o, fechaOrden: o.fechaOrden.toISOString(), fechaVencimiento: o.fechaVencimiento.toISOString() }));
 
-                <div className="flex gap-4 mb-4 text-base py-4 items-center">
-                    <select value={tipo} onChange={e => setTipo(e.target.value)} className="border px-3 py-2 rounded">
-                        <option value="actuales">Actuales</option>
-                        <option value="pasadas">Pasadas</option>
-                    </select>
-                    {tipo === "pasadas" && (
-                        <>
-                            <label>De <input type="date" className="ml-1 border px-2 py-1 rounded" defaultValue="2024-01-01" /></label>
-                            <label>A <input type="date" className="ml-1 border px-2 py-1 rounded" defaultValue="2024-12-01" /></label>
-                        </>
-                    )}
-                </div>
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const maquinasDB = await fetch(`${API_BASE_URL}/maquinas`).then(r => r.ok ? r.json() : []);
+    const setIds = new Set((maquinasDB || []).map(m => m.id));
+    const errores = [];
+    for (const o of ordenes) {
+      if (!o.maquina || !uuid.test(o.maquina)) errores.push(`UUID inválido en maquina para orden ${o.numero}`);
+      else if (!setIds.has(o.maquina)) errores.push(`maquina no existe en BD: ${o.maquina} (orden ${o.numero})`);
+    }
+    if (errores.length) {
+      document.body.removeChild(loading);
+      alert(`No se enviaron órdenes:\n${errores.join("\n")}`);
+      return;
+    }
 
-                <div className="overflow-x-auto border rounded-xl shadow-md">
-                    <table className="min-w-max w-full text-sm">
-                        <thead>
-                            <tr className="bg-gray-100 border-b">
-                                <th className="px-4 py-2 border-r">Número</th>
-                                <th className="px-4 py-2 border-r">Producto</th>
-                                <th className="px-4 py-2 border-r">Cantidad</th>
-                                <th className="px-4 py-2 border-r">Fecha Orden</th>
-                                <th className="px-4 py-2 border-r">Fecha Vencimiento</th>
-                                <th className="px-4 py-2">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {mostrar.map((item, i) => (
-                                <tr key={i} className="border-b cursor-pointer" onClick={() => navigate(`/ordenes/${item.id || item.numero}`)}>
-                                    <td className="px-4 py-2 border-r">{item.numero}</td>
-                                    <td className="px-4 py-2 border-r">{item.producto}</td>
-                                    <td className="px-4 py-2 border-r">{item.cantidadAProducir}</td>
-                                    <td className="px-4 py-2 border-r">{new Date(item.fechaOrden).toLocaleDateString()}</td>
-                                    <td className="px-4 py-2 border-r">{new Date(item.fechaVencimiento).toLocaleDateString()}</td>
-                                    <td className="px-4 py-2">{item.estado}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+    try {
+      for (const orden of ordenes) {
+        const res = await fetch(`${API_BASE_URL}/ordenes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(orden) });
+        const text = await res.text();
+        if (!res.ok) throw new Error(`${res.status} ${text}`);
+      }
+      setRespuestaCarga({ ok: true });
+    } catch (e) {
+      console.error("Error al cargar órdenes:", e);
+      const mensaje = e?.message || "Error al cargar órdenes";
+      setRespuestaCarga({ ok: false, mensaje });
+    } finally {
+      document.body.removeChild(loading);
+    }
+  };
+  return (
+    <div className="bg-white h-screen overflow-hidden animate-slideLeft">
+      <div className="px-20 pt-10">
+        <button
+          onClick={() => navigate("/dashboard", { state: { entradaReturn: true } })}
+          className="text-blue-600 text-xl mb-4 hover:underline"
+        >
+          &larr; Volver
+        </button>
 
-                <div className="mt-4 flex justify-center gap-2">
-                    <button onClick={() => setPagina(p => Math.max(1, p - 1))} className="px-3 py-1 border rounded">Anterior</button>
-                    <span className="px-3 py-1">{pagina} / {totalPaginas}</span>
-                    <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} className="px-3 py-1 border rounded">Siguiente</button>
-                </div>
-            </div>
-            {mostrarCargarOrden && (
-                <ModalCargarCSV
-                    titulo="Cargar nueva orden"
-                    onClose={() => setMostrarCargarOrden(false)}
-                    onUpload={(archivo) => {
-                        console.log("Archivo CSV cargado:", archivo);
-                        // Aquí se asume que se genera un nuevo archivo para descargar
-                        const a = document.createElement('a');
-                        a.href = URL.createObjectURL(archivo);
-                        a.download = archivo.name.replace(/\.csv$/, '') + "_Modificado.csv";
-                        a.click();
-                        URL.revokeObjectURL(a.href);
-                        setMostrarCargarOrden(false);
-                    }}
-                />
-            )}
+        <div className="flex justify-between items-center mb-6">
+          <div className="text-3xl font-semibold">Órdenes de Producción</div>
+          <div className="flex items-center">
+            <button
+              className="bg-blue-600 text-white text-2xl px-4 py-1 rounded-full"
+              onClick={() => setMostrarCargarOrden(true)}
+            >
+              +
+            </button>
+            <button
+              className="bg-gray-300 text-black text-base px-4 py-1 rounded-full ml-4"
+              onClick={generarCSV}
+            >
+              Generar reporte
+            </button>
+          </div>
         </div>
-    );
+
+        <div className="flex gap-4 mb-4 text-base py-4 items-center">
+          <select value={tipo} onChange={e => setTipo(e.target.value)} className="border px-3 py-2 rounded">
+            <option value="actuales">Actuales</option>
+            <option value="pasadas">Pasadas</option>
+          </select>
+          {tipo === "pasadas" && (
+            <>
+              <label>De <input type="date" className="ml-1 border px-2 py-1 rounded" defaultValue="2024-01-01" /></label>
+              <label>A <input type="date" className="ml-1 border px-2 py-1 rounded" defaultValue="2024-12-01" /></label>
+            </>
+          )}
+        </div>
+
+        <div className="overflow-x-auto border rounded-xl shadow-md">
+          <table className="min-w-max w-full text-sm">
+            <thead>
+              <tr className="bg-gray-100 border-b">
+                <th className="px-4 py-2 border-r">Número</th>
+                <th className="px-4 py-2 border-r">Producto</th>
+                <th className="px-4 py-2 border-r">Cantidad</th>
+                <th className="px-4 py-2 border-r">Fecha Orden</th>
+                <th className="px-4 py-2 border-r">Fecha Vencimiento</th>
+                <th className="px-4 py-2">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {mostrar.map((item, i) => (
+                <tr key={i} className="border-b cursor-pointer" onClick={() => navigate(`/ordenes/${item.id || item.numero}`)}>
+                  <td className="px-4 py-2 border-r">{item.numero}</td>
+                  <td className="px-4 py-2 border-r">{item.producto}</td>
+                  <td className="px-4 py-2 border-r">{item.cantidadAProducir}</td>
+                  <td className="px-4 py-2 border-r">{new Date(item.fechaOrden).toLocaleDateString()}</td>
+                  <td className="px-4 py-2 border-r">{new Date(item.fechaVencimiento).toLocaleDateString()}</td>
+                  <td className="px-4 py-2">{item.estado}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-4 flex justify-center gap-2">
+          <button onClick={() => setPagina(p => Math.max(1, p - 1))} className="px-3 py-1 border rounded">Anterior</button>
+          <span className="px-3 py-1">{pagina} / {totalPaginas}</span>
+          <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} className="px-3 py-1 border rounded">Siguiente</button>
+        </div>
+      </div>
+      {mostrarCargarOrden && (
+        <ModalCargarCSV
+          titulo="Cargar nueva orden"
+          onClose={() => setMostrarCargarOrden(false)}
+          onUpload={onUpload}
+        />
+      )}
+      {respuestaCarga && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-8 rounded shadow-md text-center max-w-md">
+            <p className="text-lg font-semibold mb-4">
+              {respuestaCarga.ok ? (
+                <>
+                  Órdenes cargadas exitosamente. Las órdenes se crean en estado <strong>pendiente</strong> y pasarán a <strong>en producción</strong> cuando el operario escanee la orden.
+                </>
+              ) : (
+                respuestaCarga.mensaje || "Error al cargar órdenes"
+              )}
+            </p>
+            <button onClick={() => { setRespuestaCarga(null); window.location.reload(); }} className="bg-blue-600 text-white px-4 py-2 rounded">
+              Aceptar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

@@ -29,6 +29,20 @@ export default function DetalleOrden() {
   const totalAsignado = datos.reduce((a, b) => a + (b.cantidadRequerida || 0), 0);
   const avance = totalAsignado ? ((totalCompletado / totalAsignado) * 100).toFixed(0) : 0;
 
+  const handleEliminar = async () => {
+    if (!window.confirm("¿Seguro que deseas eliminar esta orden?")) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/ordenes/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) navigate("/ordenes");
+      else alert("Error al eliminar orden");
+    } catch (err) {
+      console.error("Error:", err);
+      alert("Error al eliminar orden");
+    }
+  };
+
   return (
     <div className="p-8">
       <div className="flex flex-wrap items-center gap-4 mb-6">
@@ -93,7 +107,7 @@ export default function DetalleOrden() {
 
       <div className="flex gap-4">
         <button onClick={() => setMostrarEditor(true)} className="bg-blue-600 text-white px-4 py-2 rounded">Editar asignación de proceso</button>
-        <button className="bg-red-500 text-white px-4 py-2 rounded ml-auto">Eliminar orden</button>
+        <button onClick={handleEliminar} className="bg-red-500 text-white px-4 py-2 rounded ml-auto">Eliminar orden</button>
       </div>
       {mostrarEditor && (
         <EditarAsignacion

@@ -12,6 +12,7 @@ export default function ModalCargarCSV({ titulo, onClose, onUpload }) {
       onUpload(archivo);
       onClose();
     }
+    
   };
 
   return (

@@ -6,7 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import { AspectRatioProvider } from "./context/AspectRatioContext";
 import Alertas from "./pages/Alertas";
 import Navbar from "./components/Navbar";
-import Recursos from "./pages/Recursos";
+import Sesiones from "./pages/Sesiones";
 import Maquina from "./pages/Maquina";
 import ScrollToTop from "./components/ScrollToTop";
 import OrdenesProduccion from "./pages/OrdenesProduccion";
@@ -36,11 +36,11 @@ function App() {
           <Route path="/alertas" element={<ProtectedLayout><Alertas /></ProtectedLayout>} />
           <Route path="*" element={<ProtectedLayout><h1>Page not found</h1></ProtectedLayout>} />
           <Route path="/maquina/:id" element={<ProtectedLayout><Maquina /></ProtectedLayout>} />
-          <Route path="/recursos" element={<ProtectedLayout><Recursos/></ProtectedLayout>} />
+          <Route path="/sesiones" element={<ProtectedLayout><Sesiones/></ProtectedLayout>} />
           <Route path="/ordenes" element={<ProtectedLayout><OrdenesProduccion/></ProtectedLayout>} />
           <Route path="/ordenes/:id" element={<ProtectedLayout><DetalleOrden /></ProtectedLayout>} />
-          <Route path="/recursos/personas" element={<ProtectedLayout><Personas/></ProtectedLayout>} />
-          <Route path="/recursos/equipos" element={<ProtectedLayout><Equipos/></ProtectedLayout>} />
+          <Route path="/sesiones/personas" element={<ProtectedLayout><Personas/></ProtectedLayout>} />
+          <Route path="/sesiones/equipos" element={<ProtectedLayout><Equipos/></ProtectedLayout>} />
         </Routes>
       </Router>
     </AspectRatioProvider>
