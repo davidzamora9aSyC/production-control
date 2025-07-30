@@ -69,6 +69,35 @@ export default function DetalleOrden() {
         </div>
       </div>
 
+      <div className="mb-4">
+        <h2 className="font-bold text-black text-left mb-2">Paso</h2>
+        <div className="overflow-x-auto border rounded-xl">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-4 py-2 border-r">Nombre</th>
+                <th className="px-4 py-2 border-r">Código</th>
+                <th className="px-4 py-2 border-r">Cantidad requerida</th>
+                <th className="px-4 py-2 border-r">Cantidad producida</th>
+                <th className="px-4 py-2">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {datos.map((item, i) => (
+                <tr key={i} className="border-t">
+                  <td className="px-4 py-2 border-r">{item.nombre}</td>
+                  <td className="px-4 py-2 border-r">{item.codigoInterno}</td>
+                  <td className="px-4 py-2 border-r">{item.cantidadRequerida}</td>
+                  <td className="px-4 py-2 border-r">{item.cantidadProducida}</td>
+                  <td className="px-4 py-2">{item.estado}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h2 className="font-bold text-black text-left mb-2">Asignación</h2>
       <div className="overflow-x-auto border rounded-xl mb-2">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-100">
