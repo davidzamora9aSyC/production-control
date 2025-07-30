@@ -118,6 +118,7 @@ export default function DetalleOrden() {
                 <th className="px-4 py-2 border-r">Código</th>
                 <th className="px-4 py-2 border-r">Cantidad requerida</th>
                 <th className="px-4 py-2 border-r">Cantidad producida</th>
+                <th className="px-4 py-2 border-r">Cant. producto no conforme</th>
                 <th className="px-4 py-2 border-r">Estado</th>
                 <th className="px-4 py-2">Acciones</th>
               </tr>
@@ -129,6 +130,7 @@ export default function DetalleOrden() {
                   <td className="px-4 py-2 border-r">{item.codigoInterno}</td>
                   <td className="px-4 py-2 border-r">{item.cantidadRequerida}</td>
                   <td className="px-4 py-2 border-r">{item.cantidadProducida}</td>
+                  <td className="px-4 py-2 border-r">{(item.cantidadPedaleos ?? 0) - (item.cantidadProducida ?? 0)}</td>
                   <td className="px-4 py-2 border-r">{item.estado}</td>
                   <td className="px-4 py-2">
                     <button
@@ -153,6 +155,7 @@ export default function DetalleOrden() {
               <th className="px-4 py-2 border-r">Paso</th>
               <th className="px-4 py-2 border-r">Trabajador</th>
               <th className="px-4 py-2 border-r">Cant. producida</th>
+              <th className="px-4 py-2 border-r">Cant. producto no conforme</th>
               <th className="px-4 py-2 border-r">Cant. asignada</th>
               <th className="px-4 py-2">Estado</th>
             </tr>
@@ -164,6 +167,7 @@ export default function DetalleOrden() {
                   <td className="px-4 py-2 border-r">{p.nombre}</td>
                   <td className="px-4 py-2 border-r">{a.nombreTrabajador}</td>
                   <td className="px-4 py-2 border-r">{a.cantidadProducida}</td>
+                  <td className="px-4 py-2 border-r">{(a.cantidadPedaleos ?? 0) - (a.cantidadProducida ?? 0)}</td>
                   <td className="px-4 py-2 border-r">{a.cantidadAsignada}</td>
                   <td className="px-4 py-2">{a.estado}</td>
                 </tr>
@@ -172,6 +176,14 @@ export default function DetalleOrden() {
             <tr className="font-semibold bg-gray-50">
               <td colSpan={2} className="px-4 py-2 text-right border-r">Total</td>
               <td className="px-4 py-2 border-r">{totalCompletado}</td>
+              <td className="px-4 py-2 border-r">
+                {
+                  datos.reduce((sum, p) =>
+                    sum + (asignaciones[p.id] || []).reduce(
+                      (a, b) => a + ((b.cantidadPedaleos ?? 0) - (b.cantidadProducida ?? 0)), 0
+                    ), 0)
+                }
+              </td>
               <td className="px-4 py-2 border-r">{totalAsignado}</td>
               <td className="px-4 py-2"></td>
             </tr>
