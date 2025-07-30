@@ -1,26 +1,28 @@
 import { useEffect, useState } from "react";
-import BuscadorMaquina from "./BuscadorMaquina";
-import BuscadorTrabajador from "./BuscadorTrabajador";
+import BuscadorSesion from "./BuscadorSesion";
 
 export default function EditarAsignacion({ paso, asignacionesIniciales = [], onClose, onSave }) {
   const [filas, setFilas] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
-  const [indiceMaquina, setIndiceMaquina] = useState(null);
-  const [indiceTrabajador, setIndiceTrabajador] = useState(null);
+  const [indiceSesion, setIndiceSesion] = useState(null);
+  const [eliminados, setEliminados] = useState([]);
 
   const mapear = (arr) =>
-    arr.map((a) => ({
-      id: a.id || null,
-      maquina: a.maquina || (a.nombreMaquina ? { nombre: a.nombreMaquina } : null),
-      trabajador: a.trabajador || (a.nombreTrabajador ? { nombre: a.nombreTrabajador } : null),
-      cantidadAsignada: a.cantidadAsignada ?? 0,
-      cantidadProducida: a.cantidadProducida ?? 0,
-      cantidadPedaleos: a.cantidadPedaleos ?? 0,
-      estado: a.estado || "activo",
-      sesionTrabajo: a.sesionTrabajo?.id || a.sesionTrabajo || null,
-    }));
+    arr.map((a) => {
+      const sesionObj = typeof a.sesionTrabajo === "object" ? a.sesionTrabajo : null;
+      return {
+        id: a.id || null,
+        maquina: a.maquina || sesionObj?.maquina || (a.nombreMaquina ? { nombre: a.nombreMaquina } : null),
+        trabajador: a.trabajador || sesionObj?.trabajador || (a.nombreTrabajador ? { nombre: a.nombreTrabajador } : null),
+        cantidadAsignada: a.cantidadAsignada ?? 0,
+        cantidadProducida: a.cantidadProducida ?? 0,
+        cantidadPedaleos: a.cantidadPedaleos ?? 0,
+        estado: a.estado || "activo",
+        sesionTrabajo: sesionObj?.id || a.sesionTrabajo || null,
+      };
+    });
 
   useEffect(() => {
     if (asignacionesIniciales.length) {
@@ -67,6 +69,15 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
     ]);
   };
 
+  const eliminarFila = (index) => {
+    setFilas((prev) => {
+      const copia = [...prev];
+      const [removida] = copia.splice(index, 1);
+      if (removida?.id) setEliminados((e) => [...e, removida.id]);
+      return copia;
+    });
+  };
+
   const total = filas.reduce((s, f) => s + Number(f.cantidadAsignada || 0), 0);
   const requerido = Number(paso?.cantidadRequerida || 0);
   const valido = total === requerido && filas.length > 0;
@@ -76,15 +87,47 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
     setGuardando(true);
     setError("");
     try {
-      const payload = filas.map((f) => ({ id: f.id, data: { cantidadAsignada: Number(f.cantidadAsignada || 0) } }));
-      const res = await fetch("https://smartindustries.org/sesion-trabajo-pasos/batch", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error("Fallo al guardar");
-      const out = await res.json();
-      onSave && onSave(out);
+      // eliminar
+      await Promise.all(
+        eliminados.map((id) =>
+          fetch(`https://smartindustries.org/sesion-trabajo-pasos/${id}`, { method: "DELETE" })
+        )
+      );
+
+      // actualizar existentes
+      await Promise.all(
+        filas
+          .filter((f) => f.id)
+          .map((f) =>
+            fetch(`https://smartindustries.org/sesion-trabajo-pasos/${f.id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ cantidadAsignada: Number(f.cantidadAsignada || 0) }),
+            })
+          )
+      );
+
+      // crear nuevas
+      await Promise.all(
+        filas
+          .filter((f) => !f.id)
+          .map((f) =>
+            fetch("https://smartindustries.org/sesion-trabajo-pasos", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                sesionTrabajo: f.sesionTrabajo,
+                pasoOrden: paso.id,
+                cantidadAsignada: Number(f.cantidadAsignada || 0),
+                cantidadProducida: 0,
+              }),
+            })
+          )
+      );
+
+      const recargar = await fetch(`https://smartindustries.org/sesion-trabajo-pasos/por-paso/${paso.id}`);
+      const data = recargar.ok ? await recargar.json() : [];
+      onSave && onSave(Array.isArray(data) ? data : []);
     } catch (e) {
       setError("No se pudieron guardar los cambios");
     } finally {
@@ -109,7 +152,8 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
                 <th className="px-4 py-2 border-r">Producido</th>
                 <th className="px-4 py-2 border-r">No conforme</th>
                 <th className="px-4 py-2 border-r">Estado</th>
-                <th className="px-4 py-2">Asignada</th>
+                <th className="px-4 py-2 border-r">Asignada</th>
+                <th className="px-4 py-2">Eliminar</th>
               </tr>
             </thead>
             <tbody>
@@ -123,20 +167,20 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
                     <td className="px-4 py-2 border-r">
                       <div className="flex">
                         <input type="text" value={f.maquina?.nombre || ""} readOnly className="w-full border px-2 py-1 rounded-l" />
-                        <button onClick={() => setIndiceMaquina(i)} className="px-2 bg-gray-200 rounded-r">🔍</button>
+                        <button onClick={() => setIndiceSesion(i)} className="px-2 bg-gray-200 rounded-r">🔍</button>
                       </div>
                     </td>
                     <td className="px-4 py-2 border-r">
-                      <div className="flex">
-                        <input type="text" value={f.trabajador?.nombre || ""} readOnly className="w-full border px-2 py-1 rounded-l" />
-                        <button onClick={() => setIndiceTrabajador(i)} className="px-2 bg-gray-200 rounded-r">🔍</button>
-                      </div>
+                      <input type="text" value={f.trabajador?.nombre || ""} readOnly className="w-full border px-2 py-1 rounded" />
                     </td>
                     <td className="px-4 py-2 border-r">{f.cantidadProducida}</td>
                     <td className="px-4 py-2 border-r">{Number(f.cantidadProducida || 0) - Number(f.cantidadPedaleos || 0)}</td>
                     <td className="px-4 py-2 border-r">{f.estado}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 border-r">
                       <input type="number" value={f.cantidadAsignada} onChange={(e) => actualizar(i, "cantidadAsignada", Number(e.target.value) || 0)} className="w-full border px-2 py-1 rounded" />
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      <button onClick={() => eliminarFila(i)} className="text-red-600">✖</button>
                     </td>
                   </tr>
                 ))
@@ -151,16 +195,15 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
           <button onClick={handleGuardar} className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-60" disabled={!valido || guardando}>Guardar cambios</button>
         </div>
       </div>
-      {indiceMaquina !== null && (
-        <BuscadorMaquina
-          onSelect={(m) => { actualizar(indiceMaquina, "maquina", m); setIndiceMaquina(null); }}
-          onClose={() => setIndiceMaquina(null)}
-        />
-      )}
-      {indiceTrabajador !== null && (
-        <BuscadorTrabajador
-          onSelect={(t) => { actualizar(indiceTrabajador, "trabajador", t); setIndiceTrabajador(null); }}
-          onClose={() => setIndiceTrabajador(null)}
+      {indiceSesion !== null && (
+        <BuscadorSesion
+          onSelect={(s) => {
+            actualizar(indiceSesion, "maquina", s.maquina);
+            actualizar(indiceSesion, "trabajador", s.trabajador);
+            actualizar(indiceSesion, "sesionTrabajo", s.id);
+            setIndiceSesion(null);
+          }}
+          onClose={() => setIndiceSesion(null)}
         />
       )}
     </div>
