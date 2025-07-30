@@ -8,6 +8,8 @@ export default function DetalleOrden() {
   const [orden, setOrden] = useState(null);
   const [procesoIndex, setProcesoIndex] = useState(0);
   const [mostrarEditor, setMostrarEditor] = useState(false);
+  const [pasoSeleccionado, setPasoSeleccionado] = useState(null);
+  const [asignaciones, setAsignaciones] = useState({});
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -22,11 +24,24 @@ export default function DetalleOrden() {
       .catch(err => console.error("Error al obtener pasos:", err));
   }, [id]);
 
+  useEffect(() => {
+    pasos.forEach(p => {
+      fetch(`${API_BASE_URL}/sesion-trabajo-pasos/por-paso/${p.id}`)
+        .then(res => res.json())
+        .then(data => setAsignaciones(a => ({ ...a, [p.id]: data })))
+        .catch(err => console.error('Error al obtener asignaciones:', err));
+    });
+  }, [pasos]);
+
   const procesos = Array.from(new Set(pasos.map(p => p.nombre)));
   const procesoActual = procesos[procesoIndex] || "";
   const datos = pasos.filter(p => p.nombre === procesoActual);
-  const totalCompletado = datos.reduce((a, b) => a + (b.cantidadProducida || 0), 0);
-  const totalAsignado = datos.reduce((a, b) => a + (b.cantidadRequerida || 0), 0);
+  const totalCompletado = datos.reduce((sum, p) =>
+    sum + (asignaciones[p.id] || []).reduce((a, b) => a + (b.cantidadProducida || 0), 0)
+  , 0);
+  const totalAsignado = datos.reduce((sum, p) =>
+    sum + (asignaciones[p.id] || []).reduce((a, b) => a + (b.cantidadAsignada || 0), 0)
+  , 0);
   const avance = totalAsignado ? ((totalCompletado / totalAsignado) * 100).toFixed(0) : 0;
 
   const handleEliminar = async () => {
@@ -79,7 +94,8 @@ export default function DetalleOrden() {
                 <th className="px-4 py-2 border-r">Código</th>
                 <th className="px-4 py-2 border-r">Cantidad requerida</th>
                 <th className="px-4 py-2 border-r">Cantidad producida</th>
-                <th className="px-4 py-2">Estado</th>
+                <th className="px-4 py-2 border-r">Estado</th>
+                <th className="px-4 py-2">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -89,7 +105,15 @@ export default function DetalleOrden() {
                   <td className="px-4 py-2 border-r">{item.codigoInterno}</td>
                   <td className="px-4 py-2 border-r">{item.cantidadRequerida}</td>
                   <td className="px-4 py-2 border-r">{item.cantidadProducida}</td>
-                  <td className="px-4 py-2">{item.estado}</td>
+                  <td className="px-4 py-2 border-r">{item.estado}</td>
+                  <td className="px-4 py-2">
+                    <button
+                      className="text-blue-600 underline"
+                      onClick={() => { setPasoSeleccionado(item); setMostrarEditor(true); }}
+                    >
+                      Editar
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -102,22 +126,24 @@ export default function DetalleOrden() {
         <table className="min-w-full text-sm">
           <thead className="bg-gray-100">
             <tr>
-              <th className="px-4 py-2 border-r">Nombre</th>
-              <th className="px-4 py-2 border-r">Código</th>
-              <th className="px-4 py-2 border-r">Cantidad producida</th>
-              <th className="px-4 py-2 border-r">Cantidad requerida</th>
+              <th className="px-4 py-2 border-r">Paso</th>
+              <th className="px-4 py-2 border-r">Trabajador</th>
+              <th className="px-4 py-2 border-r">Cant. producida</th>
+              <th className="px-4 py-2 border-r">Cant. asignada</th>
               <th className="px-4 py-2">Estado</th>
             </tr>
           </thead>
           <tbody>
-            {datos.map((item, i) => (
-              <tr key={i} className="border-t">
-                <td className="px-4 py-2 border-r">{item.nombre}</td>
-                <td className="px-4 py-2 border-r">{item.codigoInterno}</td>
-                <td className="px-4 py-2 border-r">{item.cantidadProducida}</td>
-                <td className="px-4 py-2 border-r">{item.cantidadRequerida}</td>
-                <td className="px-4 py-2">{item.estado}</td>
-              </tr>
+            {datos.map(p => (
+              (asignaciones[p.id] || []).map((a, i) => (
+                <tr key={`${p.id}-${i}`} className="border-t">
+                  <td className="px-4 py-2 border-r">{p.nombre}</td>
+                  <td className="px-4 py-2 border-r">{a.nombreTrabajador}</td>
+                  <td className="px-4 py-2 border-r">{a.cantidadProducida}</td>
+                  <td className="px-4 py-2 border-r">{a.cantidadAsignada}</td>
+                  <td className="px-4 py-2">{a.estado}</td>
+                </tr>
+              ))
             ))}
             <tr className="font-semibold bg-gray-50">
               <td colSpan={2} className="px-4 py-2 text-right border-r">Total</td>
@@ -135,16 +161,17 @@ export default function DetalleOrden() {
       </div>
 
       <div className="flex gap-4">
-        <button onClick={() => setMostrarEditor(true)} className="bg-blue-600 text-white px-4 py-2 rounded">Editar asignación de proceso</button>
         <button onClick={handleEliminar} className="bg-red-500 text-white px-4 py-2 rounded ml-auto">Eliminar orden</button>
       </div>
-      {mostrarEditor && (
+      {mostrarEditor && pasoSeleccionado && (
         <EditarAsignacion
-          recursosIniciales={datos}
-          onClose={() => setMostrarEditor(false)}
-          onSave={(nuevosRecursos) => {
-            console.log("Recursos actualizados:", nuevosRecursos);
+          paso={pasoSeleccionado}
+          asignacionesIniciales={asignaciones[pasoSeleccionado.id] || []}
+          onClose={() => { setMostrarEditor(false); setPasoSeleccionado(null); }}
+          onSave={(nuevas) => {
+            setAsignaciones(a => ({ ...a, [pasoSeleccionado.id]: nuevas }));
             setMostrarEditor(false);
+            setPasoSeleccionado(null);
           }}
         />
       )}
