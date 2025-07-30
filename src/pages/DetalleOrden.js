@@ -164,10 +164,6 @@ export default function DetalleOrden() {
         </table>
       </div>
 
-      <div className="mb-4 text-sm text-gray-700">
-        Cantidad de piezas de salida: 450<br />
-        Cantidad de piezas de inventario a utilizar: 50
-      </div>
 
       <div className="flex gap-4">
         <button onClick={handleEliminar} className="bg-red-500 text-white px-4 py-2 rounded ml-auto">Eliminar orden</button>
