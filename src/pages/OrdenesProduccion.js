@@ -50,7 +50,7 @@ export default function OrdenesProduccion() {
     loading.className = "fixed top-0 left-0 w-full h-full bg-white bg-opacity-80 flex justify-center items-center text-2xl";
     loading.id = "cargando-ordenes";
     document.body.appendChild(loading);
-
+  
     const texto = await archivo.text();
     const filas = texto.split(/\r?\n/).map(f => f.trim()).filter(Boolean);
     const headers = filas[0].split(",").map(h => h.trim());
@@ -72,22 +72,11 @@ export default function OrdenesProduccion() {
       if (!pasosAgrupados[fila.numero]) pasosAgrupados[fila.numero] = { numero: fila.numero, producto: fila.producto, cantidadAProducir: fila.cantidadAProducir, fechaOrden: fila.fechaOrden, fechaVencimiento: fila.fechaVencimiento, estado: fila.estado, maquina: fila.maquina, pasos: [] };
       pasosAgrupados[fila.numero].pasos.push({ nombre: fila.nombre, codigoInterno: fila.codigoInterno, cantidadRequerida: fila.cantidadRequerida, cantidadProducida: fila.cantidadProducida, estado: fila.estadoPaso });
     }
-    const ordenes = Object.values(pasosAgrupados).map(o => ({ ...o, fechaOrden: o.fechaOrden.toISOString(), fechaVencimiento: o.fechaVencimiento.toISOString() }));
-
-    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    const maquinasDB = await fetch(`${API_BASE_URL}/maquinas`).then(r => r.ok ? r.json() : []);
-    const setIds = new Set((maquinasDB || []).map(m => m.id));
-    const errores = [];
-    for (const o of ordenes) {
-      if (!o.maquina || !uuid.test(o.maquina)) errores.push(`UUID inválido en maquina para orden ${o.numero}`);
-      else if (!setIds.has(o.maquina)) errores.push(`maquina no existe en BD: ${o.maquina} (orden ${o.numero})`);
-    }
-    if (errores.length) {
-      document.body.removeChild(loading);
-      alert(`No se enviaron órdenes:\n${errores.join("\n")}`);
-      return;
-    }
-
+    const ordenes = Object.values(pasosAgrupados).map(o => {
+      const { maquina, ...resto } = o;
+      return { ...resto, fechaOrden: o.fechaOrden.toISOString(), fechaVencimiento: o.fechaVencimiento.toISOString() };
+    });
+    
     try {
       for (const orden of ordenes) {
         const res = await fetch(`${API_BASE_URL}/ordenes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(orden) });
@@ -103,6 +92,7 @@ export default function OrdenesProduccion() {
       document.body.removeChild(loading);
     }
   };
+
   return (
     <div className="bg-white h-screen overflow-hidden animate-slideLeft">
       <div className="px-20 pt-10">
