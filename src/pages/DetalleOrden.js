@@ -3,6 +3,23 @@ import { useNavigate, useParams } from "react-router-dom";
 import EditarAsignacion from "../components/EditarAsignacion";
 import { API_BASE_URL } from "../api";
 
+const ESTADO_COLORES = {
+  pendiente: "bg-gray-400",
+  activo: "bg-green-500",
+  "en produccion": "bg-green-500",
+  "en producción": "bg-green-500",
+  pausado: "bg-yellow-400",
+  "en pausa": "bg-yellow-400",
+  finalizado: "bg-blue-500",
+  finalizada: "bg-blue-500",
+};
+
+const normalizar = (str) =>
+  (str || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
 export default function DetalleOrden() {
   const [pasos, setPasos] = useState([]);
   const [orden, setOrden] = useState(null);
@@ -68,12 +85,7 @@ export default function DetalleOrden() {
           <span>Avance: {avance}% ({totalCompletado}/{totalAsignado})</span>
           <span
             className={`h-2 w-2 rounded-full ${
-              {
-                pendiente: "bg-gray-400",
-                activo: "bg-green-500",
-                pausado: "bg-yellow-400",
-                finalizado: "bg-blue-500",
-              }[orden?.estado?.toLowerCase() || ""] || "bg-gray-400"
+              ESTADO_COLORES[normalizar(orden?.estado)] || "bg-gray-400"
             }`}
           ></span>
           <span>Estado: {orden?.estado}</span>
