@@ -5,12 +5,15 @@ import { API_BASE_URL } from "../api";
 
 const ESTADO_COLORES = {
   pendiente: "bg-gray-400",
+  activa: "bg-green-500",
   activo: "bg-green-500",
   "en produccion": "bg-green-500",
   "en producción": "bg-green-500",
   pausado: "bg-yellow-400",
   "en pausa": "bg-yellow-400",
+  pausada: "bg-yellow-400",
   finalizado: "bg-blue-500",
+  finalizada: "bg-blue-500",
   finalizada: "bg-blue-500",
 };
 
