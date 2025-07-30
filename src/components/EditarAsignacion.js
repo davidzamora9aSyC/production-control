@@ -1,5 +1,3 @@
-
-
 import { useState } from "react";
 import BuscadorMaquina from "./BuscadorMaquina";
 import BuscadorTrabajador from "./BuscadorTrabajador";
@@ -117,6 +115,5 @@ export default function EditarAsignacion({ recursosIniciales, onClose, onSave })
         />
       )}
     </div>
-  </div>
  );
 }
