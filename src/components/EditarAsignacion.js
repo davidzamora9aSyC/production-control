@@ -51,6 +51,22 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
     setFilas(copia);
   };
 
+  const agregarFila = () => {
+    setFilas((prev) => [
+      ...prev,
+      {
+        id: null,
+        maquina: null,
+        trabajador: null,
+        cantidadAsignada: 0,
+        cantidadProducida: 0,
+        cantidadPedaleos: 0,
+        estado: "activo",
+        sesionTrabajo: null,
+      },
+    ]);
+  };
+
   const total = filas.reduce((s, f) => s + Number(f.cantidadAsignada || 0), 0);
   const requerido = Number(paso?.cantidadRequerida || 0);
   const valido = total === requerido && filas.length > 0;
@@ -80,6 +96,9 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg w-full max-w-3xl shadow-lg">
         <h2 className="text-xl font-semibold mb-4">Editar asignaciones de {paso?.nombre}</h2>
+        <div className="mb-3 flex justify-end">
+          <button onClick={agregarFila} className="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">+ Añadir asignación</button>
+        </div>
         {error && <div className="mb-2 text-red-600 text-sm">{error}</div>}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm border rounded">
