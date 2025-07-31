@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { API_BASE_URL } from "../api";
 
-export default function MaquinaForm({ onSave, onClose, equipo, modo }) {
+export default function MaquinaForm({ onSave, onClose, equipo, modo, onError }) {
   const [form, setForm] = useState({
     nombre: equipo?.nombre || "",
     estado: equipo?.estado || "activa",
@@ -37,7 +37,10 @@ export default function MaquinaForm({ onSave, onClose, equipo, modo }) {
       return res.json();
     })
     .then(onSave)
-    .catch(err => console.error("Error al guardar máquina:", err));
+    .catch(err => {
+      console.error("Error al guardar máquina:", err);
+      onError && onError(err.message || "Error al guardar máquina");
+    });
   };
 
   return (

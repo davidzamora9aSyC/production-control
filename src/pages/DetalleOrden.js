@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import EditarAsignacion from "../components/EditarAsignacion";
 import { API_BASE_URL } from "../api";
+import ErrorPopup from "../components/ErrorPopup";
 
 const ESTADO_COLORES = {
   pendiente: "bg-gray-400",
@@ -30,6 +31,7 @@ export default function DetalleOrden() {
   const [mostrarEditor, setMostrarEditor] = useState(false);
   const [pasoSeleccionado, setPasoSeleccionado] = useState(null);
   const [asignaciones, setAsignaciones] = useState({});
+  const [errorMsg, setErrorMsg] = useState(null);
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -71,10 +73,10 @@ export default function DetalleOrden() {
         method: "DELETE",
       });
       if (res.ok) navigate("/ordenes");
-      else alert("Error al eliminar orden");
+      else setErrorMsg("Error al eliminar orden");
     } catch (err) {
       console.error("Error:", err);
-      alert("Error al eliminar orden");
+      setErrorMsg("Error al eliminar orden");
     }
   };
 
@@ -206,6 +208,9 @@ export default function DetalleOrden() {
             setPasoSeleccionado(null);
           }}
         />
+      )}
+      {errorMsg && (
+        <ErrorPopup mensaje={errorMsg} onClose={() => setErrorMsg(null)} />
       )}
     </div>
   );

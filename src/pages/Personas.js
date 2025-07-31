@@ -1,6 +1,7 @@
 import Navbar from "../components/Navbar";
 import ModalCargarCSV from "../components/ModalCargarCSV";
 import TrabajadorForm from "../components/TrabajadorForm";
+import ErrorPopup from "../components/ErrorPopup";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver";
@@ -16,6 +17,7 @@ export default function Personas() {
     const [trabajadores, setTrabajadores] = useState([]);
     const [progresos, setProgresos] = useState({});
     const [editar, setEditar] = useState(null);
+    const [errorMsg, setErrorMsg] = useState(null);
     const navigate = useNavigate();
     const totalPaginas = Math.ceil(trabajadores.length / ITEMS_POR_PAGINA);
     const mostrar = trabajadores.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
@@ -71,7 +73,10 @@ export default function Personas() {
                 if (!res.ok) throw new Error("Error al borrar trabajador");
                 setTrabajadores(prevs => prevs.filter(t => t.id !== id));
             })
-            .catch(err => console.error("Error al borrar:", err))
+            .catch(err => {
+                console.error("Error al borrar:", err);
+                setErrorMsg(err.message || "Error al borrar trabajador");
+            })
             .finally(() => {
                 setProgresos(prev => ({ ...prev, [id]: 0 }));
             });
@@ -208,6 +213,7 @@ export default function Personas() {
                         })
                         .catch(err => {
                             console.error("Error al crear trabajador:", err);
+                            setErrorMsg(err.message || "Error al crear trabajador");
                         });
                     }}
                 />
@@ -250,14 +256,24 @@ export default function Personas() {
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify(limpio)
                                 })
+                                .then(res => {
+                                    if (!res.ok) throw new Error('Error al guardar trabajador');
+                                })
                                 .then(() => {
                                     setTrabajadores(prev => prev.map(t => t.id === editar.id ? editar : t));
                                     setEditar(null);
+                                })
+                                .catch(err => {
+                                    console.error('Error al editar trabajador:', err);
+                                    setErrorMsg(err.message || 'Error al editar trabajador');
                                 });
                             }} className="bg-blue-600 text-white px-3 py-1 rounded">Guardar</button>
                         </div>
                     </div>
                 </div>
+            )}
+            {errorMsg && (
+                <ErrorPopup mensaje={errorMsg} onClose={() => setErrorMsg(null)} />
             )}
         </div>
     );

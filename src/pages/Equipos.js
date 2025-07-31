@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ModalCargarCSV from "../components/ModalCargarCSV";
 import MaquinaForm from "../components/MaquinaForm";
+import ErrorPopup from "../components/ErrorPopup";
 import { API_BASE_URL } from "../api";
 
 const ITEMS_POR_PAGINA = 8;
@@ -15,6 +16,7 @@ export default function Equipos() {
     const [equipos, setEquipos] = useState([]);
     const [progresos, setProgresos] = useState({});
     const [equipoEditar, setEquipoEditar] = useState(null);
+    const [errorMsg, setErrorMsg] = useState(null);
     const timeoutRefs = useRef({});
     const navigate = useNavigate();
     const totalPaginas = Math.ceil(equipos.length / ITEMS_POR_PAGINA);
@@ -47,10 +49,14 @@ export default function Equipos() {
     const iniciarBorrado = (id) => {
         timeoutRefs.current[id] = setTimeout(() => {
             fetch(`${API_BASE_URL}/maquinas/${id}`, { method: 'DELETE' })
-                .then(() => {
+                .then(res => {
+                    if (!res.ok) throw new Error('Error al borrar máquina');
                     setEquipos(prev => prev.filter(e => e.id !== id));
                 })
-                .catch(err => console.error("Error al borrar:", err));
+                .catch(err => {
+                    console.error("Error al borrar:", err);
+                    setErrorMsg(err.message || 'Error al borrar máquina');
+                });
             setProgresos(prev => ({ ...prev, [id]: 0 }));
         }, 10000);
 
@@ -196,7 +202,11 @@ export default function Equipos() {
                         setEquipoEditar(null);
                         cargarEquipos();
                     }}
+                    onError={(m) => setErrorMsg(m)}
                 />
+            )}
+            {errorMsg && (
+                <ErrorPopup mensaje={errorMsg} onClose={() => setErrorMsg(null)} />
             )}
         </div>
     );
