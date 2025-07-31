@@ -70,6 +70,13 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
   };
 
   const eliminarFila = (index) => {
+    const fila = filas[index];
+    const producida = Number(fila.cantidadProducida || 0);
+    const noConforme = producida - Number(fila.cantidadPedaleos || 0);
+    if (producida > 0 || noConforme > 0) {
+      setError("No se puede eliminar una asignación con producción registrada o no conformes.");
+      return;
+    }
     setFilas((prev) => {
       const copia = [...prev];
       const [removida] = copia.splice(index, 1);
@@ -80,7 +87,10 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
 
   const total = filas.reduce((s, f) => s + Number(f.cantidadAsignada || 0), 0);
   const requerido = Number(paso?.cantidadRequerida || 0);
-  const valido = total === requerido && filas.length > 0;
+  const valido =
+    total === requerido &&
+    filas.length > 0 &&
+    filas.every((f) => Number(f.cantidadAsignada || 0) > 0);
 
   const handleGuardar = async () => {
     if (!valido || guardando) return;
@@ -97,12 +107,12 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
       // actualizar existentes
       await Promise.all(
         filas
-          .filter((f) => f.id)
+          .filter((f) => f.id && Number(f.cantidadProducida || 0) === 0 && (Number(f.cantidadProducida || 0) - Number(f.cantidadPedaleos || 0)) === 0)
           .map((f) =>
             fetch(`https://smartindustries.org/sesion-trabajo-pasos/${f.id}`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ cantidadAsignada: Number(f.cantidadAsignada || 0) }),
+              body: JSON.stringify({ cantidadAsignada: Number(f.cantidadAsignada || 0), sesionTrabajo: f.sesionTrabajo }),
             })
           )
       );
@@ -120,6 +130,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
                 pasoOrden: paso.id,
                 cantidadAsignada: Number(f.cantidadAsignada || 0),
                 cantidadProducida: 0,
+                estado: "pendiente",
               }),
             })
           )
@@ -137,7 +148,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-full max-w-3xl shadow-lg">
+      <div className="bg-white p-6 rounded-lg w-fit max-w-[95vw] shadow-lg">
         <h2 className="text-xl font-semibold mb-4">Editar asignaciones de {paso?.nombre}</h2>
         <div className="mb-3 flex justify-end">
           <button onClick={agregarFila} className="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">+ Añadir asignación</button>
@@ -147,8 +158,9 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
           <table className="min-w-full text-sm border rounded">
             <thead className="bg-gray-100">
               <tr>
-                <th className="px-4 py-2 border-r">Máquina</th>
-                <th className="px-4 py-2 border-r">Trabajador</th>
+                <th className="px-6 py-2 border-r">Sesión</th>
+                <th className="px-6 py-2 border-r">Máquina</th>
+                <th className="px-6 py-2 border-r">Trabajador</th>
                 <th className="px-4 py-2 border-r">Producido</th>
                 <th className="px-4 py-2 border-r">No conforme</th>
                 <th className="px-4 py-2 border-r">Estado</th>
@@ -164,14 +176,21 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
               ) : (
                 filas.map((f, i) => (
                   <tr key={f.id || i} className="border-t">
-                    <td className="px-4 py-2 border-r">
-                      <div className="flex">
-                        <input type="text" value={f.maquina?.nombre || ""} readOnly className="w-full border px-2 py-1 rounded-l" />
-                        <button onClick={() => setIndiceSesion(i)} className="px-2 bg-gray-200 rounded-r">🔍</button>
-                      </div>
+                    <td className="px-6 py-2 border-r">
+                      {Number(f.cantidadProducida || 0) === 0 && (Number(f.cantidadProducida || 0) - Number(f.cantidadPedaleos || 0)) === 0 ? (
+                        <div className="flex">
+                          <input type="text" value={f.sesionTrabajo || ""} readOnly className="w-[20rem] border px-2 py-1 rounded-l" />
+                          <button onClick={() => setIndiceSesion(i)} className="px-2 bg-gray-200 rounded-r">🔍</button>
+                        </div>
+                      ) : (
+                        <div className="w-[20rem] border px-2 py-1 rounded bg-gray-100 text-gray-500">{f.sesionTrabajo}</div>
+                      )}
                     </td>
-                    <td className="px-4 py-2 border-r">
-                      <input type="text" value={f.trabajador?.nombre || ""} readOnly className="w-full border px-2 py-1 rounded" />
+                    <td className="px-6 py-2 border-r">
+                      <input type="text" value={f.maquina?.nombre || ""} readOnly className="w-[10rem] border px-2 py-1 rounded" />
+                    </td>
+                    <td className="px-6 py-2 border-r">
+                      <input type="text" value={f.trabajador?.nombre || ""} readOnly className="w-[10rem] border px-2 py-1 rounded" />
                     </td>
                     <td className="px-4 py-2 border-r">{f.cantidadProducida}</td>
                     <td className="px-4 py-2 border-r">{Number(f.cantidadProducida || 0) - Number(f.cantidadPedaleos || 0)}</td>
@@ -180,7 +199,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
                       <input type="number" value={f.cantidadAsignada} onChange={(e) => actualizar(i, "cantidadAsignada", Number(e.target.value) || 0)} className="w-full border px-2 py-1 rounded" />
                     </td>
                     <td className="px-4 py-2 text-center">
-                      <button onClick={() => eliminarFila(i)} className="text-red-600">✖</button>
+                      <button onClick={() => eliminarFila(i)} className="text-red-600 text-lg">✖</button>
                     </td>
                   </tr>
                 ))
@@ -190,6 +209,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
         </div>
         <div className="mt-4 text-sm">Total asignado: {total} / {requerido}</div>
         {!valido && <div className="text-red-600 text-sm mt-1">La suma debe ser igual a la cantidad requerida.</div>}
+        {filas.some((f) => Number(f.cantidadAsignada || 0) === 0) && <div className="text-red-600 text-sm mt-1">No se permiten asignaciones con cantidad 0.</div>}
         <div className="flex justify-end gap-4 mt-6">
           <button onClick={onClose} className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400" disabled={guardando}>Cancelar</button>
           <button onClick={handleGuardar} className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-60" disabled={!valido || guardando}>Guardar cambios</button>
@@ -197,6 +217,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
       </div>
       {indiceSesion !== null && (
         <BuscadorSesion
+          endpoint="https://smartindustries.org/sesiones-trabajo/activas"
           onSelect={(s) => {
             actualizar(indiceSesion, "maquina", s.maquina);
             actualizar(indiceSesion, "trabajador", s.trabajador);

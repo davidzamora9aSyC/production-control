@@ -51,7 +51,7 @@ export default function Navbar() {
                     onClick={() => setDropdownAbierto(prev => !prev)}
                     className={`cursor-pointer transition-colors duration-300 text-xl font-semibold text-gray-600 hover:text-black`}
                   >
-                    Sesiones
+                    Recursos
                   </span>
                   {dropdownAbierto && (
                     <ul className="absolute bg-white shadow-lg rounded mt-2 w-52 z-50">

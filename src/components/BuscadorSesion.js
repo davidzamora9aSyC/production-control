@@ -6,7 +6,7 @@ export default function BuscadorSesion({ onSelect, onClose }) {
   const [filtro, setFiltro] = useState("");
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/sesiones-trabajo/actuales`)
+    fetch(`${API_BASE_URL}/sesiones-trabajo/activas`)
       .then(res => res.json())
       .then(setSesiones)
       .catch(err => console.error("Error al obtener sesiones:", err));
