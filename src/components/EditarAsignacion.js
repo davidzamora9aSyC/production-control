@@ -177,7 +177,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
                 filas.map((f, i) => (
                   <tr key={f.id || i} className="border-t">
                     <td className="px-6 py-2 border-r">
-                      {Number(f.cantidadProducida || 0) === 0 && (Number(f.cantidadProducida || 0) - Number(f.cantidadPedaleos || 0)) === 0 ? (
+                      {Number(f.cantidadProducida || 0) === 0 && (-Number(f.cantidadProducida || 0) + Number(f.cantidadPedaleos || 0)) === 0 ? (
                         <div className="flex">
                           <input type="text" value={f.sesionTrabajo || ""} readOnly className="w-[20rem] border px-2 py-1 rounded-l" />
                           <button onClick={() => setIndiceSesion(i)} className="px-2 bg-gray-200 rounded-r">🔍</button>
@@ -193,7 +193,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
                       <input type="text" value={f.trabajador?.nombre || ""} readOnly className="w-[10rem] border px-2 py-1 rounded" />
                     </td>
                     <td className="px-4 py-2 border-r">{f.cantidadProducida}</td>
-                    <td className="px-4 py-2 border-r">{Number(f.cantidadProducida || 0) - Number(f.cantidadPedaleos || 0)}</td>
+                    <td className="px-4 py-2 border-r">{-Number(f.cantidadProducida || 0) + Number(f.cantidadPedaleos || 0)}</td>
                     <td className="px-4 py-2 border-r">{f.estado}</td>
                     <td className="px-4 py-2 border-r">
                       <input type="number" value={f.cantidadAsignada} onChange={(e) => actualizar(i, "cantidadAsignada", Number(e.target.value) || 0)} className="w-full border px-2 py-1 rounded" />
