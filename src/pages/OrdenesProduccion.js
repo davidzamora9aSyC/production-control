@@ -53,29 +53,72 @@ export default function OrdenesProduccion() {
   
     const texto = await archivo.text();
     const filas = texto.split(/\r?\n/).map(f => f.trim()).filter(Boolean);
-    const headers = filas[0].split(",").map(h => h.trim());
+    const headers = filas[0].split(',').map(h => h.trim());
     const idx = h => headers.indexOf(h);
+
     const data = filas.slice(1).map((f, i) => {
-      const v = f.split(",").map(x => x.trim()); return {
-        linea: i + 2, numero: v[idx("numero")], producto: v[idx("producto")],
-        cantidadAProducir: parseInt(v[idx("cantidadAProducir")], 10),
-        fechaOrden: new Date(v[idx("fechaOrden")]), fechaVencimiento: new Date(v[idx("fechaVencimiento")]),
-        estado: v[idx("estado")], maquina: (v[idx("maquina")] || "").trim(),
-        nombre: v[idx("nombre")], codigoInterno: v[idx("codigoInterno")],
-        cantidadRequerida: parseInt(v[idx("cantidadRequerida")], 10),
-        cantidadProducida: v[idx("cantidadProducida")] ? parseInt(v[idx("cantidadProducida")], 10) : 0,
-        estadoPaso: v[idx("estadoPaso")] || "pendiente"
-      }
+      const v = f.split(',').map(x => x.trim());
+      const numero = v[idx('numero')];
+      const producto = v[idx('producto')];
+      const cantidadAProducir = parseInt(v[idx('cantidadAProducir')], 10);
+      const fechaOrden = new Date(v[idx('fechaOrden')]);
+      const fechaVencimiento = new Date(v[idx('fechaVencimiento')]);
+      const nombre = v[idx('nombre')];
+      const codigoInterno = v[idx('codigoInterno')];
+      const cantidadRequerida = parseInt(v[idx('cantidadRequerida')], 10);
+      const cantidadProducida = idx('cantidadProducida') >= 0 && v[idx('cantidadProducida')] !== '' ? parseInt(v[idx('cantidadProducida')], 10) : 0;
+      const cantidadPedaleos = idx('cantidadPedaleos') >= 0 && v[idx('cantidadPedaleos')] !== '' ? parseInt(v[idx('cantidadPedaleos')], 10) : undefined;
+      const estadoPaso = idx('estadoPaso') >= 0 ? v[idx('estadoPaso')] : 'pendiente';
+      const numeroPasoValor = idx('numeroPaso') >= 0 && v[idx('numeroPaso')] !== '' ? parseInt(v[idx('numeroPaso')], 10) : undefined;
+
+      return {
+        linea: i + 2,
+        numero,
+        producto,
+        cantidadAProducir,
+        fechaOrden,
+        fechaVencimiento,
+        nombre,
+        codigoInterno,
+        cantidadRequerida,
+        cantidadProducida,
+        cantidadPedaleos,
+        estadoPaso,
+        numeroPaso: numeroPasoValor,
+      };
     });
+
     const pasosAgrupados = {};
     for (const fila of data) {
-      if (!pasosAgrupados[fila.numero]) pasosAgrupados[fila.numero] = { numero: fila.numero, producto: fila.producto, cantidadAProducir: fila.cantidadAProducir, fechaOrden: fila.fechaOrden, fechaVencimiento: fila.fechaVencimiento, estado: fila.estado, maquina: fila.maquina, pasos: [] };
-      pasosAgrupados[fila.numero].pasos.push({ nombre: fila.nombre, codigoInterno: fila.codigoInterno, cantidadRequerida: fila.cantidadRequerida, cantidadProducida: fila.cantidadProducida, estado: fila.estadoPaso });
+      if (!pasosAgrupados[fila.numero]) {
+        pasosAgrupados[fila.numero] = {
+          numero: fila.numero,
+          producto: fila.producto,
+          cantidadAProducir: fila.cantidadAProducir,
+          fechaOrden: fila.fechaOrden,
+          fechaVencimiento: fila.fechaVencimiento,
+          pasos: []
+        };
+      }
+      pasosAgrupados[fila.numero].pasos.push({
+        nombre: fila.nombre,
+        codigoInterno: fila.codigoInterno,
+        cantidadRequerida: fila.cantidadRequerida,
+        cantidadProducida: fila.cantidadProducida,
+        cantidadPedaleos: fila.cantidadPedaleos,
+        estado: fila.estadoPaso || 'pendiente',
+        numeroPaso: (typeof fila.numeroPaso === 'number' && !Number.isNaN(fila.numeroPaso)) ? fila.numeroPaso : (pasosAgrupados[fila.numero].pasos.length + 1)
+      });
     }
-    const ordenes = Object.values(pasosAgrupados).map(o => {
-      const { maquina, ...resto } = o;
-      return { ...resto, fechaOrden: o.fechaOrden.toISOString(), fechaVencimiento: o.fechaVencimiento.toISOString() };
-    });
+
+    const ordenes = Object.values(pasosAgrupados).map(o => ({
+      numero: o.numero,
+      producto: o.producto,
+      cantidadAProducir: o.cantidadAProducir,
+      fechaOrden: o.fechaOrden.toISOString(),
+      fechaVencimiento: o.fechaVencimiento.toISOString(),
+      pasos: o.pasos
+    }));
     
     try {
       for (const orden of ordenes) {

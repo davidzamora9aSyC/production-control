@@ -1,15 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../api";
 
 export default function MaquinaForm({ onSave, onClose, equipo, modo, onError }) {
   const [form, setForm] = useState({
+    codigo: equipo?.codigo || "",
     nombre: equipo?.nombre || "",
-    estado: equipo?.estado || "activa",
     tipo: equipo?.tipo || "troqueladora",
     ubicacion: equipo?.ubicacion || "",
     fechaInstalacion: equipo?.fechaInstalacion || "",
-    observaciones: equipo?.observaciones || ""
+    observaciones: equipo?.observaciones || "",
+    areaId: equipo?.areaId || equipo?.area?.id || ""
   });
+
+  const [areas, setAreas] = useState([]);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/areas`)
+      .then(res => {
+        if (!res.ok) throw new Error("Error al cargar áreas");
+        return res.json();
+      })
+      .then(data => setAreas(Array.isArray(data) ? data : []))
+      .catch(err => {
+        onError && onError(err.message || "No fue posible cargar las áreas");
+        setAreas([]);
+      });
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -18,12 +34,28 @@ export default function MaquinaForm({ onSave, onClose, equipo, modo, onError }) 
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const esEdicion = modo === 'editar';
+    const codigoNormalizado = (form.codigo ?? '').trim();
+    if (!esEdicion && !codigoNormalizado) {
+      onError && onError('El código es obligatorio');
+      return;
+    }
+    if (!form.areaId) {
+      onError && onError("Debes seleccionar un área");
+      return;
+    }
     const method = modo === 'editar' ? 'PUT' : 'POST';
     const url = modo === 'editar' ? `${API_BASE_URL}/maquinas/${equipo.id}` : `${API_BASE_URL}/maquinas`;
 
     const formLimpio = { ...form };
+    if (esEdicion) {
+      delete formLimpio.codigo;
+    } else {
+      formLimpio.codigo = codigoNormalizado;
+    }
     delete formLimpio.createdAt;
     delete formLimpio.updatedAt;
+    delete formLimpio.estado;
 
     console.log("Enviando datos:", formLimpio);
 
@@ -32,8 +64,21 @@ export default function MaquinaForm({ onSave, onClose, equipo, modo, onError }) 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formLimpio)
     })
-    .then(res => {
-      if (!res.ok) throw new Error("Error al guardar");
+    .then(async res => {
+      if (!res.ok) {
+        let errorMsg = "Error al guardar";
+        try {
+          const errData = await res.json();
+          if (errData?.message) {
+            if (Array.isArray(errData.message)) {
+              errorMsg = errData.message.join(", ");
+            } else {
+              errorMsg = errData.message;
+            }
+          }
+        } catch {}
+        throw new Error(errorMsg);
+      }
       return res.json();
     })
     .then(onSave)
@@ -48,19 +93,29 @@ export default function MaquinaForm({ onSave, onClose, equipo, modo, onError }) 
       <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
         <h2 className="text-xl font-semibold mb-4">{modo === 'editar' ? "Editar máquina" : "Registrar máquina"}</h2>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <label>Código</label>
+          <input name="codigo" placeholder="Código" value={form.codigo} onChange={handleChange} className="border px-3 py-2 rounded" required disabled={modo === 'editar'} />
+          <label>Nombre de la máquina</label>
           <input name="nombre" placeholder="Nombre de la máquina" value={form.nombre} onChange={handleChange} className="border px-3 py-2 rounded" required />
-          <select name="estado" value={form.estado} onChange={handleChange} className="border px-3 py-2 rounded" required>
-            <option value="activa">Activa</option>
-            <option value="no activa">No activa</option>
-          </select>
+          <label>Tipo</label>
           <select name="tipo" value={form.tipo} onChange={handleChange} className="border px-3 py-2 rounded" required>
             <option value="troqueladora">Troqueladora</option>
             <option value="taladro">Taladro</option>
             <option value="horno">Horno</option>
             <option value="vulcanizadora">Vulcanizadora</option>
           </select>
+          <label>Área</label>
+          <select name="areaId" value={form.areaId} onChange={handleChange} className="border px-3 py-2 rounded" required>
+            <option value="" disabled>Selecciona un área</option>
+            {areas.map(a => (
+              <option key={a.id} value={a.id}>{a.nombre}</option>
+            ))}
+          </select>
+          <label>Ubicación</label>
           <input name="ubicacion" placeholder="Ubicación" value={form.ubicacion} onChange={handleChange} className="border px-3 py-2 rounded" required />
+          <label>Fecha de instalación</label>
           <input type="date" name="fechaInstalacion" value={form.fechaInstalacion} onChange={handleChange} className="border px-3 py-2 rounded" required />
+          <label>Observaciones</label>
           <textarea name="observaciones" placeholder="Observaciones" value={form.observaciones} onChange={handleChange} className="border px-3 py-2 rounded" rows={3} />
           <div className="flex justify-end gap-4 mt-4">
             <button type="button" onClick={onClose} className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400">Cancelar</button>

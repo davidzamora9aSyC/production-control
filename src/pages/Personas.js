@@ -15,7 +15,6 @@ export default function Personas() {
     const [mostrarCargarCSV, setMostrarCargarCSV] = useState(false);
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [trabajadores, setTrabajadores] = useState([]);
-    const [progresos, setProgresos] = useState({});
     const [editar, setEditar] = useState(null);
     const [errorMsg, setErrorMsg] = useState(null);
     const navigate = useNavigate();
@@ -61,40 +60,18 @@ export default function Personas() {
         saveAs(blob, `trabajadores_pagina_${pagina}.csv`);
     };
 
-    const tiempoBorrado = 10000;
-    const timeoutRefs = useRef({});
-
-    const iniciarBorrado = (id) => {
-        timeoutRefs.current[id] = setTimeout(() => {
-            fetch(`${API_BASE_URL}/trabajadores/${id}`, {
-                method: 'DELETE',
-            })
-            .then(res => {
-                if (!res.ok) throw new Error("Error al borrar trabajador");
-                setTrabajadores(prevs => prevs.filter(t => t.id !== id));
-            })
-            .catch(err => {
-                console.error("Error al borrar:", err);
-                setErrorMsg(err.message || "Error al borrar trabajador");
-            })
-            .finally(() => {
-                setProgresos(prev => ({ ...prev, [id]: 0 }));
-            });
-        }, tiempoBorrado);
-
-        let inicio = Date.now();
-        const intervalo = setInterval(() => {
-            const transcurrido = Date.now() - inicio;
-            setProgresos(prev => ({ ...prev, [id]: Math.min(transcurrido / tiempoBorrado, 1) }));
-            if (transcurrido >= tiempoBorrado) clearInterval(intervalo);
-        }, 100);
-        timeoutRefs.current[`interval-${id}`] = intervalo;
-    };
-
-    const cancelarBorrado = (id) => {
-        clearTimeout(timeoutRefs.current[id]);
-        clearInterval(timeoutRefs.current[`interval-${id}`]);
-        setProgresos(prev => ({ ...prev, [id]: 0 }));
+    // Borrar trabajador con confirmación
+    const borrar = (id) => {
+        if (!window.confirm("¿Seguro que quieres borrar este trabajador?")) return;
+        fetch(`${API_BASE_URL}/trabajadores/${id}`, { method: 'DELETE' })
+          .then(res => {
+              if (!res.ok) throw new Error("Error al borrar trabajador");
+              setTrabajadores(prevs => prevs.filter(t => t.id !== id));
+          })
+          .catch(err => {
+              console.error("Error al borrar:", err);
+              setErrorMsg(err.message || "Error al borrar trabajador");
+          });
     };
 
     return (
@@ -150,15 +127,10 @@ export default function Personas() {
                                     <td className="px-4 py-2">{item.fechaInicio}</td>
                                     <td className="px-4 py-2">
                                         <button
-                                            onMouseDown={() => iniciarBorrado(item.id)}
-                                            onMouseUp={() => cancelarBorrado(item.id)}
-                                            onMouseLeave={() => cancelarBorrado(item.id)}
-                                            className="relative bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                                            onClick={() => borrar(item.id)}
+                                            className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
                                         >
                                             🗑️
-                                            {progresos[item.id] > 0 && (
-                                                <div className="absolute bottom-0 left-0 h-1 bg-white" style={{ width: `${progresos[item.id] * 100}%` }} />
-                                            )}
                                         </button>
                                     </td>
                                     <td className="px-4 py-2">
@@ -193,6 +165,7 @@ export default function Personas() {
             )}
             {mostrarFormulario && (
                 <TrabajadorForm
+                    mostrarLabels={true}
                     onCancel={() => setMostrarFormulario(false)}
                     onSubmit={(data) => {
                         fetch(`${API_BASE_URL}/trabajadores`, {
@@ -223,25 +196,23 @@ export default function Personas() {
                     <div className="bg-white p-6 rounded shadow-md w-96">
                         <h2 className="text-lg font-bold mb-4">Editar Trabajador</h2>
                         <div className="grid grid-cols-1 gap-2">
+                            <label>Nombre</label>
                             <input value={editar.nombre} onChange={e => setEditar({...editar, nombre: e.target.value})} placeholder="Nombre" className="border px-2 py-1 rounded" />
+                            <label>Identificación</label>
                             <input value={editar.identificacion} onChange={e => setEditar({...editar, identificacion: e.target.value})} placeholder="Identificación" className="border px-2 py-1 rounded" />
+                            <label>Grupo</label>
                             <select value={editar.grupo} onChange={e => setEditar({...editar, grupo: e.target.value})} className="border px-2 py-1 rounded">
                                 <option value="produccion">produccion</option>
                                 <option value="admin">admin</option>
                             </select>
+                            <label>Turno</label>
                             <select value={editar.turno} onChange={e => setEditar({...editar, turno: e.target.value})} className="border px-2 py-1 rounded">
                                 <option value="mañana">mañana</option>
                                 <option value="tarde">tarde</option>
                                 <option value="noche">noche</option>
                             </select>
+                            <label>Fecha de inicio</label>
                             <input type="date" value={editar.fechaInicio} onChange={e => setEditar({...editar, fechaInicio: e.target.value})} className="border px-2 py-1 rounded" />
-                            <select value={editar.estado} onChange={e => setEditar({...editar, estado: e.target.value})} className="border px-2 py-1 rounded">
-                                <option value="creado">creado</option>
-                                <option value="en produccion">en produccion</option>
-                                <option value="en descanso">en descanso</option>
-                                <option value="fuera de turno">fuera de turno</option>
-                                <option value="inactivo en turno">inactivo en turno</option>
-                            </select>
                         </div>
                         <div className="flex justify-end gap-2 mt-4">
                             <button onClick={() => setEditar(null)} className="border px-3 py-1 rounded">Cancelar</button>
@@ -250,6 +221,7 @@ export default function Personas() {
                                 delete limpio.createdAt;
                                 delete limpio.updatedAt;
                                 delete limpio.id;
+                                delete limpio.estado;
                                 console.log("Enviando trabajador editado:", limpio);
                                 fetch(`${API_BASE_URL}/trabajadores/${editar.id}`, {
                                     method: 'PUT',

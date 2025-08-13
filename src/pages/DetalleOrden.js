@@ -36,11 +36,11 @@ export default function DetalleOrden() {
   const { id } = useParams();
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/ordenes/${id}`)
+    fetch(`https://smartindustries.org/ordenes/${id}`)
       .then(res => res.json())
       .then(setOrden)
       .catch(err => console.error("Error al obtener orden:", err));
-    fetch(`${API_BASE_URL}/pasos/orden/${id}`)
+    fetch(`https://smartindustries.org/pasos/orden/${id}`)
       .then(res => res.json())
       .then(setPasos)
       .catch(err => console.error("Error al obtener pasos:", err));
@@ -48,7 +48,7 @@ export default function DetalleOrden() {
 
   useEffect(() => {
     pasos.forEach(p => {
-      fetch(`${API_BASE_URL}/sesion-trabajo-pasos/por-paso/${p.id}`)
+      fetch(`https://smartindustries.org/sesion-trabajo-pasos/por-paso/${p.id}`)
         .then(res => res.json())
         .then(data => setAsignaciones(a => ({ ...a, [p.id]: data })))
         .catch(err => console.error('Error al obtener asignaciones:', err));
@@ -69,7 +69,7 @@ export default function DetalleOrden() {
   const handleEliminar = async () => {
     if (!window.confirm("¿Seguro que deseas eliminar esta orden?")) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/ordenes/${id}`, {
+      const res = await fetch(`https://smartindustries.org/ordenes/${id}`, {
         method: "DELETE",
       });
       if (res.ok) navigate("/ordenes");

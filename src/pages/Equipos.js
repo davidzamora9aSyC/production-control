@@ -14,10 +14,8 @@ export default function Equipos() {
     const [mostrarCargarCSV, setMostrarCargarCSV] = useState(false);
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [equipos, setEquipos] = useState([]);
-    const [progresos, setProgresos] = useState({});
     const [equipoEditar, setEquipoEditar] = useState(null);
     const [errorMsg, setErrorMsg] = useState(null);
-    const timeoutRefs = useRef({});
     const navigate = useNavigate();
     const totalPaginas = Math.ceil(equipos.length / ITEMS_POR_PAGINA);
     const mostrar = equipos.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
@@ -46,39 +44,24 @@ export default function Equipos() {
         };
     }, []);
 
-    const iniciarBorrado = (id) => {
-        timeoutRefs.current[id] = setTimeout(() => {
-            fetch(`${API_BASE_URL}/maquinas/${id}`, { method: 'DELETE' })
-                .then(res => {
-                    if (!res.ok) throw new Error('Error al borrar máquina');
-                    setEquipos(prev => prev.filter(e => e.id !== id));
-                })
-                .catch(err => {
-                    console.error("Error al borrar:", err);
-                    setErrorMsg(err.message || 'Error al borrar máquina');
-                });
-            setProgresos(prev => ({ ...prev, [id]: 0 }));
-        }, 10000);
-
-        let inicio = Date.now();
-        const intervalo = setInterval(() => {
-            const transcurrido = Date.now() - inicio;
-            setProgresos(prev => ({ ...prev, [id]: Math.min(transcurrido / 10000, 1) }));
-            if (transcurrido >= 10000) clearInterval(intervalo);
-        }, 100);
-        timeoutRefs.current[`interval-${id}`] = intervalo;
-    };
-
-    const cancelarBorrado = (id) => {
-        clearTimeout(timeoutRefs.current[id]);
-        clearInterval(timeoutRefs.current[`interval-${id}`]);
-        setProgresos(prev => ({ ...prev, [id]: 0 }));
+    const borrarMaquina = (id, e) => {
+        e.stopPropagation();
+        if (!window.confirm("¿Seguro que deseas borrar esta máquina?")) return;
+        fetch(`${API_BASE_URL}/maquinas/${id}`, { method: "DELETE" })
+          .then(res => {
+            if (!res.ok) throw new Error("Error al borrar máquina");
+            setEquipos(prev => prev.filter(eq => eq.id !== id));
+          })
+          .catch(err => {
+            console.error("Error al borrar:", err);
+            setErrorMsg(err.message || "Error al borrar máquina");
+          });
     };
 
     const generarCSV = () => {
-        const headers = ["ID", "Nombre", "Tipo", "Estado", "Ubicación", "Fecha instalación", "Observaciones"];
+        const headers = ["Codigo de equipo", "Nombre", "Tipo", "Estado", "Ubicación", "Fecha instalación", "Observaciones"];
         const rows = mostrar.map(item => [
-            item.id,
+            item.codigo,
             item.nombre,
             item.tipo,
             item.estado,
@@ -129,25 +112,34 @@ export default function Equipos() {
                         <thead>
                             <tr className="bg-gray-100 border-b">
                                 <th className="px-4 py-2 border-r">ID</th>
+                                <th className="px-4 py-2 border-r">Código</th>
                                 <th className="px-4 py-2 border-r">Nombre</th>
                                 <th className="px-4 py-2 border-r">Tipo</th>
                                 <th className="px-4 py-2 border-r">Estado</th>
                                 <th className="px-4 py-2 border-r">Ubicación</th>
                                 <th className="px-4 py-2 border-r">Fecha instalación</th>
                                 <th className="px-4 py-2 border-r">Observaciones</th>
+                                <th className="px-4 py-2 border-r">Área</th>
                                 <th className="px-4 py-2">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {mostrar.map((item, i) => (
                                 <tr key={i} className="border-b cursor-pointer" onClick={() => navigate(`/maquina/${item.id}`)}>
-                                    <td className="px-4 py-2 border-r">{item.id}</td>
+                                    <td
+                                        className="px-4 py-2 border-r"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        {item.id}
+                                    </td>
+                                    <td className="px-4 py-2 border-r">{item.codigo}</td>
                                     <td className="px-4 py-2 border-r">{item.nombre}</td>
                                     <td className="px-4 py-2 border-r">{item.tipo}</td>
                                     <td className="px-4 py-2 border-r">{item.estado}</td>
                                     <td className="px-4 py-2 border-r">{item.ubicacion}</td>
                                     <td className="px-4 py-2 border-r">{item.fechaInstalacion}</td>
                                     <td className="px-4 py-2 border-r">{item.observaciones || "-"}</td>
+                                    <td className="px-4 py-2 border-r">{item.areaNombre || "-"}</td>
                                     <td className="px-4 py-2 flex gap-2 justify-center">
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setEquipoEditar(item); setMostrarFormulario(true); }}
@@ -156,15 +148,10 @@ export default function Equipos() {
                                             ✏️
                                         </button>
                                         <button
-                                            onMouseDown={(e) => { e.stopPropagation(); iniciarBorrado(item.id); }}
-                                            onMouseUp={(e) => { e.stopPropagation(); cancelarBorrado(item.id); }}
-                                            onMouseLeave={(e) => { e.stopPropagation(); cancelarBorrado(item.id); }}
-                                            className="relative bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                                            onClick={(e) => borrarMaquina(item.id, e)}
+                                            className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
                                         >
                                             🗑️
-                                            {progresos[item.id] > 0 && (
-                                                <div className="absolute bottom-0 left-0 h-1 bg-white" style={{ width: `${progresos[item.id] * 100}%` }} />
-                                            )}
                                         </button>
                                     </td>
                                 </tr>
