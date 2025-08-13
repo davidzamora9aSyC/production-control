@@ -50,7 +50,14 @@ export default function DetalleOrden() {
     pasos.forEach(p => {
       fetch(`https://smartindustries.org/sesion-trabajo-pasos/por-paso/${p.id}`)
         .then(res => res.json())
-        .then(data => setAsignaciones(a => ({ ...a, [p.id]: data })))
+        .then(data => {
+          const adaptado = data.map(d => ({
+            ...d,
+            nombreTrabajador: d.sesionTrabajo?.trabajador?.nombre || "N/A",
+            nombreMaquina: d.sesionTrabajo?.maquina?.nombre || "N/A"
+          }));
+          setAsignaciones(a => ({ ...a, [p.id]: adaptado }));
+        })
         .catch(err => console.error('Error al obtener asignaciones:', err));
     });
   }, [pasos]);
@@ -133,7 +140,12 @@ export default function DetalleOrden() {
                   <td className="px-4 py-2 border-r">{item.cantidadRequerida}</td>
                   <td className="px-4 py-2 border-r">{item.cantidadProducida}</td>
                   <td className="px-4 py-2 border-r">{(item.cantidadPedaleos ?? 0) - (item.cantidadProducida ?? 0)}</td>
-                  <td className="px-4 py-2 border-r">{item.estado}</td>
+                  <td className="px-4 py-2 border-r">
+                    {
+                      (asignaciones[item.id]?.[0]?.pasoOrden?.estado) ||
+                      item.estado
+                    }
+                  </td>
                   <td className="px-4 py-2">
                     <button
                       className="text-blue-600 underline"
@@ -154,7 +166,7 @@ export default function DetalleOrden() {
         <table className="min-w-full text-sm">
           <thead className="bg-gray-100">
             <tr>
-              <th className="px-4 py-2 border-r">Paso</th>
+              <th className="px-4 py-2 border-r">Máquina</th>
               <th className="px-4 py-2 border-r">Trabajador</th>
               <th className="px-4 py-2 border-r">Cant. producida</th>
               <th className="px-4 py-2 border-r">Cant. producto no conforme</th>
@@ -166,7 +178,7 @@ export default function DetalleOrden() {
             {datos.map(p => (
               (asignaciones[p.id] || []).map((a, i) => (
                 <tr key={`${p.id}-${i}`} className="border-t">
-                  <td className="px-4 py-2 border-r">{p.nombre}</td>
+                  <td className="px-4 py-2 border-r">{a.nombreMaquina}</td>
                   <td className="px-4 py-2 border-r">{a.nombreTrabajador}</td>
                   <td className="px-4 py-2 border-r">{a.cantidadProducida}</td>
                   <td className="px-4 py-2 border-r">{(a.cantidadPedaleos ?? 0) - (a.cantidadProducida ?? 0)}</td>

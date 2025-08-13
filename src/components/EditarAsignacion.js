@@ -112,7 +112,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
             fetch(`https://smartindustries.org/sesion-trabajo-pasos/${f.id}`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ cantidadAsignada: Number(f.cantidadAsignada || 0), sesionTrabajo: f.sesionTrabajo }),
+              body: JSON.stringify({ cantidadAsignada: Number(f.cantidadAsignada || 0) }),
             })
           )
       );
