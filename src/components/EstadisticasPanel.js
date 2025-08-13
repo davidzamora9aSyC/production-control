@@ -1,14 +1,47 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function EstadisticasPanel() {
-    const [proceso, setProceso] = useState("Troquelado");
+    const [proceso, setProceso] = useState("8f56484e-8717-43f1-ae33-4ddf1bc7ac35");
+    const [areas, setAreas] = useState([]);
 
-    const stats = [
-        { label: "Producción total diaria", value: 2000 },
-        { label: "Producción total mes", value: 20000 },
-        { label: "Tiempo muerto total del día", value: 20000 },
-        { label: "Piezas no conformes totales del día", value: 20000 },
-    ];
+    const [stats, setStats] = useState([]);
+
+    useEffect(() => {
+        const fetchAreas = async () => {
+            const API_BASE = "https://smartindustries.org";
+            const res = await fetch(`${API_BASE}/areas`);
+            const data = await res.json();
+            setAreas(data);
+            if (data.length > 0) setProceso(data[0].id);
+        };
+
+        fetchAreas();
+    }, []);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const API_BASE = "https://smartindustries.org";
+            const resDia = await fetch(`${API_BASE}/produccion/diaria/mes-actual?areaId=${proceso}`);
+            const dataDia = await resDia.json();
+
+            const resTotalDia = await fetch(`${API_BASE}/produccion/diaria/ultimos-30-dias?areaId=${proceso}`);
+            const dataTotalDia = await resTotalDia.json();
+
+            const hoy = new Date().toISOString().split("T")[0];
+            const hoyData = dataDia.find(d => d.fecha === hoy);
+            const piezasHoy = hoyData?.piezas || 0;
+            const pedaleadasHoy = hoyData?.pedaleadas || 0;
+
+            setStats([
+                { label: "Producción total diaria", value: piezasHoy },
+                { label: "Producción total ultimos 30 dias", value: dataTotalDia.reduce((acc, d) => acc + d.piezas, 0) },
+                { label: "Tiempo muerto total del día", value: 0 },
+                { label: "Piezas no conformes totales del día", value: pedaleadasHoy - piezasHoy },
+            ]);
+        };
+
+        fetchData();
+    }, [proceso]);
 
     return (
         <div className="mb-20">
@@ -19,9 +52,9 @@ export default function EstadisticasPanel() {
                     onChange={e => setProceso(e.target.value)}
                     className="border-b border-black text-2xl focus:outline-none"
                 >
-                    <option>Troquelado</option>
-                    <option>Inyección</option>
-                    <option>Ensamble</option>
+                    {areas.map(area => (
+                        <option key={area.id} value={area.id}>{area.nombre}</option>
+                    ))}
                 </select>
 
             </div>

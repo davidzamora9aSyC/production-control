@@ -18,7 +18,7 @@ export default function ProduccionChart() {
                 const list = await res.json();
                 const arr = Array.isArray(list) ? list : [];
                 setAreas(arr);
-                if (!proceso && arr.length > 0) setProceso(arr[0].id);
+                // if (!proceso && arr.length > 0) setProceso(arr[0].id);
                 if (proceso && !arr.some(x => x.id === proceso)) setProceso(arr[0]?.id || "");
             } catch (e) {
                 setAreas([]);
@@ -41,7 +41,7 @@ export default function ProduccionChart() {
         const load = async () => {
             setLoading(true);
             try {
-                const url = `${API_BASE}${endpoint}?areaId=${encodeURIComponent(proceso)}`;
+                const url = proceso ? `${API_BASE}${endpoint}?areaId=${encodeURIComponent(proceso)}` : `${API_BASE}${endpoint}`;
                 const res = await fetch(url);
                 const json = await res.json();
                 setRaw(Array.isArray(json) ? json : []);
@@ -51,24 +51,27 @@ export default function ProduccionChart() {
                 setLoading(false);
             }
         };
-        if (!proceso) return;
+        if (proceso === undefined) return;
         load();
     }, [endpoint, proceso]);
 
     const data = useMemo(() => {
-        const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-        if (periodo === "Meses") {
-            return raw.map(r => {
-                const d = new Date(r.mes);
-                const label = `${meses[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
-                return { name: label, value: Number(r.piezas) || 0 };
-            });
-        }
-        return raw.map(r => {
-            const d = new Date(r.fecha);
-            const label = `${d.getUTCDate().toString().padStart(2,"0")}/${(d.getUTCMonth()+1).toString().padStart(2,"0")}`;
-            return { name: label, value: Number(r.piezas) || 0 };
+        const dataMap = {};
+
+        raw.forEach(r => {
+            const d = new Date(periodo === "Meses" ? r.mes : r.fecha);
+            const label = periodo === "Meses"
+                ? `${["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"][d.getUTCMonth()]} ${d.getUTCFullYear()}`
+                : `${d.getUTCDate().toString().padStart(2,"0")}/${(d.getUTCMonth()+1).toString().padStart(2,"0")}`;
+
+            if (!dataMap[label]) {
+                dataMap[label] = 0;
+            }
+
+            dataMap[label] += Number(r.piezas) || 0;
         });
+
+        return Object.entries(dataMap).map(([name, value]) => ({ name, value }));
     }, [raw, periodo]);
 
     const isDiario = periodo === "Días";
@@ -84,6 +87,7 @@ export default function ProduccionChart() {
                 <div>
                     <span className="font-semibold text-2xl mr-4 ">Producción por</span>
                     <select value={proceso} onChange={e => setProceso(e.target.value)} className="border-b border-black focus:outline-none">
+                        <option value="">Todos</option>
                         {areas.map(a => (
                             <option key={a.id} value={a.id}>{a.nombre}</option>
                         ))}

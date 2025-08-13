@@ -11,6 +11,14 @@ export default function NuevaMinuta() {
   const [codigoOrden, setCodigoOrden] = useState("");
   const [proceso, setProceso] = useState("");
   const [procesosDisponibles, setProcesosDisponibles] = useState([]);
+  const [codigoTrabajador, setCodigoTrabajador] = useState("");
+  const [trabajadorData, setTrabajadorData] = useState(null);
+  const [trabajadorError, setTrabajadorError] = useState("");
+  const [codigoMaquina, setCodigoMaquina] = useState("");
+  const [maquinaData, setMaquinaData] = useState(null);
+  const [maquinaError, setMaquinaError] = useState("");
+  const [modalMensaje, setModalMensaje] = useState("");
+  const [mostrarModal, setMostrarModal] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,30 +43,82 @@ export default function NuevaMinuta() {
   const cumplimiento = meta ? ((piezas / meta) * 100).toFixed(1) : "";
   const nptPorcentaje = npt ? ((npt / 480) * 100).toFixed(1) : "";
 
+  const handleFetchTrabajador = () => {
+    setTrabajadorError("");
+    setTrabajadorData(null);
+    fetch(`${API_BASE_URL}/trabajadores/${codigoTrabajador}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Trabajador no encontrado');
+        return res.json();
+      })
+      .then(data => setTrabajadorData(data))
+      .catch(() => setTrabajadorError("Trabajador no encontrado"));
+  };
+
+  const handleFetchMaquina = () => {
+    setMaquinaError("");
+    setMaquinaData(null);
+    fetch(`${API_BASE_URL}/maquinas/${codigoMaquina}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Máquina no encontrada');
+        return res.json();
+      })
+      .then(data => setMaquinaData(data))
+      .catch(() => setMaquinaError("Máquina no encontrada"));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    const minuta = {
-      fechaHora,
-      piezas,
-      meta,
-      cumplimiento,
-      npt,
-      nptPorcentaje,
-      accion,
-      codigoOrden,
-      proceso
-    };
-    fetch(`${API_BASE_URL}/minutas`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(minuta)
-    })
-    .then(res => {
-      if (!res.ok) throw new Error('Error al enviar minuta');
-      return res.json();
-    })
-    .then(() => console.log('Minuta enviada'))
-    .catch(err => console.error('Error al enviar minuta:', err));
+    if (accion === "Iniciar sesión") {
+      const sesion = {
+        trabajador: trabajadorData?.id,
+        maquina: maquinaData?.id,
+      };
+      fetch(`${API_BASE_URL}/sesiones-trabajo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sesion)
+      })
+      .then(async res => {
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          const msg = (data && (data.message || data.error)) || 'Error al iniciar sesión';
+          throw new Error(msg);
+        }
+        return data;
+      })
+      .then(() => {
+        setModalMensaje('Sesión iniciada correctamente');
+        setMostrarModal(true);
+      })
+      .catch(err => {
+        setModalMensaje(err?.message || 'Error al iniciar sesión');
+        setMostrarModal(true);
+      });
+    } else {
+      const minuta = {
+        fechaHora,
+        piezas,
+        meta,
+        cumplimiento,
+        npt,
+        nptPorcentaje,
+        accion,
+        codigoOrden,
+        proceso
+      };
+      fetch(`${API_BASE_URL}/minutas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(minuta)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Error al enviar minuta');
+        return res.json();
+      })
+      .then(() => console.log('Minuta enviada'))
+      .catch(err => console.error('Error al enviar minuta:', err));
+    }
   };
 
   return (
@@ -79,8 +139,8 @@ export default function NuevaMinuta() {
             <label className="block font-medium">Acción rápida</label>
             <div className="flex flex-wrap gap-2 mt-1">
               {[
-                "Iniciar turno",
-                "Terminar turno",
+                "Iniciar sesión",
+                "Finalizar sesión",
                 "Salir a descanso",
                 "Volver del descanso",
                 "Inicio de mantenimiento",
@@ -109,39 +169,107 @@ export default function NuevaMinuta() {
             />
           </div>
 
-          {["Iniciar turno", "Volver del descanso", "Fin de mantenimiento"].includes(accion) && (
+          {["Iniciar sesión", "Volver del descanso", "Fin de mantenimiento"].includes(accion) && (
             <div className="mt-2 space-y-4">
-              <div>
-                <label className="block font-medium">Código de orden de producción</label>
-                <input
-                  type="text"
-                  value={codigoOrden}
-                  onChange={e => {
-                    setCodigoOrden(e.target.value);
-                    // Simula fetch de procesos
-                    setProcesosDisponibles(["Corte", "Soldadura", "Ensamble"]);
-                  }}
-                  className="w-full border rounded-full px-4 py-2"
-                  placeholder="Ingrese el código de la orden"
-                />
-              </div>
-              <div>
-                <label className="block font-medium">Proceso a realizar</label>
-                <select
-                  value={proceso}
-                  onChange={e => setProceso(e.target.value)}
-                  className="w-full border rounded-full px-4 py-2"
-                >
-                  <option value="">Seleccione un proceso</option>
-                  {procesosDisponibles.map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-              </div>
+              {accion === "Iniciar sesión" ? (
+                <>
+                  <div>
+                    <label className="block font-medium">Código del trabajador</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={codigoTrabajador}
+                        onChange={e => setCodigoTrabajador(e.target.value)}
+                        className="w-full border rounded-full px-4 py-2"
+                        placeholder="Ingrese el código del trabajador"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleFetchTrabajador}
+                        className="bg-blue-600 text-white px-4 rounded-full hover:bg-blue-700"
+                      >
+                        Seleccionar
+                      </button>
+                    </div>
+                    {trabajadorError && (
+                      <p className="text-red-600 mt-1">{trabajadorError}</p>
+                    )}
+                    {trabajadorData && (
+                      <div className="mt-2 text-sm bg-gray-100 p-2 rounded">
+                        <p><strong>Nombre:</strong> {trabajadorData.nombre}</p>
+                        <p><strong>Identificación:</strong> {trabajadorData.identificacion}</p>
+                        <p><strong>Grupo:</strong> {trabajadorData.grupo}</p>
+                        <p><strong>Turno:</strong> {trabajadorData.turno}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block font-medium">Código de máquina</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={codigoMaquina}
+                        onChange={e => setCodigoMaquina(e.target.value)}
+                        className="w-full border rounded-full px-4 py-2"
+                        placeholder="Ingrese el código de la máquina"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleFetchMaquina}
+                        className="bg-blue-600 text-white px-4 rounded-full hover:bg-blue-700"
+                      >
+                        Seleccionar
+                      </button>
+                    </div>
+                    {maquinaError && (
+                      <p className="text-red-600 mt-1">{maquinaError}</p>
+                    )}
+                    {maquinaData && (
+                      <div className="mt-2 text-sm bg-gray-100 p-2 rounded">
+                        <p><strong>Nombre:</strong> {maquinaData.nombre}</p>
+                        <p><strong>Código:</strong> {maquinaData.codigo}</p>
+                        <p><strong>Ubicación:</strong> {maquinaData.ubicacion}</p>
+                        <p><strong>Área:</strong> {maquinaData.area?.nombre}</p>
+                        <p><strong>Tipo:</strong> {maquinaData.tipo}</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block font-medium">Código de orden de producción</label>
+                    <input
+                      type="text"
+                      value={codigoOrden}
+                      onChange={e => {
+                        setCodigoOrden(e.target.value);
+                        // Simula fetch de procesos
+                        setProcesosDisponibles(["Corte", "Soldadura", "Ensamble"]);
+                      }}
+                      className="w-full border rounded-full px-4 py-2"
+                      placeholder="Ingrese el código de la orden"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-medium">Proceso a realizar</label>
+                    <select
+                      value={proceso}
+                      onChange={e => setProceso(e.target.value)}
+                      className="w-full border rounded-full px-4 py-2"
+                    >
+                      <option value="">Seleccione un proceso</option>
+                      {procesosDisponibles.map(p => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
-          {!["Iniciar turno", "Volver del descanso", "Fin de mantenimiento"].includes(accion) && (
+          {!["Iniciar sesión", "Volver del descanso", "Fin de mantenimiento"].includes(accion) && (
             <>
               <div>
                 <label className="block font-medium">Código del trabajador</label>
@@ -152,7 +280,7 @@ export default function NuevaMinuta() {
                 />
               </div>
 
-              {["Terminar turno", "Salir a descanso", "Inicio de mantenimiento"].includes(accion) && (
+              {["Finalizar sesión", "Salir a descanso", "Inicio de mantenimiento"].includes(accion) && (
                 <>
                   {/* 2. Cantidad de piezas hechas */}
                   <div>
@@ -219,10 +347,31 @@ export default function NuevaMinuta() {
             type="submit"
             className="mt-4 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 self-start"
           >
-            Enviar minuta
+            {accion === "Iniciar sesión" ? "Iniciar sesión" : "Enviar minuta"}
           </button>
         </form>
       </div>
+      {mostrarModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white p-6 rounded shadow-lg">
+            <p>{modalMensaje}</p>
+            <button
+              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+              onClick={() => {
+                setMostrarModal(false);
+                setModalMensaje("");
+                setCodigoTrabajador("");
+                setTrabajadorData(null);
+                setCodigoMaquina("");
+                setMaquinaData(null);
+                setAccion("");
+              }}
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
