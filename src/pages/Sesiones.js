@@ -2,6 +2,7 @@ import Navbar from "../components/Navbar";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../api";
+import { FaInfoCircle } from "react-icons/fa";
 
 const ITEMS_POR_PAGINA = 8;
 
@@ -23,21 +24,19 @@ export default function Sesiones() {
     function generarCSV() {
         const headers = [
             "Máquina", "Último Trabajador", "Grupo", "Inicio (hora)",
-            "Vel. promedio (día)", "Vel. promedio (sesión)", "Vel. actual",
-            "NPT (Min)", "NPT (Min/día)", "NPT por inactividad (Min)", "% NPT",
+            "Vel. sin NPT", "Vel. con NPT (sesión)", "Vel. sin NPT (10min)",
+            "NPT (Min)", "NPT por inactividad (Min)", "% NPT",
             "Defectos", "Producción total"
         ];
         const rows = mostrar.map(item => [
             item.maquina.nombre,
             item.trabajador.nombre,
             item.grupo,
-            item.estado,
             new Date(item.fechaInicio).toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false }),
             item.avgSpeed.toFixed(2),
             item.avgSpeedSesion.toFixed(2),
             item.velocidadActual.toFixed(2),
             item.nptMin,
-            item.nptMinDia,
             item.nptPorInactividad,
             Number(item.porcentajeNPT).toFixed(2) + "%",
             item.defectos,
@@ -84,16 +83,42 @@ export default function Sesiones() {
                                 <th className="sticky left-0 z-10 bg-gray-100 px-4 py-2 border-r">Máquina</th>
                                 <th className="sticky left-16 z-10 bg-gray-100 px-4 py-2 border-r">Último Trabajador</th>
                                 <th className="px-4 py-2 border-r">Grupo</th>
-                                <th className="px-4 py-2 border-r">Inicio (hora)</th>
-                                <th className="px-4 py-2 border-r">Vel. promedio (día)</th>
-                                <th className="px-4 py-2 border-r">Vel. promedio (sesión)</th>
-                                <th className="px-4 py-2 border-r">Vel. actual</th>
-                                <th className="px-4 py-2 border-r">NPT (Min)</th>
-                                <th className="px-4 py-2 border-r">NPT (Min/día)</th>
-                                <th className="px-4 py-2 border-r">NPT por inactividad (Min)</th>
-                                <th className="px-4 py-2 border-r">% NPT</th>
-                                <th className="px-4 py-2 border-r">Defectos</th>
-                                <th className="px-4 py-2">Producción total</th>
+                                <th className="px-4 py-2 border-r relative group">
+                                  <span className="inline-flex items-center gap-1">Inicio (hora)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Hora local de Bogotá del inicio de la sesión.</span>
+                                </th>
+                                <th className="px-4 py-2 border-r relative group">
+                                  <span className="inline-flex items-center gap-1">Vel. sin NPT <FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Piezas por hora excluyendo NPT (total de piezas de sesión/(minutos de sesión - NPT)  * 60). Se mide en (piezas/hora)</span>
+                                </th>
+                                <th className="px-4 py-2 border-r relative group">
+                                  <span className="inline-flex items-center gap-1">Vel. con NPT (sesión)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Piezas por hora incluyendo tiempos no productivos (total de piezas de sesión / minutos totales de sesión * 60). Se mide en (piezas/hora)</span>
+                                </th>
+                                <th className="px-4 py-2 border-r relative group">
+                                  <span className="inline-flex items-center gap-1">Vel. sin NPT (10min)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Piezas por hora en los últimos 10 minutos excluyendo NPT (piezas contadas en la ventana / (minutos de ventana - NPT de ventana) * 60). Se mide en (piezas/hora)</span>
+                                </th>
+                                <th className="px-4 py-2 border-r relative group">
+                                  <span className="inline-flex items-center gap-1">NPT (Min)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Minutos sin producción: no hubo pedaleo y no se contaron piezas.</span>
+                                </th>
+                                <th className="px-4 py-2 border-r relative group">
+                                  <span className="inline-flex items-center gap-1">NPT por inactividad (Min)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Minutos sin actividad detectada durante periodos mayores a 3 minutos en la sesión.</span>
+                                </th>
+                                <th className="px-4 py-2 border-r relative group">
+                                  <span className="inline-flex items-center gap-1">% NPT<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">(NPT (Min) / minutos totales de la sesión) * 100.</span>
+                                </th>
+                                <th className="px-4 py-2 border-r relative group">
+                                  <span className="inline-flex items-center gap-1">Defectos<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Pedaleadas menos piezas en toda la sesión.</span>
+                                </th>
+                                <th className="px-4 py-2 border-r relative group">
+                                  <span className="inline-flex items-center gap-1">Producción total<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Suma de piezas contadas en la sesión.</span>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -107,7 +132,6 @@ export default function Sesiones() {
                                     <td className="px-4 py-2 border-r">{item.avgSpeedSesion.toFixed(2)}</td>
                                     <td className="px-4 py-2 border-r">{item.velocidadActual.toFixed(2)}</td>
                                     <td className="px-4 py-2 border-r">{item.nptMin}</td>
-                                    <td className="px-4 py-2 border-r">{item.nptMinDia}</td>
                                     <td className="px-4 py-2 border-r">{item.nptPorInactividad}</td>
                                     <td className="px-4 py-2 border-r">{Number(item.porcentajeNPT).toFixed(2)}%</td>
                                     <td className="px-4 py-2 border-r">{item.defectos}</td>
