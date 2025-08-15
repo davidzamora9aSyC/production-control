@@ -94,6 +94,11 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
 
   const handleGuardar = async () => {
     if (!valido || guardando) return;
+    const invalidoPorProduccion = filas.some(f => Number(f.cantidadAsignada || 0) < Number(f.cantidadProducida || 0));
+    if (invalidoPorProduccion) {
+      setError("No se puede asignar una cantidad menor a la ya producida.");
+      return;
+    }
     setGuardando(true);
     setError("");
     try {
@@ -107,7 +112,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
       // actualizar existentes
       await Promise.all(
         filas
-          .filter((f) => f.id && Number(f.cantidadProducida || 0) === 0 && (Number(f.cantidadProducida || 0) - Number(f.cantidadPedaleos || 0)) === 0)
+          .filter((f) => f.id && Number(f.cantidadAsignada || 0) >= Number(f.cantidadProducida || 0))
           .map((f) =>
             fetch(`https://smartindustries.org/sesion-trabajo-pasos/${f.id}`, {
               method: "PUT",
@@ -129,8 +134,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
                 sesionTrabajo: f.sesionTrabajo,
                 pasoOrden: paso.id,
                 cantidadAsignada: Number(f.cantidadAsignada || 0),
-                cantidadProducida: 0,
-                estado: "pendiente",
+                porAdministrador: true,
               }),
             })
           )
@@ -139,6 +143,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
       const recargar = await fetch(`https://smartindustries.org/sesion-trabajo-pasos/por-paso/${paso.id}`);
       const data = recargar.ok ? await recargar.json() : [];
       onSave && onSave(Array.isArray(data) ? data : []);
+      window.location.reload();
     } catch (e) {
       setError("No se pudieron guardar los cambios");
     } finally {
@@ -196,7 +201,15 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
                     <td className="px-4 py-2 border-r">{-Number(f.cantidadProducida || 0) + Number(f.cantidadPedaleos || 0)}</td>
                     <td className="px-4 py-2 border-r">{f.estado}</td>
                     <td className="px-4 py-2 border-r">
-                      <input type="number" value={f.cantidadAsignada} onChange={(e) => actualizar(i, "cantidadAsignada", Number(e.target.value) || 0)} className="w-full border px-2 py-1 rounded" />
+                      <input
+                        type="number"
+                        value={f.cantidadAsignada}
+                        min="0"
+                        onChange={(e) =>
+                          actualizar(i, "cantidadAsignada", Math.max(0, Number(e.target.value) || 0))
+                        }
+                        className="w-full border px-2 py-1 rounded"
+                      />
                     </td>
                     <td className="px-4 py-2 text-center">
                       <button onClick={() => eliminarFila(i)} className="text-red-600 text-lg">✖</button>
