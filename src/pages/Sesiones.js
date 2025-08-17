@@ -123,7 +123,7 @@ export default function Sesiones() {
                         </thead>
                         <tbody>
                             {mostrar.map((item, i) => (
-                                <tr key={i} className="border-b cursor-pointer" onClick={() => navigate(`/maquina/${item.maquina}`)}>
+                                <tr key={i} className="border-b cursor-pointer" onClick={() => navigate(`/sesion/${item.id}`)}>
                                     <td className="sticky left-0 bg-white px-4 py-2 border-r z-0">{item.maquina.nombre}</td>
                                     <td className="sticky left-16 bg-white px-4 py-2 border-r z-0">{item.trabajador.nombre}</td>
                                     <td className="px-4 py-2 border-r">{item.grupo}</td>

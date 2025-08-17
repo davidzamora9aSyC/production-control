@@ -8,18 +8,25 @@ const generarData = () => {
     const ahora = new Date();
     const data = [];
     const descansoInicio = Math.floor(Math.random() * 100) + 10;
+    const mantenimientoInicio = Math.floor(Math.random() * 100) + 10;
 
     for (let i = 119; i >= 0; i--) {
         const minuto = new Date(ahora.getTime() - i * 60000);
         const etiqueta = minuto.getHours().toString().padStart(2, '0') + ':' + minuto.getMinutes().toString().padStart(2, '0');
+        const enDescanso = (i <= descansoInicio && i > descansoInicio - 10) ? 1 : 0;
+        const enMantenimiento = (i <= mantenimientoInicio && i > mantenimientoInicio - 7) ? 1 : 0;
 
         if (i <= descansoInicio && i > descansoInicio - 10) {
             data.push({
                 minuto: etiqueta,
                 usos: 11,
                 piezas: 11,
+                mantenimiento: enMantenimiento,
+                descanso: enDescanso,
                 fillUsos: "#84cc16",
                 fillPiezas: "#84cc16",
+                fillMantenimiento: enMantenimiento ? "#f59e0b" : "#3b82f6",
+                fillDescanso: enDescanso ? "#84cc16" : "#3b82f6",
             });
         } else {
             const usos = Math.floor(Math.random() * 10) + 1;
@@ -28,8 +35,12 @@ const generarData = () => {
                 minuto: etiqueta,
                 usos,
                 piezas: Math.max(0, piezas),
+                mantenimiento: enMantenimiento,
+                descanso: enDescanso,
                 fillUsos: "#3b82f6",
                 fillPiezas: "#3b82f6",
+                fillMantenimiento: enMantenimiento ? "#f59e0b" : "#3b82f6",
+                fillDescanso: enDescanso ? "#84cc16" : "#3b82f6",
             });
         }
     }
@@ -42,6 +53,9 @@ export default function Maquina() {
     const [fechaHora, setFechaHora] = useState(new Date());
     const [data, setData] = useState(generarData());
     const [maquina, setMaquina] = useState(null);
+    const [sesion, setSesion] = useState(null);
+    const [orden, setOrden] = useState(null);
+    const [pasoActivo, setPasoActivo] = useState(null);
     const { id } = useParams();
 
     useEffect(() => {
@@ -49,12 +63,26 @@ export default function Maquina() {
         return () => clearInterval(intervalo);
     }, []);
 
+useEffect(() => {
+    fetch(`https://smartindustries.org/sesiones-trabajo/${id}`)
+        .then(res => res.json())
+        .then(data => {
+            setSesion(data);
+            setMaquina(data.maquina);
+            fetch(`https://smartindustries.org/sesiones-trabajo/${data.id}/orden-produccion`)
+                .then(res => res.json())
+                .then(({ orden, paso }) => {
+                    setOrden(orden);
+                    setPasoActivo(paso);
+                })
+                .catch(err => console.error('Error al obtener orden de producción:', err));
+        })
+        .catch(err => console.error('Error al obtener detalles de la sesión:', err));
+}, [id]);
+
     useEffect(() => {
-        fetch(`${API_BASE_URL}/maquinas/${id}`)
-            .then(res => res.json())
-            .then(setMaquina)
-            .catch(err => console.error('Error al obtener maquina:', err));
-    }, [id]);
+        console.log('Sesión actual:', sesion);
+    }, [sesion]);
 
     useEffect(() => {
         const intervalo = setInterval(() => {
@@ -63,12 +91,18 @@ export default function Maquina() {
                 const etiqueta = nuevoMinuto.getHours().toString().padStart(2, '0') + ':' + nuevoMinuto.getMinutes().toString().padStart(2, '0');
                 const usos = Math.floor(Math.random() * 10) + 1;
                 const piezas = usos - (Math.random() < 0.8 ? 0 : Math.floor(Math.random() * 3));
+                const mantenimiento = Math.random() < 0.03 ? 1 : 0;
+                const descanso = Math.random() < 0.05 ? 1 : 0;
                 const nuevoDato = {
                     minuto: etiqueta,
                     usos,
                     piezas: Math.max(0, piezas),
+                    mantenimiento,
+                    descanso,
                     fillUsos: "#3b82f6",
                     fillPiezas: "#3b82f6",
+                    fillMantenimiento: mantenimiento ? "#f59e0b" : "#3b82f6",
+                    fillDescanso: descanso ? "#84cc16" : "#3b82f6",
                 };
                 return [...prevData.slice(1), nuevoDato];
             });
@@ -80,20 +114,52 @@ export default function Maquina() {
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-semibold">Uso de máquina</h1>
+                <h1 className="text-2xl font-semibold">Información de la sesión</h1>
                 <span>{fechaHora.toLocaleString()}</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="md:col-span-3 bg-white p-4 rounded-lg shadow">
+                    <h2 className="text-lg font-semibold mb-2">Sesión</h2>
+                    <p><strong>Trabajador:</strong> {sesion?.trabajador?.nombre || '-'}</p>
+                    <p><strong>Cantidad producida:</strong> {sesion?.cantidadProducida ?? '-'}</p>
+                    <p><strong>Pedaleos:</strong> {sesion?.cantidadPedaleos ?? '-'}</p>
+                    <p><strong>Fin:</strong> {sesion?.fechaFin ? new Date(sesion.fechaFin).toLocaleString() : '-'}</p>
+                    <p><strong>Inicio:</strong> {sesion?.fechaInicio ? new Date(sesion.fechaInicio).toLocaleString() : '-'}</p>
+                    <p><strong>Estado:</strong> {sesion?.estadoSesion ?? sesion?.estado ?? sesion?.estado_sesion ?? '-'}</p>
+                </div>
                 <div className="bg-white p-4 rounded-lg shadow">
-                    <p><strong>Número de máquina:</strong> {maquina?.id}</p>
-                    <p><strong>Operario actual:</strong> {maquina?.operario || '-'}</p>
+                    <h2 className="text-lg font-semibold mb-2">Máquina</h2>
+                    <p><strong>Nombre de máquina:</strong> {maquina?.nombre}</p>
+                    <p><strong>Código:</strong> {maquina?.codigo}</p>
                     <p><strong>Tipo de máquina:</strong> {maquina?.tipo}</p>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow">
-                    <p><strong>Orden de producción actual:</strong> <a href="#" className="text-blue-600">{maquina?.ordenActual || '-'}</a></p>
-                    <p><strong>Avance:</strong> {maquina?.avance || '-'}%</p>
-                    <p><strong>{maquina?.producidas || 0}/{maquina?.requeridas || 0} piezas</strong></p>
+                    <h2 className="text-lg font-semibold mb-2">Orden actual</h2>
+                    <p><strong>Número:</strong> {orden?.numero || '-'}</p>
+                    <p><strong>Producto:</strong> {orden?.producto || '-'}</p>
+                    <p><strong>Cantidad a producir:</strong> {orden?.cantidadAProducir ?? '-'}</p>
+                    <p><strong>Fecha de orden:</strong> {orden?.fechaOrden ? new Date(orden.fechaOrden).toLocaleDateString() : '-'}</p>
+                    <p><strong>Fecha de vencimiento:</strong> {orden?.fechaVencimiento ? new Date(orden.fechaVencimiento).toLocaleDateString() : '-'}</p>
+                    <p><strong>Estado:</strong> {orden?.estado || '-'}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow">
+                    <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">Paso en producción de la orden actual
+                      <span className="relative group inline-flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-500">
+                          <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm.75 14.5h-1.5v-6h1.5v6zm0-8h-1.5V7h1.5v1.5z"/>
+                        </svg>
+                        <div className="absolute left-5 top-0 z-10 hidden group-hover:block bg-gray-800 text-white text-xs p-2 rounded shadow max-w-xs w-72">
+                          Una orden de producción tiene varios pasos y cada paso puede realizarse entre diferentes trabajadores en diferentes máquinas. La información de "Paso" muestra la cantidad requerida, producida y pedaleos agregados de todos los trabajadores en ese paso; no corresponde a lo producido por una sola sesión. Para ver lo de una sesión específica se usa la asignación "sesión–trabajo–paso".
+                        </div>
+                      </span>
+                    </h2>
+                    <p><strong>Paso que se esta realizando por el trabajador:</strong> {pasoActivo?.nombre || '-'}</p>
+                    <p><strong>Código interno:</strong> {pasoActivo?.codigoInterno || '-'}</p>
+                    <p><strong>Cantidad requerida:</strong> {pasoActivo?.cantidadRequerida ?? '-'}</p>
+                    <p><strong>Cantidad producida:</strong> {pasoActivo?.cantidadProducida ?? '-'}</p>
+                    <p><strong>Pedaleos:</strong> {pasoActivo?.cantidadPedaleos ?? '-'}</p>
+                    <p><strong>Estado:</strong> {pasoActivo?.estado || '-'}</p>
                 </div>
             </div>
 
@@ -125,7 +191,7 @@ export default function Maquina() {
                 </div>
             </div>
 
-            <div className="bg-white p-4 rounded-lg shadow">
+            <div className="bg-white p-4 rounded-lg shadow mb-4">
                 <h2 className="text-lg font-semibold mb-2">Piezas producidas en los últimos 120 minutos</h2>
                 <div className="h-40 w-full bg-white relative overflow-hidden">
                     <ResponsiveContainer width="100%" height="100%">
@@ -153,6 +219,68 @@ export default function Maquina() {
                     <div className="flex items-center gap-2"><span className="w-3 h-3 bg-lime-300 inline-block rounded-full"></span>Operario en descanso</div>
                 </div>
             </div>
+
+                <div className="bg-white p-4 rounded-lg shadow mb-4">
+                    <h2 className="text-lg font-semibold mb-2">Mantenimiento en los últimos 120 minutos</h2>
+                    <div className="h-40 w-full bg-white relative overflow-hidden">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={data}>
+                                <XAxis dataKey="minuto" interval="preserveStartEnd" />
+                                <YAxis domain={[0, 1]} ticks={[0, 1]} allowDecimals={false} />
+                                <Tooltip
+                                    formatter={(v) => (v === 1 ? '1 (sí)' : '0 (no)')}
+                                    labelFormatter={(l) => `Minuto ${l}`}
+                                />
+                                <Bar dataKey="mantenimiento" key="mantenimiento" fill="#3b82f6" barSize={6}>
+                                    {data.map((entry, index) => {
+                                        const isActive = entry.mantenimiento === 1;
+                                        const isFirst = isActive && (!data[index - 1] || data[index - 1].mantenimiento !== 1);
+                                        const isLast = isActive && (!data[index + 1] || data[index + 1].mantenimiento !== 1);
+                                        const radius = isActive
+                                            ? [isFirst ? 5 : 0, isLast ? 5 : 0, isLast ? 5 : 0, isFirst ? 5 : 0]
+                                            : [5, 5, 0, 0];
+                                        return <Cell key={`mantenimiento-${index}`} fill={entry.fillMantenimiento} radius={radius} />;
+                                    })}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                    <div className="flex gap-6 text-sm mt-2">
+                        <div className="flex items-center gap-2"><span className="w-3 h-3 bg-amber-500 inline-block rounded-full"></span>En mantenimiento = 1</div>
+                        <div className="flex items-center gap-2"><span className="w-3 h-3 bg-blue-600 inline-block rounded-full"></span>Operativa = 0</div>
+                    </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-lg shadow mb-4">
+                    <h2 className="text-lg font-semibold mb-2">Descanso del trabajador en los últimos 120 minutos</h2>
+                    <div className="h-40 w-full bg-white relative overflow-hidden">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={data}>
+                                <XAxis dataKey="minuto" interval="preserveStartEnd" />
+                                <YAxis domain={[0, 1]} ticks={[0, 1]} allowDecimals={false} />
+                                <Tooltip
+                                    formatter={(v) => (v === 1 ? '1 (sí)' : '0 (no)')}
+                                    labelFormatter={(l) => `Minuto ${l}`}
+                                />
+                                <Bar dataKey="descanso" key="descanso" fill="#3b82f6" barSize={6}>
+                                    {data.map((entry, index) => {
+                                        const isActive = entry.descanso === 1;
+                                        const isFirst = isActive && (!data[index - 1] || data[index - 1].descanso !== 1);
+                                        const isLast = isActive && (!data[index + 1] || data[index + 1].descanso !== 1);
+                                        const radius = isActive
+                                            ? [isFirst ? 5 : 0, isLast ? 5 : 0, isLast ? 5 : 0, isFirst ? 5 : 0]
+                                            : [5, 5, 0, 0];
+                                        return <Cell key={`descanso-${index}`} fill={entry.fillDescanso} radius={radius} />;
+                                    })}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                    <div className="flex gap-6 text-sm mt-2">
+                        <div className="flex items-center gap-2"><span className="w-3 h-3 bg-lime-300 inline-block rounded-full"></span>En descanso = 1</div>
+                        <div className="flex items-center gap-2"><span className="w-3 h-3 bg-blue-600 inline-block rounded-full"></span>Trabajando = 0</div>
+                    </div>
+                </div>
 
             <p className="text-sm text-gray-500 mt-4">Creada el 29/11/2024 9:00 AM</p>
         </div>

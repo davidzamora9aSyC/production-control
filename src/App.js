@@ -35,7 +35,7 @@ function App() {
           <Route path="/dashboard" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
           <Route path="/alertas" element={<ProtectedLayout><Alertas /></ProtectedLayout>} />
           <Route path="*" element={<ProtectedLayout><h1>Page not found</h1></ProtectedLayout>} />
-          <Route path="/maquina/:id" element={<ProtectedLayout><Maquina /></ProtectedLayout>} />
+          <Route path="/sesion/:id" element={<ProtectedLayout><Maquina /></ProtectedLayout>} />
           <Route path="/sesiones" element={<ProtectedLayout><Sesiones/></ProtectedLayout>} />
           <Route path="/ordenes" element={<ProtectedLayout><OrdenesProduccion/></ProtectedLayout>} />
           <Route path="/ordenes/:id" element={<ProtectedLayout><DetalleOrden /></ProtectedLayout>} />
