@@ -9,6 +9,7 @@ const ITEMS_POR_PAGINA = 8;
 export default function Sesiones() {
     const [pagina, setPagina] = useState(1);
     const [datos, setDatos] = useState([]);
+    const [orden, setOrden] = useState({ columna: null, ascendente: true });
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -23,6 +24,22 @@ export default function Sesiones() {
 
     const totalPaginas = Math.ceil(datos.length / ITEMS_POR_PAGINA);
     const mostrar = datos.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
+
+    function ordenarPor(columna) {
+        const esAscendente = orden.columna === columna ? !orden.ascendente : true;
+        const sorted = [...datos].sort((a, b) => {
+            const aVal = columna.includes('.') ? columna.split('.').reduce((o, k) => o?.[k], a) : a[columna];
+            const bVal = columna.includes('.') ? columna.split('.').reduce((o, k) => o?.[k], b) : b[columna];
+
+            if (!isNaN(parseFloat(aVal)) && !isNaN(parseFloat(bVal))) {
+                return esAscendente ? aVal - bVal : bVal - aVal;
+            } else {
+                return esAscendente ? String(aVal).localeCompare(bVal) : String(bVal).localeCompare(aVal);
+            }
+        });
+        setOrden({ columna, ascendente: esAscendente });
+        setDatos(sorted);
+    }
 
     function generarCSV() {
         const headers = [
@@ -99,62 +116,134 @@ export default function Sesiones() {
                         </colgroup>
                         <thead>
                             <tr className="bg-gray-100 border-b">
-                                <th className="bg-gray-100 p-2 md:p-3 lg:p-4 border-r whitespace-normal">Máquina</th>
-                                <th className="bg-gray-100 p-2 md:p-3 lg:p-4 border-r whitespace-normal">Último Trabajador</th>
-                                <th className="bg-gray-100 p-2 md:p-3 lg:p-4 border-r whitespace-normal">Estado</th>
-                                <th className="p-2 md:p-3 lg:p-4 border-r whitespace-normal">Grupo</th>
-                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
-                                  <div className="relative group inline-block">
-                                    <span className="inline-flex items-center gap-1 whitespace-normal">Inicio (hora)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Hora local de Bogotá del inicio de la sesión.</span>
+                                <th onClick={() => ordenarPor("maquina.nombre")} className="bg-gray-100 p-2 md:p-3 lg:p-4 border-r whitespace-normal">Máquina</th>
+                                <th onClick={() => ordenarPor("trabajador.nombre")} className="bg-gray-100 p-2 md:p-3 lg:p-4 border-r whitespace-normal">Último Trabajador</th>
+                                <th onClick={() => ordenarPor("estadoSesion")} className="bg-gray-100 p-2 md:p-3 lg:p-4 border-r whitespace-normal">Estado</th>
+                                <th onClick={() => ordenarPor("grupo")} className="p-2 md:p-3 lg:p-4 border-r whitespace-normal">Grupo</th>
+                                <th onClick={() => ordenarPor("fechaInicio")} className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative inline-flex items-center gap-1">
+                                    <span>Inicio (hora)</span>
+                                    {orden.columna === "fechaInicio" && (
+                                      <span>{orden.ascendente ? "▲" : "▼"}</span>
+                                    )}
+                                    <span className="relative group inline-block">
+                                      <FaInfoCircle className="text-gray-500" size={14} />
+                                      <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 w-max min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">
+                                        Hora local de Bogotá del inicio de la sesión.
+                                      </span>
+                                    </span>
                                   </div>
                                 </th>
-                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
-                                  <div className="relative group inline-block">
-                                    <span className="inline-flex items-center gap-1 whitespace-normal">Vel. sin NPT <FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Piezas por hora excluyendo NPT (total de piezas de sesión/(minutos de sesión - NPT)  * 60). Se mide en (piezas/hora)</span>
+                                <th onClick={() => ordenarPor("avgSpeed")} className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative inline-flex items-center gap-1">
+                                    <span>Vel. sin NPT</span>
+                                    {orden.columna === "avgSpeed" && (
+                                      <span>{orden.ascendente ? "▲" : "▼"}</span>
+                                    )}
+                                    <span className="relative group inline-block">
+                                      <FaInfoCircle className="text-gray-500" size={14} />
+                                      <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 w-max min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">
+                                        Piezas por hora excluyendo NPT (total de piezas de sesión/(minutos de sesión - NPT)  * 60). Se mide en (piezas/hora)
+                                      </span>
+                                    </span>
                                   </div>
                                 </th>
-                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
-                                  <div className="relative group inline-block">
-                                    <span className="inline-flex items-center gap-1 whitespace-normal">Vel. con NPT (sesión)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Piezas por hora incluyendo tiempos no productivos (total de piezas de sesión / minutos totales de sesión * 60). Se mide en (piezas/hora)</span>
+                                <th onClick={() => ordenarPor("avgSpeedSesion")} className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative inline-flex items-center gap-1">
+                                    <span>Vel. con NPT (sesión)</span>
+                                    {orden.columna === "avgSpeedSesion" && (
+                                      <span>{orden.ascendente ? "▲" : "▼"}</span>
+                                    )}
+                                    <span className="relative group inline-block">
+                                      <FaInfoCircle className="text-gray-500" size={14} />
+                                      <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 w-max min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">
+                                        Piezas por hora incluyendo tiempos no productivos (total de piezas de sesión / minutos totales de sesión * 60). Se mide en (piezas/hora)
+                                      </span>
+                                    </span>
                                   </div>
                                 </th>
-                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
-                                  <div className="relative group inline-block">
-                                    <span className="inline-flex items-center gap-1 whitespace-normal">Vel. sin NPT (10min)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Piezas por hora en los últimos 10 minutos excluyendo NPT (piezas contadas en la ventana / (minutos de ventana - NPT de ventana) * 60). Se mide en (piezas/hora)</span>
+                                <th onClick={() => ordenarPor("velocidadActual")} className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative inline-flex items-center gap-1">
+                                    <span>Vel. sin NPT (10min)</span>
+                                    {orden.columna === "velocidadActual" && (
+                                      <span>{orden.ascendente ? "▲" : "▼"}</span>
+                                    )}
+                                    <span className="relative group inline-block">
+                                      <FaInfoCircle className="text-gray-500" size={14} />
+                                      <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 w-max min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">
+                                        Piezas por hora en los últimos 10 minutos excluyendo NPT (piezas contadas en la ventana / (minutos de ventana - NPT de ventana) * 60). Se mide en (piezas/hora)
+                                      </span>
+                                    </span>
                                   </div>
                                 </th>
-                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
-                                  <div className="relative group inline-block">
-                                    <span className="inline-flex items-center gap-1 whitespace-normal">Tiempo no productivo total (minutos)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Minutos sin producción: no hubo pedaleo y no se contaron piezas.</span>
+                                <th onClick={() => ordenarPor("nptMin")} className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative inline-flex items-center gap-1">
+                                    <span>Tiempo no productivo total (minutos)</span>
+                                    {orden.columna === "nptMin" && (
+                                      <span>{orden.ascendente ? "▲" : "▼"}</span>
+                                    )}
+                                    <span className="relative group inline-block">
+                                      <FaInfoCircle className="text-gray-500" size={14} />
+                                      <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 w-max min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">
+                                        Minutos sin producción: no hubo pedaleo y no se contaron piezas.
+                                      </span>
+                                    </span>
                                   </div>
                                 </th>
-                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
-                                  <div className="relative group inline-block">
-                                    <span className="inline-flex items-center gap-1 whitespace-normal">NPT por inactividad (Min)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Minutos sin actividad detectada durante periodos mayores a 3 minutos en la sesión.</span>
+                                <th onClick={() => ordenarPor("nptPorInactividad")} className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative inline-flex items-center gap-1">
+                                    <span>NPT por inactividad (Min)</span>
+                                    {orden.columna === "nptPorInactividad" && (
+                                      <span>{orden.ascendente ? "▲" : "▼"}</span>
+                                    )}
+                                    <span className="relative group inline-block">
+                                      <FaInfoCircle className="text-gray-500" size={14} />
+                                      <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 w-max min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">
+                                        Minutos sin actividad detectada durante periodos mayores a 3 minutos en la sesión.
+                                      </span>
+                                    </span>
                                   </div>
                                 </th>
-                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
-                                  <div className="relative group inline-block">
-                                    <span className="inline-flex items-center gap-1 whitespace-normal">% NPT<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">(tiempo no productivo total / minutos totales de la sesión) * 100.</span>
+                                <th onClick={() => ordenarPor("porcentajeNPT")} className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative inline-flex items-center gap-1">
+                                    <span>% NPT</span>
+                                    {orden.columna === "porcentajeNPT" && (
+                                      <span>{orden.ascendente ? "▲" : "▼"}</span>
+                                    )}
+                                    <span className="relative group inline-block">
+                                      <FaInfoCircle className="text-gray-500" size={14} />
+                                      <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 w-max min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">
+                                        (tiempo no productivo total / minutos totales de la sesión) * 100.
+                                      </span>
+                                    </span>
                                   </div>
                                 </th>
-                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
-                                  <div className="relative group inline-block">
-                                    <span className="inline-flex items-center gap-1 whitespace-normal">Defectos<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Pedaleadas menos piezas en toda la sesión.</span>
+                                <th onClick={() => ordenarPor("defectos")} className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative inline-flex items-center gap-1">
+                                    <span>Defectos</span>
+                                    {orden.columna === "defectos" && (
+                                      <span>{orden.ascendente ? "▲" : "▼"}</span>
+                                    )}
+                                    <span className="relative group inline-block">
+                                      <FaInfoCircle className="text-gray-500" size={14} />
+                                      <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 w-max min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">
+                                        Pedaleadas menos piezas en toda la sesión.
+                                      </span>
+                                    </span>
                                   </div>
                                 </th>
-                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
-                                  <div className="relative group inline-block">
-                                    <span className="inline-flex items-center gap-1 whitespace-normal">Producción total<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                    <span className="absolute right-0 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Suma de piezas contadas en la sesión.</span>
+                                <th onClick={() => ordenarPor("produccionTotal")} className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative inline-flex items-center gap-1">
+                                    <span>Producción total</span>
+                                    {orden.columna === "produccionTotal" && (
+                                      <span>{orden.ascendente ? "▲" : "▼"}</span>
+                                    )}
+                                    <span className="relative group inline-block">
+                                      <FaInfoCircle className="text-gray-500" size={14} />
+                                      <span className="absolute right-0 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 w-max min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">
+                                        Suma de piezas contadas en la sesión.
+                                      </span>
+                                    </span>
                                   </div>
                                 </th>
                             </tr>

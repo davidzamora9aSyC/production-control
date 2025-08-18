@@ -46,14 +46,10 @@ export default function Maquina() {
                     .then(mantenimientosRaw => {
                         // Los mantenimientos ya vienen en UTC; convertimos sus fechas a hora Colombia
                         const mantenimientos = (mantenimientosRaw || []).map(m => {
-                            // Convertir inicio y fin a Date en Colombia
                             const inicioColombia = new Date(new Date(m.inicio).toLocaleString('en-US', { timeZone: 'America/Bogota' }));
-                            const finColombia = new Date(new Date(m.fin).toLocaleString('en-US', { timeZone: 'America/Bogota' }));
-                            return {
-                                ...m,
-                                inicioColombia,
-                                finColombia
-                            };
+                            const finISO = m.fin ?? new Date().toISOString();
+                            const finColombia = new Date(new Date(finISO).toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+                            return { ...m, inicioColombia, finColombia };
                         });
 
                         // Obtener descansos del trabajador
@@ -64,17 +60,11 @@ export default function Maquina() {
                                 .then(descansosRaw => {
                                     // Convertimos a intervalos en Colombia y ajustamos inicio y fin
                                     const descansos = (descansosRaw || []).map(d => {
-                                        const inicio = new Date(d.inicio);
-                                        const fin = new Date(d.fin);
-                                        const inicioColombia = new Date(inicio.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
-                                        const finColombia = new Date(fin.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
-                                        return {
-                                            ...d,
-                                            inicio: inicioColombia.toISOString(),
-                                            fin: finColombia.toISOString(),
-                                            inicioColombia,
-                                            finColombia
-                                        };
+                                        const inicioRaw = new Date(d.inicio);
+                                        const finRaw = d.fin ? new Date(d.fin) : new Date();
+                                        const inicioColombia = new Date(inicioRaw.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+                                        const finColombia = new Date(finRaw.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+                                        return { ...d, inicio: inicioColombia.toISOString(), fin: finColombia.toISOString(), inicioColombia, finColombia };
                                     });
 
                                     // Continúa con el fetch de registro-minuto
@@ -127,13 +117,13 @@ export default function Maquina() {
                                 .then(registros => {
                                     const dataTransformada = registros.map(r => {
                                         const s = r.minutoInicioLocal ?? r.minutoInicio;
-                                        // Convertir el timestamp del registro a hora Colombia
                                         const d = new Date(new Date(s).toLocaleString('en-US', { timeZone: 'America/Bogota' }));
                                         const etiqueta = d.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false });
-                                        // Verificar si este minuto está dentro de algún intervalo de mantenimiento
+                                        const minutoInicio = d;
+                                        const minutoFin = new Date(d.getTime() + 60000 - 1);
                                         let estaEnMantenimiento = 0;
                                         for (let m of mantenimientos) {
-                                            if (d >= m.inicioColombia && d <= m.finColombia) {
+                                            if (minutoInicio < m.finColombia && minutoFin > m.inicioColombia) {
                                                 estaEnMantenimiento = 1;
                                                 break;
                                             }
