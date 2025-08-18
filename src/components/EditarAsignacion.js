@@ -85,12 +85,15 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
     });
   };
 
-  const total = filas.reduce((s, f) => s + Number(f.cantidadAsignada || 0), 0);
   const requerido = Number(paso?.cantidadRequerida || 0);
-  const valido =
-    total === requerido &&
-    filas.length > 0 &&
-    filas.every((f) => Number(f.cantidadAsignada || 0) > 0);
+
+  const totalAsignadas = filas.reduce((s, f) => f.estado !== 'finalizada' ? s + Number(f.cantidadAsignada || 0) : s, 0);
+  const totalProducidoFinalizadas = filas.reduce((s, f) => f.estado === 'finalizada' ? s + Number(f.cantidadProducida || 0) : s, 0);
+  const totalNoConformeFinalizadas = filas.reduce((s, f) => f.estado === 'finalizada' ? s + Math.max(0, Number(f.cantidadPedaleos || 0) - Number(f.cantidadProducida || 0)) : s, 0);
+
+  const total = totalAsignadas + totalProducidoFinalizadas + totalNoConformeFinalizadas;
+  const filasValidas = filas.filter(f => f.estado !== 'finalizada');
+  const valido = total === requerido && filasValidas.length > 0 && filasValidas.every((f) => Number(f.cantidadAsignada || 0) > 0);
 
   const handleGuardar = async () => {
     if (!valido || guardando) return;
@@ -201,15 +204,19 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
                     <td className="px-4 py-2 border-r">{-Number(f.cantidadProducida || 0) + Number(f.cantidadPedaleos || 0)}</td>
                     <td className="px-4 py-2 border-r">{f.estado}</td>
                     <td className="px-4 py-2 border-r">
-                      <input
-                        type="number"
-                        value={f.cantidadAsignada}
-                        min="0"
-                        onChange={(e) =>
-                          actualizar(i, "cantidadAsignada", Math.max(0, Number(e.target.value) || 0))
-                        }
-                        className="w-full border px-2 py-1 rounded"
-                      />
+                      {f.estado === 'finalizada' ? (
+                        <div className="w-full border px-2 py-1 rounded bg-gray-100 text-center">-</div>
+                      ) : (
+                        <input
+                          type="number"
+                          value={f.cantidadAsignada}
+                          min="0"
+                          onChange={(e) =>
+                            actualizar(i, "cantidadAsignada", Math.max(0, Number(e.target.value) || 0))
+                          }
+                          className="w-full border px-2 py-1 rounded"
+                        />
+                      )}
                     </td>
                     <td className="px-4 py-2 text-center">
                       <button onClick={() => eliminarFila(i)} className="text-red-600 text-lg">✖</button>
@@ -221,7 +228,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
           </table>
         </div>
         <div className="mt-4 text-sm">Total asignado: {total} / {requerido}</div>
-        {!valido && <div className="text-red-600 text-sm mt-1">La suma debe ser igual a la cantidad requerida.</div>}
+        {!valido && <div className="text-red-600 text-sm mt-1">La suma debe ser igual a la cantidad requerida (asignadas + producidas + no conformes).</div>}
         {filas.some((f) => Number(f.cantidadAsignada || 0) === 0) && <div className="text-red-600 text-sm mt-1">No se permiten asignaciones con cantidad 0.</div>}
         <div className="flex justify-end gap-4 mt-6">
           <button onClick={onClose} className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400" disabled={guardando}>Cancelar</button>
@@ -231,6 +238,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
       {indiceSesion !== null && (
         <BuscadorSesion
           endpoint="https://smartindustries.org/sesiones-trabajo/activas"
+          idsSesionesActuales={filas.map(f => f.sesionTrabajo)}
           onSelect={(s) => {
             actualizar(indiceSesion, "maquina", s.maquina);
             actualizar(indiceSesion, "trabajador", s.trabajador);

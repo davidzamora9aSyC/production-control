@@ -51,6 +51,7 @@ export default function DetalleOrden() {
       fetch(`https://smartindustries.org/sesion-trabajo-pasos/por-paso/${p.id}`)
         .then(res => res.json())
         .then(data => {
+          console.log(`Asignaciones crudas del paso ${p.id}:`, data);
           const adaptado = data.map(d => ({
             ...d,
             nombreTrabajador: d.sesionTrabajo?.trabajador?.nombre || "N/A",
@@ -182,8 +183,19 @@ export default function DetalleOrden() {
                   <td className="px-4 py-2 border-r">{a.nombreTrabajador}</td>
                   <td className="px-4 py-2 border-r">{a.cantidadProducida}</td>
                   <td className="px-4 py-2 border-r">{(a.cantidadPedaleos ?? 0) - (a.cantidadProducida ?? 0)}</td>
-                  <td className="px-4 py-2 border-r">{a.cantidadAsignada}</td>
-                  <td className="px-4 py-2">{a.estado}</td>
+                  <td className="px-4 py-2 border-r">
+                    {normalizar(a.estado) === 'finalizada' &&
+                     (a.cantidadProducida ?? 0) + ((a.cantidadPedaleos ?? 0) - (a.cantidadProducida ?? 0)) < (a.cantidadAsignada ?? 0)
+                      ? `${a.cantidadAsignada} - (${(a.cantidadProducida ?? 0) + ((a.cantidadPedaleos ?? 0) - (a.cantidadProducida ?? 0))} completados)`
+                      : a.cantidadAsignada
+                    }
+                  </td>
+                  <td className="px-4 py-2">
+                    {a.estado}
+                    {normalizar(a.estado) === 'finalizada' && (a.cantidadProducida ?? 0) + ((a.cantidadPedaleos ?? 0) - (a.cantidadProducida ?? 0)) < (a.cantidadAsignada ?? 0) && (
+                      <span className="ml-10 inline-block w-3 h-3 bg-red-500 rounded-full"></span>
+                    )}
+                  </td>
                 </tr>
               ))
             ))}
@@ -198,7 +210,19 @@ export default function DetalleOrden() {
                     ), 0)
                 }
               </td>
-              <td className="px-4 py-2 border-r">{totalAsignado}</td>
+              <td className="px-4 py-2 border-r">{
+                datos.reduce((sum, p) =>
+                  sum + (asignaciones[p.id] || []).reduce((a, b) => {
+                    const estadoFinalizado = normalizar(b.estado) === 'finalizada';
+                    const completado = (b.cantidadProducida ?? 0) + ((b.cantidadPedaleos ?? 0) - (b.cantidadProducida ?? 0));
+                    return a + (
+                      estadoFinalizado && completado < (b.cantidadAsignada ?? 0)
+                        ? completado
+                        : (b.cantidadAsignada ?? 0)
+                    );
+                  }, 0)
+                , 0)
+              }</td>
               <td className="px-4 py-2"></td>
             </tr>
           </tbody>

@@ -4,54 +4,11 @@ import { useParams } from "react-router-dom";
 import { API_BASE_URL } from "../api";
 
 
-const generarData = () => {
-    const ahora = new Date();
-    const data = [];
-    const descansoInicio = Math.floor(Math.random() * 100) + 10;
-    const mantenimientoInicio = Math.floor(Math.random() * 100) + 10;
-
-    for (let i = 119; i >= 0; i--) {
-        const minuto = new Date(ahora.getTime() - i * 60000);
-        const etiqueta = minuto.getHours().toString().padStart(2, '0') + ':' + minuto.getMinutes().toString().padStart(2, '0');
-        const enDescanso = (i <= descansoInicio && i > descansoInicio - 10) ? 1 : 0;
-        const enMantenimiento = (i <= mantenimientoInicio && i > mantenimientoInicio - 7) ? 1 : 0;
-
-        if (i <= descansoInicio && i > descansoInicio - 10) {
-            data.push({
-                minuto: etiqueta,
-                usos: 11,
-                piezas: 11,
-                mantenimiento: enMantenimiento,
-                descanso: enDescanso,
-                fillUsos: "#84cc16",
-                fillPiezas: "#84cc16",
-                fillMantenimiento: enMantenimiento ? "#f59e0b" : "#3b82f6",
-                fillDescanso: enDescanso ? "#84cc16" : "#3b82f6",
-            });
-        } else {
-            const usos = Math.floor(Math.random() * 10) + 1;
-            const piezas = usos - (Math.random() < 0.8 ? 0 : Math.floor(Math.random() * 3));
-            data.push({
-                minuto: etiqueta,
-                usos,
-                piezas: Math.max(0, piezas),
-                mantenimiento: enMantenimiento,
-                descanso: enDescanso,
-                fillUsos: "#3b82f6",
-                fillPiezas: "#3b82f6",
-                fillMantenimiento: enMantenimiento ? "#f59e0b" : "#3b82f6",
-                fillDescanso: enDescanso ? "#84cc16" : "#3b82f6",
-            });
-        }
-    }
-
-    return data;
-};
 
 
 export default function Maquina() {
     const [fechaHora, setFechaHora] = useState(new Date());
-    const [data, setData] = useState(generarData());
+    const [data, setData] = useState([]);
     const [maquina, setMaquina] = useState(null);
     const [sesion, setSesion] = useState(null);
     const [orden, setOrden] = useState(null);
@@ -63,53 +20,49 @@ export default function Maquina() {
         return () => clearInterval(intervalo);
     }, []);
 
-useEffect(() => {
-    fetch(`https://smartindustries.org/sesiones-trabajo/${id}`)
-        .then(res => res.json())
-        .then(data => {
-            setSesion(data);
-            setMaquina(data.maquina);
-            fetch(`https://smartindustries.org/sesiones-trabajo/${data.id}/orden-produccion`)
-                .then(res => res.json())
-                .then(({ orden, paso }) => {
-                    setOrden(orden);
-                    setPasoActivo(paso);
-                })
-                .catch(err => console.error('Error al obtener orden de producción:', err));
-        })
-        .catch(err => console.error('Error al obtener detalles de la sesión:', err));
-}, [id]);
+    useEffect(() => {
+        fetch(`https://smartindustries.org/sesiones-trabajo/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                setSesion(data);
+                setMaquina(data.maquina);
+                fetch(`https://smartindustries.org/sesiones-trabajo/${data.id}/orden-produccion`)
+                    .then(res => res.json())
+                    .then(({ orden, paso }) => {
+                        setOrden(orden);
+                        setPasoActivo(paso);
+                    })
+                    .catch(err => console.error('Error al obtener orden de producción:', err));
+                // Nuevo fetch para registro-minuto
+                fetch(`https://smartindustries.org/registro-minuto/sesion/${data.id}/ultimos`)
+                    .then(res => res.json())
+                    .then(registros => {
+                        const dataTransformada = registros.map(r => {
+                            const s = r.minutoInicioLocal ?? r.minutoInicio;
+                            const d = new Date(s);
+                            const etiqueta = d.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false });
+                            return {
+                                ...r,
+                                minuto: etiqueta,
+                                piezasNoConformes: Math.max(0, (r.pedaleadas ?? 0) - (r.piezasContadas ?? r.piezas ?? 0)),
+                                fillPiezasNoConformes: r.fillPiezasNoConformes ?? '#ef4444',
+                                piezas: r.piezasContadas ?? r.piezas ?? 0,
+                                fillPiezas: r.fillPiezas ?? (r.descanso === 1 ? '#84cc16' : '#3b82f6'),
+                                mantenimiento: r.mantenimiento ?? 0,
+                                fillMantenimiento: r.fillMantenimiento ?? '#f59e0b',
+                                descanso: r.descanso ?? 0,
+                                fillDescanso: r.fillDescanso ?? '#d9f99d',
+                            };
+                        });
+                        setData(dataTransformada);
+                    });
+            })
+            .catch(err => console.error('Error al obtener detalles de la sesión:', err));
+    }, [id]);
 
     useEffect(() => {
         console.log('Sesión actual:', sesion);
     }, [sesion]);
-
-    useEffect(() => {
-        const intervalo = setInterval(() => {
-            setData(prevData => {
-                const nuevoMinuto = new Date();
-                const etiqueta = nuevoMinuto.getHours().toString().padStart(2, '0') + ':' + nuevoMinuto.getMinutes().toString().padStart(2, '0');
-                const usos = Math.floor(Math.random() * 10) + 1;
-                const piezas = usos - (Math.random() < 0.8 ? 0 : Math.floor(Math.random() * 3));
-                const mantenimiento = Math.random() < 0.03 ? 1 : 0;
-                const descanso = Math.random() < 0.05 ? 1 : 0;
-                const nuevoDato = {
-                    minuto: etiqueta,
-                    usos,
-                    piezas: Math.max(0, piezas),
-                    mantenimiento,
-                    descanso,
-                    fillUsos: "#3b82f6",
-                    fillPiezas: "#3b82f6",
-                    fillMantenimiento: mantenimiento ? "#f59e0b" : "#3b82f6",
-                    fillDescanso: descanso ? "#84cc16" : "#3b82f6",
-                };
-                return [...prevData.slice(1), nuevoDato];
-            });
-        }, 60000);
-
-        return () => clearInterval(intervalo);
-    }, []);
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
@@ -164,30 +117,32 @@ useEffect(() => {
             </div>
 
             <div className="bg-white p-4 rounded-lg shadow mb-4">
-                <h2 className="text-lg font-semibold mb-2">Usos de máquina en los últimos 120 minutos</h2>
+                <h2 className="text-lg font-semibold mb-2">Piezas no conformes en los últimos 120 minutos</h2>
                 <div className="h-40 w-full bg-white relative overflow-hidden">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={data}>
-                            <XAxis dataKey="minuto" />
-                            <YAxis />
-                            <Tooltip />
-                            <Bar dataKey="usos" key="usos" fill="#3b82f6">
-                                {data.map((entry, index) => {
-                                    const isDescanso = entry.fillUsos === "#84cc16";
-                                    const isFirst = isDescanso && (!data[index - 1] || data[index - 1].fillUsos !== "#84cc16");
-                                    const isLast = isDescanso && (!data[index + 1] || data[index + 1].fillUsos !== "#84cc16");
-                                    const radius = isDescanso
-                                        ? [isFirst ? 5 : 0, isLast ? 5 : 0, isLast ? 5 : 0, isFirst ? 5 : 0]
-                                        : [5, 5, 0, 0];
-                                    return <Cell key={`usos-${index}`} fill={entry.fillUsos} radius={radius} />;
-                                })}
-                            </Bar>
+                          <XAxis dataKey="minuto" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="piezasNoConformes" key="piezasNoConformes" fill="#ef4444">
+                            {data.map((entry, index) => {
+                              return (
+                                <Cell
+                                  key={`pnc-${index}`}
+                                  fill={entry.fillPiezasNoConformes}
+                                  radius={[5, 5, 0, 0]}
+                                />
+                              );
+                            })}
+                          </Bar>
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
                 <div className="flex gap-6 text-sm mt-2">
-                    <div className="flex items-center gap-2"><span className="w-3 h-3 bg-blue-600 inline-block rounded-full"></span>Usos de máquina por minuto</div>
-                    <div className="flex items-center gap-2"><span className="w-3 h-3 bg-lime-300 inline-block rounded-full"></span>Operario en descanso</div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 bg-red-500 inline-block rounded-full"></span>
+                    Piezas no conformes por minuto
+                  </div>
                 </div>
             </div>
 
@@ -216,7 +171,7 @@ useEffect(() => {
                 </div>
                 <div className="flex gap-6 text-sm mt-2">
                     <div className="flex items-center gap-2"><span className="w-3 h-3 bg-blue-600 inline-block rounded-full"></span>Piezas por minuto</div>
-                    <div className="flex items-center gap-2"><span className="w-3 h-3 bg-lime-300 inline-block rounded-full"></span>Operario en descanso</div>
+                   
                 </div>
             </div>
 

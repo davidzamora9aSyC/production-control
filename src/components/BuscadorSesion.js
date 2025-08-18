@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../api";
 
-export default function BuscadorSesion({ onSelect, onClose }) {
+export default function BuscadorSesion({ onSelect, onClose, idsSesionesActuales = [] }) {
   const [sesiones, setSesiones] = useState([]);
   const [filtro, setFiltro] = useState("");
 
@@ -12,10 +12,12 @@ export default function BuscadorSesion({ onSelect, onClose }) {
       .catch(err => console.error("Error al obtener sesiones:", err));
   }, []);
 
-  const filtradas = sesiones.filter(s => {
-    const texto = `${s.maquina?.nombre || ""} ${s.trabajador?.nombre || ""}`.toLowerCase();
-    return texto.includes(filtro.toLowerCase());
-  });
+  const filtradas = sesiones
+    .filter(s => !idsSesionesActuales.includes(s.id))
+    .filter(s => {
+      const texto = `${s.maquina?.nombre || ""} ${s.trabajador?.nombre || ""}`.toLowerCase();
+      return texto.includes(filtro.toLowerCase());
+    });
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
