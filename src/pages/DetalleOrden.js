@@ -247,9 +247,29 @@ export default function DetalleOrden() {
                   </td>
                   <td className="px-4 py-2">
                     {a.estado}
-                    {normalizar(a.estado) === 'finalizada' && (a.cantidadProducida ?? 0) + ((a.cantidadPedaleos ?? 0) - (a.cantidadProducida ?? 0)) < (a.cantidadAsignada ?? 0) && (
-                      <span className="ml-10 inline-block w-3 h-3 bg-red-500 rounded-full"></span>
-                    )}
+                    {(() => {
+                      const estado = normalizar(a.estado);
+                      const completado = (a.cantidadProducida ?? 0) + ((a.cantidadPedaleos ?? 0) - (a.cantidadProducida ?? 0));
+                      const asignado = a.cantidadAsignada ?? 0;
+
+                      if (estado === 'inactivo') {
+                        return <span className="ml-10 inline-block w-3 h-3 bg-gray-400 rounded-full"></span>;
+                      }
+
+                      if (estado === 'finalizada') {
+                        if (completado < asignado) {
+                          return <span className="ml-10 inline-block w-3 h-3 bg-red-500 rounded-full"></span>;
+                        } else {
+                          return <span className="ml-10 inline-block w-3 h-3 bg-gray-400 rounded-full"></span>;
+                        }
+                      }
+
+                      if (estado === 'produccion' || estado === 'en producción') {
+                        return <span className="ml-10 inline-block w-3 h-3 bg-green-500 rounded-full"></span>;
+                      }
+
+                      return null;
+                    })()}
                   </td>
                 </tr>
               ))
