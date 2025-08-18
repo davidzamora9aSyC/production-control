@@ -80,7 +80,8 @@ export default function Personas() {
             .then(url => {
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `identificador_${id}.png`;
+                const trabajador = trabajadores.find(t => t.id === id);
+                a.download = `identificador_${trabajador?.nombre || id}.png`;
                 a.click();
             })
             .catch(err => {
@@ -142,12 +143,42 @@ export default function Personas() {
                                     <td className="px-4 py-2 border-r">{item.estado}</td>
                                     <td className="px-4 py-2">{item.fechaInicio}</td>
                                     <td className="px-4 py-2 border-r">
-                                        <button
-                                            onClick={() => descargarQR(item.id)}
-                                            className="bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700"
-                                        >
-                                            QR
-                                        </button>
+                                        <div className="flex flex-col gap-1">
+                                            <button
+                                              onClick={() => descargarQR(item.id)}
+                                              className="bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700"
+                                            >
+                                              Descargar QR
+                                            </button>
+                                            <button
+                                              onClick={() => {
+                                                QRCode.toDataURL(String(item.id)).then(url => {
+                                                  const ventana = window.open("", "_blank");
+                                                  if (!ventana) return;
+                                                  const imagen = new Image();
+                                                  imagen.src = url;
+                                                  imagen.onload = () => {
+                                                    const trabajador = trabajadores.find(t => t.id === item.id);
+                                                    ventana.document.body.innerHTML = `
+                                                      <div style="text-align:center">
+                                                        <p style="font-size:18px;margin-bottom:8px">${trabajador?.nombre || ''}</p>
+                                                        <img src="${url}" style="width:250px;height:250px" />
+                                                      </div>`;
+                                                    ventana.document.title = `QR Trabajador ${item.id}`;
+                                                    ventana.focus();
+                                                    ventana.print();
+                                                    ventana.close();
+                                                  };
+                                                }).catch(err => {
+                                                  console.error("Error al imprimir QR:", err);
+                                                  setErrorMsg("Error al imprimir QR del trabajador");
+                                                });
+                                              }}
+                                              className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                                            >
+                                              Imprimir QR
+                                            </button>
+                                        </div>
                                     </td>
                                     <td className="px-4 py-2">
                                         <button
@@ -246,7 +277,7 @@ export default function Personas() {
                                 delete limpio.updatedAt;
                                 delete limpio.id;
                                 delete limpio.estado;
-                                console.log("Enviando trabajador editado:", limpio);
+           
                                 fetch(`${API_BASE_URL}/trabajadores/${editar.id}`, {
                                     method: 'PUT',
                                     headers: { 'Content-Type': 'application/json' },

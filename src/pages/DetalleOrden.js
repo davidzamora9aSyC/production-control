@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import EditarAsignacion from "../components/EditarAsignacion";
 import { API_BASE_URL } from "../api";
 import ErrorPopup from "../components/ErrorPopup";
+import QRCode from "qrcode";
 
 const ESTADO_COLORES = {
   pendiente: "bg-gray-400",
@@ -88,6 +89,42 @@ export default function DetalleOrden() {
     }
   };
 
+  const imprimirQRPaso = (id) => {
+    QRCode.toDataURL(String(id))
+      .then(url => {
+        const ventana = window.open("", "_blank");
+        if (!ventana) return;
+
+        const imagen = new Image();
+        imagen.src = url;
+        imagen.onload = () => {
+          ventana.document.body.innerHTML = `<img src="${url}" style="width:250px;height:250px" />`;
+          ventana.document.title = `QR Paso ${id}`;
+          ventana.focus();
+          ventana.print();
+          ventana.close();
+        };
+      })
+      .catch(err => {
+        console.error("Error al imprimir QR:", err);
+        setErrorMsg("Error al imprimir QR del paso");
+      });
+  };
+
+  const descargarQRPaso = (id) => {
+    QRCode.toDataURL(String(id))
+      .then(url => {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `paso_${id}.png`;
+        a.click();
+      })
+      .catch(err => {
+        console.error("Error al generar QR:", err);
+        setErrorMsg("Error al generar QR del paso");
+      });
+  };
+
   return (
     <div className="p-8">
       <div className="flex flex-wrap items-center gap-4 mb-6">
@@ -130,6 +167,8 @@ export default function DetalleOrden() {
                 <th className="px-4 py-2 border-r">Cantidad producida</th>
                 <th className="px-4 py-2 border-r">Cant. producto no conforme</th>
                 <th className="px-4 py-2 border-r">Estado</th>
+                <th className="px-4 py-2 border-r">Descargar QR</th>
+                <th className="px-4 py-2 border-r">Imprimir QR</th>
                 <th className="px-4 py-2">Acciones</th>
               </tr>
             </thead>
@@ -146,6 +185,22 @@ export default function DetalleOrden() {
                       (asignaciones[item.id]?.[0]?.pasoOrden?.estado) ||
                       item.estado
                     }
+                  </td>
+                  <td className="px-4 py-2 border-r">
+                    <button
+                      className="bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700"
+                      onClick={() => descargarQRPaso(item.id)}
+                    >
+                      Descargar
+                    </button>
+                  </td>
+                  <td className="px-4 py-2 border-r">
+                    <button
+                      className="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                      onClick={() => imprimirQRPaso(item.id)}
+                    >
+                      Imprimir
+                    </button>
                   </td>
                   <td className="px-4 py-2">
                     <button
