@@ -33,28 +33,60 @@ export default function Maquina() {
                         setPasoActivo(paso);
                     })
                     .catch(err => console.error('Error al obtener orden de producción:', err));
-                // Nuevo fetch para registro-minuto
-                fetch(`https://smartindustries.org/registro-minuto/sesion/${data.id}/ultimos`)
+
+                // --- NUEVO: obtener intervalos de mantenimiento antes de fetch de registro-minuto ---
+                // Calcular hora actual UTC y 2 horas atrás en UTC
+                const fin = new Date(); // UTC actual
+                const inicio = new Date(fin.getTime() - 2 * 60 * 60 * 1000); // UTC - 2h
+                const inicioUTC = inicio.toISOString();
+                const finUTC = fin.toISOString();
+                // Fetch de mantenimientos
+                fetch(`https://smartindustries.org/estados-maquina/maquina/${data.maquina?.id}?inicio=${inicioUTC}&fin=${finUTC}`)
                     .then(res => res.json())
-                    .then(registros => {
-                        const dataTransformada = registros.map(r => {
-                            const s = r.minutoInicioLocal ?? r.minutoInicio;
-                            const d = new Date(s);
-                            const etiqueta = d.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false });
+                    .then(mantenimientosRaw => {
+                        // Los mantenimientos ya vienen en UTC; convertimos sus fechas a hora Colombia
+                        const mantenimientos = (mantenimientosRaw || []).map(m => {
+                            // Convertir inicio y fin a Date en Colombia
+                            const inicioColombia = new Date(new Date(m.inicio).toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+                            const finColombia = new Date(new Date(m.fin).toLocaleString('en-US', { timeZone: 'America/Bogota' }));
                             return {
-                                ...r,
-                                minuto: etiqueta,
-                                piezasNoConformes: Math.max(0, (r.pedaleadas ?? 0) - (r.piezasContadas ?? r.piezas ?? 0)),
-                                fillPiezasNoConformes: r.fillPiezasNoConformes ?? '#ef4444',
-                                piezas: r.piezasContadas ?? r.piezas ?? 0,
-                                fillPiezas: r.fillPiezas ?? (r.descanso === 1 ? '#84cc16' : '#3b82f6'),
-                                mantenimiento: r.mantenimiento ?? 0,
-                                fillMantenimiento: r.fillMantenimiento ?? '#f59e0b',
-                                descanso: r.descanso ?? 0,
-                                fillDescanso: r.fillDescanso ?? '#d9f99d',
+                                ...m,
+                                inicioColombia,
+                                finColombia
                             };
                         });
-                        setData(dataTransformada);
+                        // Ahora fetch de registro-minuto
+                        fetch(`https://smartindustries.org/registro-minuto/sesion/${data.id}/ultimos`)
+                            .then(res => res.json())
+                            .then(registros => {
+                                const dataTransformada = registros.map(r => {
+                                    const s = r.minutoInicioLocal ?? r.minutoInicio;
+                                    // Convertir el timestamp del registro a hora Colombia
+                                    const d = new Date(new Date(s).toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+                                    const etiqueta = d.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false });
+                                    // Verificar si este minuto está dentro de algún intervalo de mantenimiento
+                                    let estaEnMantenimiento = 0;
+                                    for (let m of mantenimientos) {
+                                        if (d >= m.inicioColombia && d <= m.finColombia) {
+                                            estaEnMantenimiento = 1;
+                                            break;
+                                        }
+                                    }
+                                    return {
+                                        ...r,
+                                        minuto: etiqueta,
+                                        piezasNoConformes: Math.max(0, (r.pedaleadas ?? 0) - (r.piezasContadas ?? r.piezas ?? 0)),
+                                        fillPiezasNoConformes: r.fillPiezasNoConformes ?? '#ef4444',
+                                        piezas: r.piezasContadas ?? r.piezas ?? 0,
+                                        fillPiezas: r.fillPiezas ?? (r.descanso === 1 ? '#84cc16' : '#3b82f6'),
+                                        mantenimiento: estaEnMantenimiento,
+                                        fillMantenimiento: estaEnMantenimiento === 1 ? '#f59e0b' : '#3b82f6',
+                                        descanso: r.descanso ?? 0,
+                                        fillDescanso: r.fillDescanso ?? '#d9f99d',
+                                    };
+                                });
+                                setData(dataTransformada);
+                            });
                     });
             })
             .catch(err => console.error('Error al obtener detalles de la sesión:', err));
@@ -186,7 +218,7 @@ export default function Maquina() {
                                     formatter={(v) => (v === 1 ? '1 (sí)' : '0 (no)')}
                                     labelFormatter={(l) => `Minuto ${l}`}
                                 />
-                                <Bar dataKey="mantenimiento" key="mantenimiento" fill="#3b82f6" barSize={6}>
+                                <Bar dataKey="mantenimiento" key="mantenimiento" fill="#3b82f6" barSize={14}>
                                     {data.map((entry, index) => {
                                         const isActive = entry.mantenimiento === 1;
                                         const isFirst = isActive && (!data[index - 1] || data[index - 1].mantenimiento !== 1);
@@ -217,16 +249,16 @@ export default function Maquina() {
                                     formatter={(v) => (v === 1 ? '1 (sí)' : '0 (no)')}
                                     labelFormatter={(l) => `Minuto ${l}`}
                                 />
-                                <Bar dataKey="descanso" key="descanso" fill="#3b82f6" barSize={6}>
-                                    {data.map((entry, index) => {
-                                        const isActive = entry.descanso === 1;
-                                        const isFirst = isActive && (!data[index - 1] || data[index - 1].descanso !== 1);
-                                        const isLast = isActive && (!data[index + 1] || data[index + 1].descanso !== 1);
-                                        const radius = isActive
-                                            ? [isFirst ? 5 : 0, isLast ? 5 : 0, isLast ? 5 : 0, isFirst ? 5 : 0]
-                                            : [5, 5, 0, 0];
-                                        return <Cell key={`descanso-${index}`} fill={entry.fillDescanso} radius={radius} />;
-                                    })}
+                                <Bar dataKey="descanso" key="descanso" fill="#3b82f6" barSize={14}>
+                                  {data.map((entry, index) => {
+                                    const isActive = entry.descanso === 1;
+                                    const isFirst = isActive && (!data[index - 1] || data[index - 1].descanso !== 1);
+                                    const isLast = isActive && (!data[index + 1] || data[index + 1].descanso !== 1);
+                                    const radius = isActive
+                                      ? [isFirst ? 5 : 0, isLast ? 5 : 0, isLast ? 5 : 0, isFirst ? 5 : 0]
+                                      : [5, 5, 0, 0];
+                                    return <Cell key={`descanso-${index}`} fill={entry.fillDescanso} radius={radius} />;
+                                  })}
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
