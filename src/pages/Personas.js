@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver";
 import { API_BASE_URL } from "../api";
+import QRCode from "qrcode";
 
 const ITEMS_POR_PAGINA = 8;
 
@@ -74,6 +75,20 @@ export default function Personas() {
           });
     };
 
+    const descargarQR = (id) => {
+        QRCode.toDataURL(String(id))
+            .then(url => {
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `identificador_${id}.png`;
+                a.click();
+            })
+            .catch(err => {
+                console.error("Error al generar QR:", err);
+                setErrorMsg("Error al generar identificador");
+            });
+    };
+
     return (
         <div className="bg-white h-screen overflow-hidden animate-slideLeft">
             <div className="px-20 pt-10">
@@ -111,6 +126,7 @@ export default function Personas() {
                                 <th className="px-4 py-2 border-r">Turno</th>
                                 <th className="px-4 py-2 border-r">Estado</th>
                                 <th className="px-4 py-2 border-r">Fecha de inicio</th>
+                                <th className="px-4 py-2 border-r">Identificador</th>
                                 <th className="px-4 py-2">Borrar</th>
                                 <th className="px-4 py-2">Editar</th>
                             </tr>
@@ -125,6 +141,14 @@ export default function Personas() {
                                     <td className="px-4 py-2 border-r">{item.turno}</td>
                                     <td className="px-4 py-2 border-r">{item.estado}</td>
                                     <td className="px-4 py-2">{item.fechaInicio}</td>
+                                    <td className="px-4 py-2 border-r">
+                                        <button
+                                            onClick={() => descargarQR(item.id)}
+                                            className="bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700"
+                                        >
+                                            QR
+                                        </button>
+                                    </td>
                                     <td className="px-4 py-2">
                                         <button
                                             onClick={() => borrar(item.id)}

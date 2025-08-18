@@ -13,6 +13,7 @@ export default function Maquina() {
     const [sesion, setSesion] = useState(null);
     const [orden, setOrden] = useState(null);
     const [pasoActivo, setPasoActivo] = useState(null);
+    const [ordenError, setOrdenError] = useState(null);
     const { id } = useParams();
 
     useEffect(() => {
@@ -26,13 +27,26 @@ export default function Maquina() {
             .then(data => {
                 setSesion(data);
                 setMaquina(data.maquina);
+                // Nueva lógica para obtener orden-produccion y manejar error 404
                 fetch(`https://smartindustries.org/sesiones-trabajo/${data.id}/orden-produccion`)
-                    .then(res => res.json())
-                    .then(({ orden, paso }) => {
-                        setOrden(orden);
-                        setPasoActivo(paso);
-                    })
-                    .catch(err => console.error('Error al obtener orden de producción:', err));
+                  .then(async res => {
+                    const payload = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                      setOrden(null);
+                      setPasoActivo(null);
+                      setOrdenError({ status: res.status, message: payload?.message || 'Error' });
+                      return;
+                    }
+                    setOrden(payload.orden);
+                    setPasoActivo(payload.paso);
+                    setOrdenError(null);
+                  })
+                  .catch(err => {
+                    setOrden(null);
+                    setPasoActivo(null);
+                    setOrdenError({ status: 0, message: 'Error de red' });
+                    console.error('Error al obtener orden de producción:', err);
+                  });
 
                 // --- NUEVO: obtener intervalos de mantenimiento y descansos antes de fetch de registro-minuto ---
                 // Calcular hora actual UTC y 2 horas atrás en UTC
@@ -168,7 +182,15 @@ export default function Maquina() {
                     <p><strong>Pedaleos:</strong> {sesion?.cantidadPedaleos ?? '-'}</p>
                     <p><strong>Fin:</strong> {sesion?.fechaFin ? new Date(sesion.fechaFin).toLocaleString() : '-'}</p>
                     <p><strong>Inicio:</strong> {sesion?.fechaInicio ? new Date(sesion.fechaInicio).toLocaleString() : '-'}</p>
-                    <p><strong>Estado:</strong> {sesion?.estadoSesion ?? sesion?.estado ?? sesion?.estado_sesion ?? '-'}</p>
+                    <p>
+                      <strong>Estado:</strong>{" "}
+                      {(sesion?.estadoSesion ?? sesion?.estado ?? sesion?.estado_sesion) === "produccion"
+                        ? "🟢"
+                        : (sesion?.estadoSesion ?? sesion?.estado ?? sesion?.estado_sesion) === "inactivo"
+                        ? "⚫"
+                        : "🟠"}{" "}
+                      {sesion?.estadoSesion ?? sesion?.estado ?? sesion?.estado_sesion ?? "-"}
+                    </p>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow">
                     <h2 className="text-lg font-semibold mb-2">Máquina</h2>
@@ -176,33 +198,67 @@ export default function Maquina() {
                     <p><strong>Código:</strong> {maquina?.codigo}</p>
                     <p><strong>Tipo de máquina:</strong> {maquina?.tipo}</p>
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow">
-                    <h2 className="text-lg font-semibold mb-2">Orden actual</h2>
-                    <p><strong>Número:</strong> {orden?.numero || '-'}</p>
-                    <p><strong>Producto:</strong> {orden?.producto || '-'}</p>
-                    <p><strong>Cantidad a producir:</strong> {orden?.cantidadAProducir ?? '-'}</p>
-                    <p><strong>Fecha de orden:</strong> {orden?.fechaOrden ? new Date(orden.fechaOrden).toLocaleDateString() : '-'}</p>
-                    <p><strong>Fecha de vencimiento:</strong> {orden?.fechaVencimiento ? new Date(orden.fechaVencimiento).toLocaleDateString() : '-'}</p>
-                    <p><strong>Estado:</strong> {orden?.estado || '-'}</p>
-                </div>
-                <div className="bg-white p-4 rounded-lg shadow">
-                    <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">Paso en producción de la orden actual
-                      <span className="relative group inline-flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-500">
-                          <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm.75 14.5h-1.5v-6h1.5v6zm0-8h-1.5V7h1.5v1.5z"/>
-                        </svg>
-                        <div className="absolute left-5 top-0 z-10 hidden group-hover:block bg-gray-800 text-white text-xs p-2 rounded shadow max-w-xs w-72">
-                          Una orden de producción tiene varios pasos y cada paso puede realizarse entre diferentes trabajadores en diferentes máquinas. La información de "Paso" muestra la cantidad requerida, producida y pedaleos agregados de todos los trabajadores en ese paso; no corresponde a lo producido por una sola sesión. Para ver lo de una sesión específica se usa la asignación "sesión–trabajo–paso".
-                        </div>
-                      </span>
-                    </h2>
-                    <p><strong>Paso que se esta realizando por el trabajador:</strong> {pasoActivo?.nombre || '-'}</p>
-                    <p><strong>Código interno:</strong> {pasoActivo?.codigoInterno || '-'}</p>
-                    <p><strong>Cantidad requerida:</strong> {pasoActivo?.cantidadRequerida ?? '-'}</p>
-                    <p><strong>Cantidad producida:</strong> {pasoActivo?.cantidadProducida ?? '-'}</p>
-                    <p><strong>Pedaleos:</strong> {pasoActivo?.cantidadPedaleos ?? '-'}</p>
-                    <p><strong>Estado:</strong> {pasoActivo?.estado || '-'}</p>
-                </div>
+                {ordenError?.status === 404 ? (
+                  <div className="bg-white p-4 rounded-lg shadow md:col-span-2">
+                    <h2 className="text-lg font-semibold mb-2">Orden de producción</h2>
+                    <p>La sesión no está trabajando en ninguna orden de producción.</p>
+                    <p className="text-sm text-gray-500">{ordenError?.message}</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-white p-4 rounded-lg shadow">
+                      <h2 className="text-lg font-semibold mb-2">Orden actual</h2>
+                      <p><strong>Número:</strong> {orden?.numero || '-'}</p>
+                      <p><strong>Producto:</strong> {orden?.producto || '-'}</p>
+                      <p><strong>Cantidad a producir:</strong> {orden?.cantidadAProducir ?? '-'}</p>
+                      <p><strong>Fecha de orden:</strong> {orden?.fechaOrden ? new Date(orden.fechaOrden).toLocaleDateString() : '-'}</p>
+                      <p><strong>Fecha de vencimiento:</strong> {orden?.fechaVencimiento ? new Date(orden.fechaVencimiento).toLocaleDateString() : '-'}</p>
+                      <p>
+                        <strong>Estado:</strong>{" "}
+                        {orden?.estado === "pendiente"
+                          ? "⚪"
+                          : orden?.estado === "activa"
+                          ? "🟢"
+                          : orden?.estado === "pausado"
+                          ? "🟠"
+                          : orden?.estado === "finalizado"
+                          ? "⚫"
+                          : "🟠"}{" "}
+                        {orden?.estado || "-"}
+                      </p>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow">
+                      <h2 className="text-lg font-semibold mb-2">Paso en producción de la orden actual
+                        <span className="relative group inline-flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-500">
+                            <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm.75 14.5h-1.5v-6h1.5v6zm0-8h-1.5V7h1.5v1.5z"/>
+                          </svg>
+                          <div className="absolute left-5 top-0 z-10 hidden group-hover:block bg-gray-800 text-white text-xs p-2 rounded shadow max-w-xs w-72">
+                            Una orden de producción tiene varios pasos y cada paso puede realizarse entre diferentes trabajadores en diferentes máquinas. La información de "Paso" muestra la cantidad requerida, producida y pedaleos agregados de todos los trabajadores en ese paso; no corresponde a lo producido por una sola sesión. Para ver lo de una sesión específica se usa la asignación "sesión–trabajo–paso".
+                          </div>
+                        </span>
+                      </h2>
+                      <p><strong>Paso que se esta realizando por el trabajador:</strong> {pasoActivo?.nombre || '-'}</p>
+                      <p><strong>Código interno:</strong> {pasoActivo?.codigoInterno || '-'}</p>
+                      <p><strong>Cantidad requerida:</strong> {pasoActivo?.cantidadRequerida ?? '-'}</p>
+                      <p><strong>Cantidad producida:</strong> {pasoActivo?.cantidadProducida ?? '-'}</p>
+                      <p><strong>Pedaleos:</strong> {pasoActivo?.cantidadPedaleos ?? '-'}</p>
+                      <p>
+                        <strong>Estado:</strong>{" "}
+                        {pasoActivo?.estado === "pendiente"
+                          ? "⚪"
+                          : pasoActivo?.estado === "activo"
+                          ? "🟢"
+                          : pasoActivo?.estado === "pausado"
+                          ? "🟠"
+                          : pasoActivo?.estado === "finalizado"
+                          ? "⚫"
+                          : ""}{" "}
+                        {pasoActivo?.estado || "-"}
+                      </p>
+                    </div>
+                  </>
+                )}
             </div>
 
             <div className="bg-white p-4 rounded-lg shadow mb-4">

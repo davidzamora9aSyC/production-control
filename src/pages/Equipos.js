@@ -125,7 +125,7 @@ export default function Equipos() {
                         </thead>
                         <tbody>
                             {mostrar.map((item, i) => (
-                                <tr key={i} className="border-b cursor-pointer" onClick={() => navigate(`/maquina/${item.id}`)}>
+                                <tr key={i} className="border-b cursor-pointer" >
                                     <td
                                         className="px-4 py-2 border-r"
                                         onClick={(e) => e.stopPropagation()}

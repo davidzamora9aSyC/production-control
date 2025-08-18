@@ -11,6 +11,7 @@
     "lucide-react": "^0.475.0",
     "moufront": "file:",
     "moufront3": "file:",
+    "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.4.0",
