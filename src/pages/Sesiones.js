@@ -81,18 +81,18 @@ export default function Sesiones() {
                 </div>
 
                 <div className="overflow-x-auto border rounded-xl shadow-md">
-                    <table className="min-w-max table-auto w-full text-xs md:text-sm lg:text-base">
+                    <table className="min-w-max table-auto w-full text-[11px] md:text-xs lg:text-sm">
                         <colgroup>
                           <col className="w-32 md:w-40 lg:w-48" />
-                          <col className="w-40 md:w-48 lg:w-56" />
+                          <col className="w-40 md:w-48 lg:w-32" />
                           <col className="w-24 md:w-28 lg:w-32" />
                           <col className="w-24 md:w-28 lg:w-32" />
-                          <col className="w-28 md:w-32 lg:w-40" />
-                          <col className="w-28 md:w-32 lg:w-40" />
+                          <col className="w-28 md:w-20 lg:w-32" />
+                          <col className="w-28 md:w-20 lg:w-32" />
                           <col className="w-28 md:w-32 lg:w-40" />
                           <col className="w-28 md:w-32 lg:w-40" />
                           <col className="w-36 md:w-40 lg:w-48" />
-                          <col className="w-36 md:w-40 lg:w-48" />
+                          <col className="w-36 md:w-24 lg:w-32" />
                           <col className="w-24 md:w-28 lg:w-32" />
                           <col className="w-20 md:w-24 lg:w-28" />
                           <col className="w-28 md:w-32 lg:w-40" />
@@ -101,7 +101,7 @@ export default function Sesiones() {
                             <tr className="bg-gray-100 border-b">
                                 <th className="bg-gray-100 p-2 md:p-3 lg:p-4 border-r whitespace-normal">Máquina</th>
                                 <th className="bg-gray-100 p-2 md:p-3 lg:p-4 border-r whitespace-normal">Último Trabajador</th>
-                                <th className="p-2 md:p-3 lg:p-4 border-r whitespace-normal">Estado</th>
+                                <th className="bg-gray-100 p-2 md:p-3 lg:p-4 border-r whitespace-normal">Estado</th>
                                 <th className="p-2 md:p-3 lg:p-4 border-r whitespace-normal">Grupo</th>
                                 <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
                                   <div className="relative group inline-block">
@@ -166,7 +166,7 @@ export default function Sesiones() {
                                 <tr key={i} className="border-b cursor-pointer" onClick={() => navigate(`/sesion/${item.id}`)}>
                                     <td className="bg-white p-2 md:p-3 lg:p-4 border-r">{item.maquina.nombre}</td>
                                     <td className="bg-white p-2 md:p-3 lg:p-4 border-r">{item.trabajador.nombre}</td>
-                                    <td className="p-2 md:p-3 lg:p-4 border-r break-words flex items-center gap-2">
+                                    <td className="p-2 md:p-3 lg:p-4 border-r break-words flex items-center gap-2 bg-white">
                                         {item.estadoSesion}
                                         <span className={`inline-block w-2 h-2 rounded-full ${
                                             item.estadoSesion === 'produccion' ? 'bg-green-500' :
