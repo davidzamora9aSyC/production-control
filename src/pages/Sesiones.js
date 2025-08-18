@@ -81,48 +81,81 @@ export default function Sesiones() {
                 </div>
 
                 <div className="overflow-x-auto border rounded-xl shadow-md">
-                    <table className="min-w-max w-full text-sm table-fixed">
+                    <table className="min-w-max table-auto w-full text-xs md:text-sm lg:text-base">
+                        <colgroup>
+                          <col className="w-32 md:w-40 lg:w-48" />
+                          <col className="w-40 md:w-48 lg:w-56" />
+                          <col className="w-24 md:w-28 lg:w-32" />
+                          <col className="w-24 md:w-28 lg:w-32" />
+                          <col className="w-28 md:w-32 lg:w-40" />
+                          <col className="w-28 md:w-32 lg:w-40" />
+                          <col className="w-28 md:w-32 lg:w-40" />
+                          <col className="w-28 md:w-32 lg:w-40" />
+                          <col className="w-36 md:w-40 lg:w-48" />
+                          <col className="w-36 md:w-40 lg:w-48" />
+                          <col className="w-24 md:w-28 lg:w-32" />
+                          <col className="w-20 md:w-24 lg:w-28" />
+                          <col className="w-28 md:w-32 lg:w-40" />
+                        </colgroup>
                         <thead>
                             <tr className="bg-gray-100 border-b">
-                                <th className="bg-gray-100 px-4 py-2 border-r">Máquina</th>
-                                <th className="bg-gray-100 px-4 py-2 border-r">Último Trabajador</th>
-                                <th className="px-4 py-2 border-r break-words">Estado</th>
-                                <th className="px-4 py-2 border-r break-words">Grupo</th>
-                                <th className="px-4 py-2 border-r relative group max-w-[160px] break-words">
-                                  <span className="inline-flex items-center gap-1">Inicio (hora)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Hora local de Bogotá del inicio de la sesión.</span>
+                                <th className="bg-gray-100 p-2 md:p-3 lg:p-4 border-r whitespace-normal">Máquina</th>
+                                <th className="bg-gray-100 p-2 md:p-3 lg:p-4 border-r whitespace-normal">Último Trabajador</th>
+                                <th className="p-2 md:p-3 lg:p-4 border-r whitespace-normal">Estado</th>
+                                <th className="p-2 md:p-3 lg:p-4 border-r whitespace-normal">Grupo</th>
+                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative group inline-block">
+                                    <span className="inline-flex items-center gap-1 whitespace-normal">Inicio (hora)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Hora local de Bogotá del inicio de la sesión.</span>
+                                  </div>
                                 </th>
-                                <th className="px-4 py-2 border-r relative group max-w-[160px] break-words">
-                                  <span className="inline-flex items-center gap-1">Vel. sin NPT <FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Piezas por hora excluyendo NPT (total de piezas de sesión/(minutos de sesión - NPT)  * 60). Se mide en (piezas/hora)</span>
+                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative group inline-block">
+                                    <span className="inline-flex items-center gap-1 whitespace-normal">Vel. sin NPT <FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Piezas por hora excluyendo NPT (total de piezas de sesión/(minutos de sesión - NPT)  * 60). Se mide en (piezas/hora)</span>
+                                  </div>
                                 </th>
-                                <th className="px-4 py-2 border-r relative group max-w-[160px] break-words">
-                                  <span className="inline-flex items-center gap-1">Vel. con NPT (sesión)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Piezas por hora incluyendo tiempos no productivos (total de piezas de sesión / minutos totales de sesión * 60). Se mide en (piezas/hora)</span>
+                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative group inline-block">
+                                    <span className="inline-flex items-center gap-1 whitespace-normal">Vel. con NPT (sesión)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Piezas por hora incluyendo tiempos no productivos (total de piezas de sesión / minutos totales de sesión * 60). Se mide en (piezas/hora)</span>
+                                  </div>
                                 </th>
-                                <th className="px-4 py-2 border-r relative group max-w-[160px] break-words">
-                                  <span className="inline-flex items-center gap-1">Vel. sin NPT (10min)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Piezas por hora en los últimos 10 minutos excluyendo NPT (piezas contadas en la ventana / (minutos de ventana - NPT de ventana) * 60). Se mide en (piezas/hora)</span>
+                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative group inline-block">
+                                    <span className="inline-flex items-center gap-1 whitespace-normal">Vel. sin NPT (10min)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Piezas por hora en los últimos 10 minutos excluyendo NPT (piezas contadas en la ventana / (minutos de ventana - NPT de ventana) * 60). Se mide en (piezas/hora)</span>
+                                  </div>
                                 </th>
-                                <th className="px-4 py-2 border-r relative group max-w-[160px] break-words">
-                                  <span className="inline-flex items-center gap-1">Tiempo no productivo total (minutos)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Minutos sin producción: no hubo pedaleo y no se contaron piezas.</span>
+                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative group inline-block">
+                                    <span className="inline-flex items-center gap-1 whitespace-normal">Tiempo no productivo total (minutos)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Minutos sin producción: no hubo pedaleo y no se contaron piezas.</span>
+                                  </div>
                                 </th>
-                                <th className="px-4 py-2 border-r relative group max-w-[160px] break-words">
-                                  <span className="inline-flex items-center gap-1">NPT por inactividad (Min)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Minutos sin actividad detectada durante periodos mayores a 3 minutos en la sesión.</span>
+                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative group inline-block">
+                                    <span className="inline-flex items-center gap-1 whitespace-normal">NPT por inactividad (Min)<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Minutos sin actividad detectada durante periodos mayores a 3 minutos en la sesión.</span>
+                                  </div>
                                 </th>
-                                <th className="px-4 py-2 border-r relative group max-w-[160px] break-words">
-                                  <span className="inline-flex items-center gap-1">% NPT<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">(tiempo no productivo total / minutos totales de la sesión) * 100.</span>
+                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative group inline-block">
+                                    <span className="inline-flex items-center gap-1 whitespace-normal">% NPT<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">(tiempo no productivo total / minutos totales de la sesión) * 100.</span>
+                                  </div>
                                 </th>
-                                <th className="px-4 py-2 border-r relative group max-w-[160px] break-words">
-                                  <span className="inline-flex items-center gap-1">Defectos<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Pedaleadas menos piezas en toda la sesión.</span>
+                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative group inline-block">
+                                    <span className="inline-flex items-center gap-1 whitespace-normal">Defectos<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Pedaleadas menos piezas en toda la sesión.</span>
+                                  </div>
                                 </th>
-                                <th className="px-4 py-2 border-r relative group max-w-[160px] break-words">
-                                  <span className="inline-flex items-center gap-1">Producción total<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
-                                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible">Suma de piezas contadas en la sesión.</span>
+                                <th className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">
+                                  <div className="relative group inline-block">
+                                    <span className="inline-flex items-center gap-1 whitespace-normal">Producción total<FaInfoCircle className="inline text-gray-500 ml-1" /></span>
+                                    <span className="absolute right-0 top-full mt-1 hidden group-hover:block rounded bg-gray-800 text-white text-xs px-2 py-1 shadow-lg z-20 !z-50 min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]">Suma de piezas contadas en la sesión.</span>
+                                  </div>
                                 </th>
                             </tr>
                         </thead>
@@ -131,9 +164,9 @@ export default function Sesiones() {
                                 console.log("Item:", item);
                                 return (
                                 <tr key={i} className="border-b cursor-pointer" onClick={() => navigate(`/sesion/${item.id}`)}>
-                                    <td className="bg-white px-4 py-2 border-r">{item.maquina.nombre}</td>
-                                    <td className="bg-white px-4 py-2 border-r">{item.trabajador.nombre}</td>
-                                    <td className="px-4 py-2 border-r break-words flex items-center gap-2">
+                                    <td className="bg-white p-2 md:p-3 lg:p-4 border-r">{item.maquina.nombre}</td>
+                                    <td className="bg-white p-2 md:p-3 lg:p-4 border-r">{item.trabajador.nombre}</td>
+                                    <td className="p-2 md:p-3 lg:p-4 border-r break-words flex items-center gap-2">
                                         {item.estadoSesion}
                                         <span className={`inline-block w-2 h-2 rounded-full ${
                                             item.estadoSesion === 'produccion' ? 'bg-green-500' :
@@ -143,16 +176,16 @@ export default function Sesiones() {
                                             'bg-gray-400'
                                         }`}></span>
                                     </td>
-                                    <td className="px-4 py-2 border-r break-words">{item.grupo}</td>
-                                    <td className="px-4 py-2 border-r max-w-[160px] break-words">{new Date(item.fechaInicio).toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false })}</td>
-                                    <td className="px-4 py-2 border-r max-w-[160px] break-words">{item.avgSpeed.toFixed(2)}</td>
-                                    <td className="px-4 py-2 border-r max-w-[160px] break-words">{item.avgSpeedSesion.toFixed(2)}</td>
-                                    <td className="px-4 py-2 border-r max-w-[160px] break-words">{item.velocidadActual.toFixed(2)}</td>
-                                    <td className="px-4 py-2 border-r max-w-[160px] break-words">{item.nptMin}</td>
-                                    <td className="px-4 py-2 border-r max-w-[160px] break-words">{item.nptPorInactividad}</td>
-                                    <td className="px-4 py-2 border-r max-w-[160px] break-words">{Number(item.porcentajeNPT).toFixed(2)}%</td>
-                                    <td className="px-4 py-2 border-r max-w-[160px] break-words">{item.defectos}</td>
-                                    <td className="px-4 py-2 max-w-[160px] break-words">{item.produccionTotal}</td>
+                                    <td className="p-2 md:p-3 lg:p-4 border-r break-words">{item.grupo}</td>
+                                    <td className="p-2 md:p-3 lg:p-4 border-r break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">{new Date(item.fechaInicio).toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false })}</td>
+                                    <td className="p-2 md:p-3 lg:p-4 border-r break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">{item.avgSpeed.toFixed(2)}</td>
+                                    <td className="p-2 md:p-3 lg:p-4 border-r break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">{item.avgSpeedSesion.toFixed(2)}</td>
+                                    <td className="p-2 md:p-3 lg:p-4 border-r break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">{item.velocidadActual.toFixed(2)}</td>
+                                    <td className="p-2 md:p-3 lg:p-4 border-r break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">{item.nptMin}</td>
+                                    <td className="p-2 md:p-3 lg:p-4 border-r break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">{item.nptPorInactividad}</td>
+                                    <td className="p-2 md:p-3 lg:p-4 border-r break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">{Number(item.porcentajeNPT).toFixed(2)}%</td>
+                                    <td className="p-2 md:p-3 lg:p-4 border-r break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">{item.defectos}</td>
+                                    <td className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">{item.produccionTotal}</td>
                                 </tr>
                                 );
                             })}
