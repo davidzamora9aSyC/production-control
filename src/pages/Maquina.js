@@ -34,7 +34,7 @@ export default function Maquina() {
                     })
                     .catch(err => console.error('Error al obtener orden de producción:', err));
 
-                // --- NUEVO: obtener intervalos de mantenimiento antes de fetch de registro-minuto ---
+                // --- NUEVO: obtener intervalos de mantenimiento y descansos antes de fetch de registro-minuto ---
                 // Calcular hora actual UTC y 2 horas atrás en UTC
                 const fin = new Date(); // UTC actual
                 const inicio = new Date(fin.getTime() - 2 * 60 * 60 * 1000); // UTC - 2h
@@ -55,38 +55,105 @@ export default function Maquina() {
                                 finColombia
                             };
                         });
-                        // Ahora fetch de registro-minuto
-                        fetch(`https://smartindustries.org/registro-minuto/sesion/${data.id}/ultimos`)
-                            .then(res => res.json())
-                            .then(registros => {
-                                const dataTransformada = registros.map(r => {
-                                    const s = r.minutoInicioLocal ?? r.minutoInicio;
-                                    // Convertir el timestamp del registro a hora Colombia
-                                    const d = new Date(new Date(s).toLocaleString('en-US', { timeZone: 'America/Bogota' }));
-                                    const etiqueta = d.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false });
-                                    // Verificar si este minuto está dentro de algún intervalo de mantenimiento
-                                    let estaEnMantenimiento = 0;
-                                    for (let m of mantenimientos) {
-                                        if (d >= m.inicioColombia && d <= m.finColombia) {
-                                            estaEnMantenimiento = 1;
-                                            break;
-                                        }
-                                    }
-                                    return {
-                                        ...r,
-                                        minuto: etiqueta,
-                                        piezasNoConformes: Math.max(0, (r.pedaleadas ?? 0) - (r.piezasContadas ?? r.piezas ?? 0)),
-                                        fillPiezasNoConformes: r.fillPiezasNoConformes ?? '#ef4444',
-                                        piezas: r.piezasContadas ?? r.piezas ?? 0,
-                                        fillPiezas: r.fillPiezas ?? (r.descanso === 1 ? '#84cc16' : '#3b82f6'),
-                                        mantenimiento: estaEnMantenimiento,
-                                        fillMantenimiento: estaEnMantenimiento === 1 ? '#f59e0b' : '#3b82f6',
-                                        descanso: r.descanso ?? 0,
-                                        fillDescanso: r.fillDescanso ?? '#d9f99d',
-                                    };
+
+                        // Obtener descansos del trabajador
+                        const trabajadorId = data.trabajador?.id;
+                        if (trabajadorId) {
+                            fetch(`https://smartindustries.org/estados-trabajador/trabajador/${trabajadorId}?inicio=${inicioUTC}&fin=${finUTC}`)
+                                .then(res => res.json())
+                                .then(descansosRaw => {
+                                    // Convertimos a intervalos en Colombia y ajustamos inicio y fin
+                                    const descansos = (descansosRaw || []).map(d => {
+                                        const inicio = new Date(d.inicio);
+                                        const fin = new Date(d.fin);
+                                        const inicioColombia = new Date(inicio.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+                                        const finColombia = new Date(fin.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+                                        return {
+                                            ...d,
+                                            inicio: inicioColombia.toISOString(),
+                                            fin: finColombia.toISOString(),
+                                            inicioColombia,
+                                            finColombia
+                                        };
+                                    });
+
+                                    // Continúa con el fetch de registro-minuto
+                                    fetch(`https://smartindustries.org/registro-minuto/sesion/${data.id}/ultimos`)
+                                        .then(res => res.json())
+                                        .then(registros => {
+                                            const dataTransformada = registros.map(r => {
+                                                const s = r.minutoInicioLocal ?? r.minutoInicio;
+                                                const d = new Date(new Date(s).toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+                                                const etiqueta = d.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false });
+                                                const minutoInicio = d;
+                                                const minutoFin = new Date(d.getTime() + 60000 - 1);
+
+                                                let estaEnMantenimiento = 0;
+                                                for (let m of mantenimientos) {
+                                                    if (minutoInicio < m.finColombia && minutoFin > m.inicioColombia) {
+                                                        estaEnMantenimiento = 1;
+                                                        break;
+                                                    }
+                                                }
+
+                                                let estaEnDescanso = 0;
+                                                for (let des of descansos) {
+                                                    if (minutoInicio < des.finColombia && minutoFin > des.inicioColombia) {
+                                                        estaEnDescanso = 1;
+                                                        break;
+                                                    }
+                                                }
+
+                                                return {
+                                                    ...r,
+                                                    minuto: etiqueta,
+                                                    piezasNoConformes: Math.max(0, (r.pedaleadas ?? 0) - (r.piezasContadas ?? r.piezas ?? 0)),
+                                                    fillPiezasNoConformes: r.fillPiezasNoConformes ?? '#ef4444',
+                                                    piezas: r.piezasContadas ?? r.piezas ?? 0,
+                                                    fillPiezas: r.fillPiezas ?? (estaEnDescanso === 1 ? '#84cc16' : '#3b82f6'),
+                                                    mantenimiento: estaEnMantenimiento,
+                                                    fillMantenimiento: estaEnMantenimiento === 1 ? '#f59e0b' : '#3b82f6',
+                                                    descanso: estaEnDescanso,
+                                                    fillDescanso: estaEnDescanso === 1 ? '#d9f99d' : '#3b82f6',
+                                                };
+                                            });
+                                            setData(dataTransformada);
+                                        });
                                 });
-                                setData(dataTransformada);
-                            });
+                        } else {
+                            // Si no hay trabajador, seguimos con el fetch de registro-minuto como antes, sin descansos
+                            fetch(`https://smartindustries.org/registro-minuto/sesion/${data.id}/ultimos`)
+                                .then(res => res.json())
+                                .then(registros => {
+                                    const dataTransformada = registros.map(r => {
+                                        const s = r.minutoInicioLocal ?? r.minutoInicio;
+                                        // Convertir el timestamp del registro a hora Colombia
+                                        const d = new Date(new Date(s).toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+                                        const etiqueta = d.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false });
+                                        // Verificar si este minuto está dentro de algún intervalo de mantenimiento
+                                        let estaEnMantenimiento = 0;
+                                        for (let m of mantenimientos) {
+                                            if (d >= m.inicioColombia && d <= m.finColombia) {
+                                                estaEnMantenimiento = 1;
+                                                break;
+                                            }
+                                        }
+                                        return {
+                                            ...r,
+                                            minuto: etiqueta,
+                                            piezasNoConformes: Math.max(0, (r.pedaleadas ?? 0) - (r.piezasContadas ?? r.piezas ?? 0)),
+                                            fillPiezasNoConformes: r.fillPiezasNoConformes ?? '#ef4444',
+                                            piezas: r.piezasContadas ?? r.piezas ?? 0,
+                                            fillPiezas: r.fillPiezas ?? (r.descanso === 1 ? '#84cc16' : '#3b82f6'),
+                                            mantenimiento: estaEnMantenimiento,
+                                            fillMantenimiento: estaEnMantenimiento === 1 ? '#f59e0b' : '#3b82f6',
+                                            descanso: r.descanso ?? 0,
+                                            fillDescanso: r.fillDescanso ?? '#d9f99d',
+                                        };
+                                    });
+                                    setData(dataTransformada);
+                                });
+                        }
                     });
             })
             .catch(err => console.error('Error al obtener detalles de la sesión:', err));
