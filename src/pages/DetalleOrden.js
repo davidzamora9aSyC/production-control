@@ -37,32 +37,22 @@ export default function DetalleOrden() {
   const { id } = useParams();
 
   useEffect(() => {
-    fetch(`https://smartindustries.org/ordenes/${id}`)
+    fetch(`https://smartindustries.org/ordenes/${id}/detalle`)
       .then(res => res.json())
-      .then(setOrden)
-      .catch(err => console.error("Error al obtener orden:", err));
-    fetch(`https://smartindustries.org/pasos/orden/${id}`)
-      .then(res => res.json())
-      .then(setPasos)
-      .catch(err => console.error("Error al obtener pasos:", err));
-  }, [id]);
-
-  useEffect(() => {
-    pasos.forEach(p => {
-      fetch(`https://smartindustries.org/sesion-trabajo-pasos/por-paso/${p.id}`)
-        .then(res => res.json())
-        .then(data => {
-          console.log(`Asignaciones crudas del paso ${p.id}:`, data);
-          const adaptado = data.map(d => ({
+      .then(data => {
+        setOrden(data);
+        setPasos(data.pasos || []);
+        data.pasos.forEach(paso => {
+          const adaptado = (paso.sesiones || []).map(d => ({
             ...d,
             nombreTrabajador: d.sesionTrabajo?.trabajador?.nombre || "N/A",
             nombreMaquina: d.sesionTrabajo?.maquina?.nombre || "N/A"
           }));
-          setAsignaciones(a => ({ ...a, [p.id]: adaptado }));
-        })
-        .catch(err => console.error('Error al obtener asignaciones:', err));
-    });
-  }, [pasos]);
+          setAsignaciones(prev => ({ ...prev, [paso.id]: adaptado }));
+        });
+      })
+      .catch(err => console.error("Error al obtener detalle de orden:", err));
+  }, [id]);
 
   const procesos = Array.from(new Set(pasos.map(p => p.nombre)));
   const procesoActual = procesos[procesoIndex] || "";
