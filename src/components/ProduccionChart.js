@@ -1,6 +1,7 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { useState, useEffect, useMemo } from "react";
-import { ExpandButton } from "./ExpandableCard";
+import { useState, useEffect, useMemo, useContext } from "react";
+import { ExpandButton, ExpandContext } from "./ExpandableCard";
+
 
 const API_BASE = "https://smartindustries.org";
 
@@ -11,6 +12,7 @@ export default function ProduccionChart() {
     const [raw, setRaw] = useState([]);
     const [loading, setLoading] = useState(false);
     const [areas, setAreas] = useState([]);
+    const { expanded } = useContext(ExpandContext);
 
     useEffect(() => {
         const loadAreas = async () => {
@@ -83,7 +85,7 @@ export default function ProduccionChart() {
         : ["Ultimos 30 días", "Mes actual"];
 
     return (
-        <div className="w-full max-h-[40%] mb-16">
+        <div className={`w-full ${expanded ? "h-full flex flex-col" : "max-h-[40%] mb-16"}`}>
             <div className="flex justify-between items-center mb-6 ">
                 <div>
                     <span className="font-semibold text-2xl mr-4 ">Producción por</span>
@@ -109,8 +111,8 @@ export default function ProduccionChart() {
                 </div>
             </div>
 
-            <div className="border rounded-2xl shadow-md pl-1 pr-5 pb-4 pt-6">
-                <ResponsiveContainer width="100%" height={223}>
+            <div className={`border rounded-2xl shadow-md pl-1 pr-5 pb-4 pt-6 ${expanded ? "flex-1 min-h-0" : ""}`}>
+                <ResponsiveContainer width="100%" height={expanded ? "100%" : 223}>
                     <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" />
                         {isDiario ? (

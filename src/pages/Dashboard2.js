@@ -20,7 +20,6 @@ function GeneralView() {
         <div className="font-semibold text-4xl">Resumen general</div>
         <div className="text-sm text-gray-600">{fechaHora.toLocaleString()}</div>
       </div>
-
       <ExpandableCard>
         <ProduccionChart />
       </ExpandableCard>

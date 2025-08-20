@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { ExpandButton } from "./ExpandableCard";
+
+import { ExpandButton, ExpandContext } from "./ExpandableCard";
+
 
 const alertas = [
     { tipo: "Máquina detenida", entidad: "Troqueladora", fecha: "29/11/2024", hora: "9:00 AM" },
@@ -22,9 +24,10 @@ export default function Alertas() {
     const [desde, setDesde] = useState("2024-01-01");
     const [hasta, setHasta] = useState("2024-12-01");
     const navigate = useNavigate();
+    const { expanded } = useContext(ExpandContext);
 
     return (
-        <div>
+        <div className={expanded ? "h-full flex flex-col" : ""}>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-semibold">Alertas</h2>
                 <div className="flex gap-4 text-base items-center">
@@ -33,7 +36,7 @@ export default function Alertas() {
                     <ExpandButton />
                 </div>
             </div>
-            <section className="border rounded-xl p-4 bg-white h-[320px] shadow-md flex flex-col relative">
+            <section className={`border rounded-xl p-4 bg-white shadow-md flex flex-col relative ${expanded ? "flex-1 min-h-0" : "h-[320px]"}`}>
                 <div className="absolute top-1 right-1">
                     <button
                         onClick={() => navigate("/alertas")}

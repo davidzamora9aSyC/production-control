@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useRef, useState } from "react";
 
-const ExpandContext = createContext({ expanded: false });
+export const ExpandContext = createContext({ expanded: false });
 
 export function ExpandButton() {
 
@@ -73,7 +73,8 @@ export default function ExpandableCard({ children, expandedHeight = "85vh" }) {
             onClick={close}
           />
           <div
-            className="bg-white p-4 rounded-lg shadow-lg overflow-auto absolute transition-all duration-300"
+
+            className="bg-white p-4 rounded-lg shadow-lg overflow-hidden absolute transition-all duration-300 flex flex-col"
             style={style}
           >
 
@@ -81,7 +82,6 @@ export default function ExpandableCard({ children, expandedHeight = "85vh" }) {
           </div>
         </div>
       )}
-
     </ExpandContext.Provider>
   );
 }
