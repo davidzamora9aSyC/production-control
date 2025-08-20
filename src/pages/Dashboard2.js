@@ -21,18 +21,15 @@ function GeneralView() {
         <div className="text-sm text-gray-600">{fechaHora.toLocaleString()}</div>
       </div>
 
-
-
-
       <ExpandableCard>
         <ProduccionChart />
       </ExpandableCard>
       <EstadisticasPanel />
 
-      <ExpandableCard expandedHeight="95vh">
+      <ExpandableCard>
         <ComponenteControl />
       </ExpandableCard>
-      <ExpandableCard expandedHeight="95vh">
+      <ExpandableCard>
         <AlertasComponent />
       </ExpandableCard>
 

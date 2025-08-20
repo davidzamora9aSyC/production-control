@@ -4,20 +4,25 @@ import { createContext, useContext, useRef, useState } from "react";
 const ExpandContext = createContext({ expanded: false });
 
 export function ExpandButton() {
-  const { open, expanded } = useContext(ExpandContext);
-  if (expanded) return null;
+
+  const { open, close, expanded } = useContext(ExpandContext);
+  const handle = expanded ? close : open;
+  const icon = expanded ? "✕" : "⛶";
+  const label = expanded ? "Cerrar" : "Expandir";
   return (
     <button
-      onClick={open}
+      onClick={handle}
       className="ml-2 bg-white border rounded-full shadow p-1 text-sm"
-      aria-label="Expandir"
+      aria-label={label}
     >
-      ⛶
+      {icon}
+
     </button>
   );
 }
 
-export default function ExpandableCard({ children, expandedHeight = "90vh" }) {
+export default function ExpandableCard({ children, expandedHeight = "85vh" }) {
+
   const [expanded, setExpanded] = useState(false);
   const [style, setStyle] = useState({});
   const cardRef = useRef(null);
@@ -32,8 +37,12 @@ export default function ExpandableCard({ children, expandedHeight = "90vh" }) {
     });
     setExpanded(true);
     requestAnimationFrame(() => {
+
+      const numericHeight = parseFloat(expandedHeight);
+      const top = (100 - numericHeight) / 2;
       setStyle({
-        top: "5vh",
+        top: `${top}vh`,
+
         left: "5vw",
         width: "90vw",
         height: expandedHeight,
@@ -67,14 +76,7 @@ export default function ExpandableCard({ children, expandedHeight = "90vh" }) {
             className="bg-white p-4 rounded-lg shadow-lg overflow-auto absolute transition-all duration-300"
             style={style}
           >
-            <button
-              onClick={close}
 
-              className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
-              aria-label="Cerrar"
-            >
-              ✕
-            </button>
             {children}
           </div>
         </div>
@@ -83,5 +85,4 @@ export default function ExpandableCard({ children, expandedHeight = "90vh" }) {
     </ExpandContext.Provider>
   );
 }
-
 
