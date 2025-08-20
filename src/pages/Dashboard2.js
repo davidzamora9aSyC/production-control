@@ -3,7 +3,9 @@ import ProduccionChart from "../components/ProduccionChart";
 import ComponenteControl from "../components/ComponenteControl";
 import EstadisticasPanel from "../components/EstadisticasPanel";
 import AlertasComponent from "../components/AlertasComponent";
+
 import ExpandableCard from "../components/ExpandableCard";
+
 
 function GeneralView() {
   const [fechaHora, setFechaHora] = useState(new Date());
@@ -19,6 +21,7 @@ function GeneralView() {
         <div className="font-semibold text-4xl">Resumen general</div>
         <div className="text-sm text-gray-600">{fechaHora.toLocaleString()}</div>
       </div>
+
       <ExpandableCard>
         <ProduccionChart />
       </ExpandableCard>
@@ -29,6 +32,7 @@ function GeneralView() {
       <ExpandableCard>
         <AlertasComponent />
       </ExpandableCard>
+
     </div>
   );
 }
