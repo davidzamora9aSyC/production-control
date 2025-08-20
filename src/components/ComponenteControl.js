@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ExpandButton } from "./ExpandableCard";
 
 const Gauge = ({ value, label }) => {
   const [angle, setAngle] = useState(-90);
@@ -141,6 +142,7 @@ export default function ComponenteControl() {
         <div className="flex items-center gap-4 text-base">
           <label>De <input type="date" className="ml-1 border px-2 py-1 rounded text-black" /></label>
           <label>A <input type="date" className="ml-1 border px-2 py-1 rounded text-black" /></label>
+          <ExpandButton />
         </div>
       </div>
 

@@ -3,7 +3,6 @@ import ProduccionChart from "../components/ProduccionChart";
 import ComponenteControl from "../components/ComponenteControl";
 import EstadisticasPanel from "../components/EstadisticasPanel";
 import AlertasComponent from "../components/AlertasComponent";
-
 import ExpandableCard from "../components/ExpandableCard";
 
 
@@ -22,14 +21,18 @@ function GeneralView() {
         <div className="text-sm text-gray-600">{fechaHora.toLocaleString()}</div>
       </div>
 
+
+
+
       <ExpandableCard>
         <ProduccionChart />
       </ExpandableCard>
       <EstadisticasPanel />
-      <ExpandableCard>
+
+      <ExpandableCard expandedHeight="95vh">
         <ComponenteControl />
       </ExpandableCard>
-      <ExpandableCard>
+      <ExpandableCard expandedHeight="95vh">
         <AlertasComponent />
       </ExpandableCard>
 

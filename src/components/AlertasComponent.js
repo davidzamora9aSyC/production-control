@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ExpandButton } from "./ExpandableCard";
 
 const alertas = [
     { tipo: "Máquina detenida", entidad: "Troqueladora", fecha: "29/11/2024", hora: "9:00 AM" },
@@ -29,6 +30,7 @@ export default function Alertas() {
                 <div className="flex gap-4 text-base items-center">
                     <label>De <input type="date" value={desde} onChange={e => setDesde(e.target.value)} className="ml-1 border px-2 py-1 rounded" /></label>
                     <label>A <input type="date" value={hasta} onChange={e => setHasta(e.target.value)} className="ml-1 border px-2 py-1 rounded" /></label>
+                    <ExpandButton />
                 </div>
             </div>
             <section className="border rounded-xl p-4 bg-white h-[320px] shadow-md flex flex-col relative">
