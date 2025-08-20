@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
+import { ExpandButton, ExpandContext } from "./ExpandableCard";
 
 const Gauge = ({ value, label }) => {
   const [angle, setAngle] = useState(-90);
@@ -89,6 +90,7 @@ const Area = ({ nombre, trabajadores }) => {
 
 
 export default function ComponenteControl() {
+  const { expanded } = useContext(ExpandContext);
   const areas = [
     {
       nombre: "Troquelado",
@@ -135,16 +137,17 @@ export default function ComponenteControl() {
   ];
 
   return (
-    <div className="w-full ">
+    <div className={`w-full ${expanded ? "h-full flex flex-col" : ""}`}> 
       <div className="flex justify-between items-center pb-8  text-md ">
         <h2 className="text-2xl font-semibold">Control</h2>
         <div className="flex items-center gap-4 text-base">
           <label>De <input type="date" className="ml-1 border px-2 py-1 rounded text-black" /></label>
           <label>A <input type="date" className="ml-1 border px-2 py-1 rounded text-black" /></label>
+          <ExpandButton />
         </div>
       </div>
 
-      <div className="border rounded-2xl shadow-md p-4 w-full - max-h-[320px] overflow-y-scroll">
+      <div className={`border rounded-2xl shadow-md p-4 w-full ${expanded ? "flex-1 overflow-y-auto" : "max-h-[320px] overflow-y-scroll"}`}>
         <div className="mb-6">
           <h3 className="text-xl mb-4 font-semibold">Estadísticas globales</h3>
           <div className="grid grid-cols-3 gap-4">
