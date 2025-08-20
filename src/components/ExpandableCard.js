@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useRef, useState } from "react";
 
 const ExpandContext = createContext({ expanded: false });
@@ -68,6 +69,7 @@ export default function ExpandableCard({ children, expandedHeight = "90vh" }) {
           >
             <button
               onClick={close}
+
               className="absolute top-2 right-2 bg-gray-200 rounded-full p-1"
               aria-label="Cerrar"
             >
@@ -77,7 +79,9 @@ export default function ExpandableCard({ children, expandedHeight = "90vh" }) {
           </div>
         </div>
       )}
+
     </ExpandContext.Provider>
   );
 }
+
 
