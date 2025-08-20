@@ -1,5 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useState, useEffect, useMemo } from "react";
+import { ExpandButton } from "./ExpandableCard";
 
 const API_BASE = "https://smartindustries.org";
 
@@ -104,6 +105,7 @@ export default function ProduccionChart() {
                             <option key={op}>{op}</option>
                         ))}
                     </select>
+                    <ExpandButton />
                 </div>
             </div>
 
