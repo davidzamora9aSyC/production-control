@@ -1,8 +1,10 @@
+
 import { createContext, useContext, useRef, useState } from "react";
 
 export const ExpandContext = createContext({ expanded: false });
 
 export function ExpandButton() {
+
   const { open, close, expanded } = useContext(ExpandContext);
   const handle = expanded ? close : open;
   const icon = expanded ? "✕" : "⛶";
@@ -14,11 +16,13 @@ export function ExpandButton() {
       aria-label={label}
     >
       {icon}
+
     </button>
   );
 }
 
 export default function ExpandableCard({ children, expandedHeight = "85vh" }) {
+
   const [expanded, setExpanded] = useState(false);
   const [style, setStyle] = useState({});
   const cardRef = useRef(null);
@@ -33,10 +37,12 @@ export default function ExpandableCard({ children, expandedHeight = "85vh" }) {
     });
     setExpanded(true);
     requestAnimationFrame(() => {
+
       const numericHeight = parseFloat(expandedHeight);
       const top = (100 - numericHeight) / 2;
       setStyle({
         top: `${top}vh`,
+
         left: "5vw",
         width: "90vw",
         height: expandedHeight,
@@ -67,9 +73,11 @@ export default function ExpandableCard({ children, expandedHeight = "85vh" }) {
             onClick={close}
           />
           <div
+
             className="bg-white p-4 rounded-lg shadow-lg overflow-hidden absolute transition-all duration-300 flex flex-col"
             style={style}
           >
+
             {children}
           </div>
         </div>

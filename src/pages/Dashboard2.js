@@ -5,6 +5,7 @@ import EstadisticasPanel from "../components/EstadisticasPanel";
 import AlertasComponent from "../components/AlertasComponent";
 import ExpandableCard from "../components/ExpandableCard";
 
+
 function GeneralView() {
   const [fechaHora, setFechaHora] = useState(new Date());
 
@@ -23,12 +24,14 @@ function GeneralView() {
         <ProduccionChart />
       </ExpandableCard>
       <EstadisticasPanel />
+
       <ExpandableCard>
         <ComponenteControl />
       </ExpandableCard>
       <ExpandableCard>
         <AlertasComponent />
       </ExpandableCard>
+
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useState, useEffect, useMemo, useContext } from "react";
 import { ExpandButton, ExpandContext } from "./ExpandableCard";
 
+
 const API_BASE = "https://smartindustries.org";
 
 export default function ProduccionChart() {

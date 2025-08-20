@@ -1,5 +1,7 @@
+
 import { useEffect, useState, useContext } from "react";
 import { ExpandButton, ExpandContext } from "./ExpandableCard";
+
 
 const Gauge = ({ value, label }) => {
   const [angle, setAngle] = useState(-90);
