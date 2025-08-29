@@ -82,8 +82,8 @@ export default function Maquina() {
                                         return { ...d, inicio: inicioColombia.toISOString(), fin: finColombia.toISOString(), inicioColombia, finColombia };
                                     });
 
-                                    // Continúa con el fetch de registro-minuto
-                                    fetch(`https://smartindustries.org/registro-minuto/sesion/${data.id}/ultimos`)
+                                    // Continúa con el fetch de registro-minuto usando el id de la URL
+                                    fetch(`https://smartindustries.org/registro-minuto/sesion/${id}/ultimos`)
                                         .then(res => res.json())
                                         .then(registros => {
                                             const dataTransformada = registros.map(r => {
@@ -127,7 +127,8 @@ export default function Maquina() {
                                 });
                         } else {
                             // Si no hay trabajador, seguimos con el fetch de registro-minuto como antes, sin descansos
-                            fetch(`https://smartindustries.org/registro-minuto/sesion/${data.id}/ultimos`)
+                            // Usar el id de la URL
+                            fetch(`https://smartindustries.org/registro-minuto/sesion/${id}/ultimos`)
                                 .then(res => res.json())
                                 .then(registros => {
                                     const dataTransformada = registros.map(r => {
