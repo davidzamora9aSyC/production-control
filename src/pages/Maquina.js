@@ -119,7 +119,7 @@ export default function Maquina() {
                                                     mantenimiento: estaEnMantenimiento,
                                                     fillMantenimiento: estaEnMantenimiento === 1 ? '#f59e0b' : '#3b82f6',
                                                     descanso: estaEnDescanso,
-                                                    fillDescanso: estaEnDescanso === 1 ? '#d9f99d' : '#3b82f6',
+                                                    fillDescanso: estaEnDescanso === 1 ? '#84cc16' : '#3b82f6',
                                                 };
                                             });
                                             setData(dataTransformada);
@@ -154,7 +154,7 @@ export default function Maquina() {
                                             mantenimiento: estaEnMantenimiento,
                                             fillMantenimiento: estaEnMantenimiento === 1 ? '#f59e0b' : '#3b82f6',
                                             descanso: r.descanso ?? 0,
-                                            fillDescanso: r.fillDescanso ?? '#d9f99d',
+                                            fillDescanso: (r.descanso === 1 ? '#84cc16' : '#3b82f6'),
                                         };
                                     });
                                     setData(dataTransformada);
