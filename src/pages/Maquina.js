@@ -28,7 +28,8 @@ export default function Maquina() {
                 setSesion(data);
                 setMaquina(data.maquina);
                 // Nueva lógica para obtener orden-produccion y manejar error 404
-                fetch(`https://smartindustries.org/sesiones-trabajo/${data.id}/orden-produccion`)
+                // Se debe usar el id de la URL (useParams), no el id del payload
+                fetch(`https://smartindustries.org/sesiones-trabajo/${id}/orden-produccion`)
                   .then(async res => {
                     const payload = await res.json().catch(() => ({}));
                     if (!res.ok) {
