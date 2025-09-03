@@ -30,6 +30,9 @@ function GeneralView() {
       <ExpandableCard>
         <IndicadorChart metricKey="porcentajeNPT" title="% NPT por" />
       </ExpandableCard>
+      <ExpandableCard>
+        <IndicadorChart metricKey="avgSpeed" title="Velocidad promedio por" isPercent={false} />
+      </ExpandableCard>
       <EstadisticasPanel />
       <ExpandableCard>
         <ComponenteControl />

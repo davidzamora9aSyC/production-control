@@ -4,7 +4,7 @@ import { ExpandButton, ExpandContext } from "./ExpandableCard";
 
 const API_BASE = "https://smartindustries.org";
 
-export default function IndicadorChart({ metricKey, title }) {
+export default function IndicadorChart({ metricKey, title, isPercent = true }) {
   const [proceso, setProceso] = useState("");
   const [periodo, setPeriodo] = useState("Meses");
   const [rango, setRango] = useState("Ultimos 12 meses");
@@ -100,6 +100,9 @@ export default function IndicadorChart({ metricKey, title }) {
     return [min, max];
   }, [data]);
 
+  const formatTick = (v) => isPercent ? `${Number(v).toFixed(0)}%` : `${Number(v).toFixed(0)}`;
+  const formatTooltip = (v) => isPercent ? `${Number(v).toFixed(2)}%` : `${Number(v).toFixed(2)}`;
+
   const isDiario = periodo === "Días";
   const tickStep = useMemo(() => isDiario ? Math.max(1, Math.ceil(data.length / 6)) : 1, [isDiario, data.length]);
   const opcionesRango = periodo === "Meses" ? ["Ultimos 12 meses", "Año actual"] : ["Ultimos 30 días", "Mes actual"];
@@ -137,8 +140,8 @@ export default function IndicadorChart({ metricKey, title }) {
             ) : (
               <XAxis dataKey="name" />
             )}
-            <YAxis domain={yDomain} tickFormatter={(v) => `${Number(v).toFixed(0)}%`} />
-            <Tooltip formatter={(v) => `${Number(v).toFixed(2)}%`} />
+            <YAxis domain={yDomain} tickFormatter={formatTick} />
+            <Tooltip formatter={formatTooltip} />
             <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} dot />
           </LineChart>
         </ResponsiveContainer>
