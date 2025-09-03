@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import ProduccionChart from "../components/ProduccionChart";
+import IndicadorChart from "../components/IndicadorChart";
 import ComponenteControl from "../components/ComponenteControl";
 import EstadisticasPanel from "../components/EstadisticasPanel";
 import AlertasComponent from "../components/AlertasComponent";
@@ -22,6 +23,12 @@ function GeneralView() {
       </div>
       <ExpandableCard>
         <ProduccionChart />
+      </ExpandableCard>
+      <ExpandableCard>
+        <IndicadorChart metricKey="porcentajeDefectos" title="% No conformes por" />
+      </ExpandableCard>
+      <ExpandableCard>
+        <IndicadorChart metricKey="porcentajeNPT" title="% NPT por" />
       </ExpandableCard>
       <EstadisticasPanel />
       <ExpandableCard>
@@ -146,4 +153,3 @@ export default function Dashboard2() {
     </div>
   );
 }
-
