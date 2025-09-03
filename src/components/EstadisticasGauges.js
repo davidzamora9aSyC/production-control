@@ -41,7 +41,7 @@ export default function EstadisticasGauges() {
         const list = await res.json();
         const arr = Array.isArray(list) ? list : [];
         setAreas(arr);
-        if (!areaId && arr.length > 0) setAreaId(arr[0].id);
+        // Dejar "Todos" ("") como selección por defecto si no hay selección
       } catch {
         setAreas([]);
       }
@@ -59,8 +59,36 @@ export default function EstadisticasGauges() {
         ]);
         const diaAll = await diaRes.json();
         const mesAll = await mesRes.json();
-        setDayData(Array.isArray(diaAll) ? diaAll.find(r => r.areaId === areaId) : null);
-        setMonthData(Array.isArray(mesAll) ? mesAll.find(r => r.areaId === areaId) : null);
+
+        const agg = (arr) => {
+          if (!Array.isArray(arr) || arr.length === 0) return null;
+          const totalProd = arr.reduce((a, r) => a + (Number(r.produccionTotal) || 0), 0);
+          const totalDef = arr.reduce((a, r) => a + (Number(r.defectos) || 0), 0);
+          const totalNPT = arr.reduce((a, r) => a + (Number(r.nptMin) || 0), 0);
+          const totalPausas = arr.reduce((a, r) => a + (Number(r.pausasMin) || 0), 0);
+          const totalDur = arr.reduce((a, r) => a + (Number(r.duracionTotalMin) || 0), 0);
+          const pctDef = (totalProd + totalDef) > 0 ? (totalDef / (totalProd + totalDef)) * 100 : 0;
+          const avgSpeed = totalDur > 0
+            ? arr.reduce((a, r) => a + (Number(r.avgSpeed) || 0) * (Number(r.duracionTotalMin) || 0), 0) / totalDur
+            : (arr.reduce((a, r) => a + (Number(r.avgSpeed) || 0), 0) / arr.length);
+          return {
+            produccionTotal: totalProd,
+            defectos: totalDef,
+            nptMin: totalNPT,
+            pausasMin: totalPausas,
+            duracionTotalMin: totalDur,
+            porcentajeDefectos: pctDef,
+            avgSpeed: avgSpeed,
+          };
+        };
+
+        if (areaId) {
+          setDayData(Array.isArray(diaAll) ? diaAll.find(r => r.areaId === areaId) : null);
+          setMonthData(Array.isArray(mesAll) ? mesAll.find(r => r.areaId === areaId) : null);
+        } else {
+          setDayData(Array.isArray(diaAll) ? agg(diaAll) : null);
+          setMonthData(Array.isArray(mesAll) ? agg(mesAll) : null);
+        }
       } catch {
         setDayData(null);
         setMonthData(null);
@@ -107,6 +135,7 @@ export default function EstadisticasGauges() {
           onChange={e => setAreaId(e.target.value)}
           className="border-b border-black text-xl focus:outline-none"
         >
+          <option value="">Todos</option>
           {areas.map(area => (
             <option key={area.id} value={area.id}>{area.nombre}</option>
           ))}
@@ -131,4 +160,3 @@ export default function EstadisticasGauges() {
     </div>
   );
 }
-
