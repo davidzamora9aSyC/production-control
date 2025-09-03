@@ -80,6 +80,11 @@ export default function IndicadorChart({ metricKey, title }) {
     let min = Math.min(...data.map(d => Number(d.value) || 0));
     let max = Math.max(...data.map(d => Number(d.value) || 0));
 
+    // Si todos los valores están en [0, 100], fija el dominio a [0, 100]
+    if (min >= 0 && max <= 100) {
+      return [0, 100];
+    }
+
     if (min === max) {
       if (min === 0) {
         min = -5; max = 5;
