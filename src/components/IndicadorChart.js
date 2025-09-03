@@ -74,6 +74,27 @@ export default function IndicadorChart({ metricKey, title }) {
     return Object.entries(dataMap).map(([name, value]) => ({ name, value }));
   }, [raw, periodo, metricKey]);
 
+  // Dominio dinámico para soportar valores negativos (p.ej. -5%)
+  const yDomain = useMemo(() => {
+    if (!data.length) return [0, 100];
+    let min = Math.min(...data.map(d => Number(d.value) || 0));
+    let max = Math.max(...data.map(d => Number(d.value) || 0));
+
+    if (min === max) {
+      if (min === 0) {
+        min = -5; max = 5;
+      } else {
+        const padSame = Math.max(1, Math.ceil(Math.abs(min) * 0.1));
+        min -= padSame; max += padSame;
+      }
+    }
+
+    const pad = Math.max(1, Math.ceil((max - min) * 0.05));
+    min = Math.floor((min - pad) / 5) * 5;
+    max = Math.ceil((max + pad) / 5) * 5;
+    return [min, max];
+  }, [data]);
+
   const isDiario = periodo === "Días";
   const tickStep = useMemo(() => isDiario ? Math.max(1, Math.ceil(data.length / 6)) : 1, [isDiario, data.length]);
   const opcionesRango = periodo === "Meses" ? ["Ultimos 12 meses", "Año actual"] : ["Ultimos 30 días", "Mes actual"];
@@ -111,8 +132,8 @@ export default function IndicadorChart({ metricKey, title }) {
             ) : (
               <XAxis dataKey="name" />
             )}
-            <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
-            <Tooltip formatter={(v) => `${v}%`} />
+            <YAxis domain={yDomain} tickFormatter={(v) => `${Number(v).toFixed(0)}%`} />
+            <Tooltip formatter={(v) => `${Number(v).toFixed(2)}%`} />
             <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} dot />
           </LineChart>
         </ResponsiveContainer>
@@ -121,4 +142,3 @@ export default function IndicadorChart({ metricKey, title }) {
     </div>
   );
 }
-
