@@ -33,8 +33,8 @@ function App() {
           <Route path="/" element={<NuevaMinuta />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />
-          <Route path="/dashboard" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
-          <Route path="/dashboard2" element={<ProtectedLayout><Dashboard2 /></ProtectedLayout>} />
+          <Route path="/dashboard2" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
+          <Route path="/dashboard" element={<ProtectedLayout><Dashboard2 /></ProtectedLayout>} />
           <Route path="/alertas" element={<ProtectedLayout><Alertas /></ProtectedLayout>} />
           <Route path="*" element={<ProtectedLayout><h1>Page not found</h1></ProtectedLayout>} />
           <Route path="/sesion/:id" element={<ProtectedLayout><Maquina /></ProtectedLayout>} />
