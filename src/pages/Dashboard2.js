@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import ProduccionChart from "../components/ProduccionChart";
 import IndicadorChart from "../components/IndicadorChart";
-import ComponenteControl from "../components/ComponenteControl";
-import EstadisticasPanel from "../components/EstadisticasPanel";
+import EstadisticasGauges from "../components/EstadisticasGauges";
 import AlertasComponent from "../components/AlertasComponent";
 import ExpandableCard from "../components/ExpandableCard";
 
@@ -33,10 +32,7 @@ function GeneralView() {
       <ExpandableCard>
         <IndicadorChart metricKey="avgSpeed" title="Velocidad promedio por" isPercent={false} />
       </ExpandableCard>
-      <EstadisticasPanel />
-      <ExpandableCard>
-        <ComponenteControl />
-      </ExpandableCard>
+      <EstadisticasGauges />
       <ExpandableCard>
         <AlertasComponent />
       </ExpandableCard>
