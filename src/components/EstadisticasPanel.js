@@ -20,28 +20,73 @@ export default function EstadisticasPanel() {
 
     useEffect(() => {
         const fetchData = async () => {
-            const API_BASE = "https://smartindustries.org";
-            const resDia = await fetch(`${API_BASE}/produccion/diaria/mes-actual?areaId=${proceso}`);
-            const dataDia = await resDia.json();
+            try {
+                const API_BASE = "https://smartindustries.org";
+                const hoy = new Date().toISOString().split("T")[0];
 
-            const resTotalDia = await fetch(`${API_BASE}/produccion/diaria/ultimos-30-dias?areaId=${proceso}`);
-            const dataTotalDia = await resTotalDia.json();
+                // Endpoints nuevos de indicadores
+                const [ult30Res, resumenDiaRes, resumenMesRes] = await Promise.all([
+                    fetch(`${API_BASE}/indicadores/diaria/ultimos-30-dias`),
+                    fetch(`${API_BASE}/indicadores/resumen/dia?fecha=${hoy}`),
+                    fetch(`${API_BASE}/indicadores/resumen/mes-actual`),
+                ]);
 
-            const resMes = await fetch(`${API_BASE}/produccion/tiempo-muerto/mes-actual?areaId=${proceso}`);
-            const dataMes = await resMes.json();
+                const ult30All = await ult30Res.json();      // array de varias áreas
+                const resumenDiaAll = await resumenDiaRes.json(); // array por área
+                const resumenMesAll = await resumenMesRes.json(); // array por área
 
-            const hoy = new Date().toISOString().split("T")[0];
-            const hoyData = dataDia.find(d => d.fecha === hoy);
-            const piezasHoy = hoyData?.piezas || 0;
-            const pedaleadasHoy = hoyData?.pedaleadas || 0;
+                const hoyArea = Array.isArray(resumenDiaAll)
+                    ? resumenDiaAll.find(r => r.areaId === proceso)
+                    : null;
+                const mesArea = Array.isArray(resumenMesAll)
+                    ? resumenMesAll.find(r => r.areaId === proceso)
+                    : null;
 
-            setStats([
-                { label: "Producción total diaria", value: piezasHoy },
-                { label: "Producción total ultimos 30 dias", value: dataTotalDia.reduce((acc, d) => acc + d.piezas, 0) },
-                { label: "Tiempo muerto total del día", value: 0 },
-                { label: "Piezas no conformes totales del día", value: pedaleadasHoy - piezasHoy },
-                { label: "Tiempo muerto total del mes", value: dataMes.total || 0 },
-            ]);
+                const produccionHoy = Number(hoyArea?.produccionTotal || 0);
+                const defectosHoy = Number(hoyArea?.defectos || 0);
+                const nptHoy = Number(hoyArea?.nptMin || 0);
+                const pausasHoy = Number(hoyArea?.pausasMin || 0);
+                const pctDefectosHoy = Number(hoyArea?.porcentajeDefectos || 0);
+                const pctNPTHoy = Number(hoyArea?.porcentajeNPT || 0);
+
+                const ult30Area = Array.isArray(ult30All)
+                    ? ult30All.filter(r => r.areaId === proceso)
+                    : [];
+                const produccionUlt30 = ult30Area.reduce((acc, d) => acc + (Number(d.produccionTotal) || 0), 0);
+
+                const produccionMes = Number(mesArea?.produccionTotal || 0);
+                const defectosMes = Number(mesArea?.defectos || 0);
+                const nptMes = Number(mesArea?.nptMin || 0);
+                const pausasMes = Number(mesArea?.pausasMin || 0);
+                const pctDefectosMes = Number(mesArea?.porcentajeDefectos || 0);
+                const pctNPTMes = Number(mesArea?.porcentajeNPT || 0);
+
+                const avgSpeedHoy = Number(hoyArea?.avgSpeed || 0);
+                const avgSpeedSesionHoy = Number(hoyArea?.avgSpeedSesion || 0);
+                const avgSpeedMes = Number(mesArea?.avgSpeed || 0);
+                const avgSpeedSesionMes = Number(mesArea?.avgSpeedSesion || 0);
+
+                setStats([
+                    { label: "Producción total de hoy", value: produccionHoy },
+                    { label: "Producción últimos 30 días (área)", value: produccionUlt30 },
+                    { label: "Producción total mes actual", value: produccionMes },
+                    { label: "Tiempo muerto total del día (NPT)", value: nptHoy },
+                    { label: "% NPT del día", value: `${pctNPTHoy}%` },
+                    { label: "Pausas del día (min)", value: pausasHoy },
+                    { label: "Piezas no conformes del día", value: defectosHoy },
+                    { label: "% no conformes del día", value: `${pctDefectosHoy}%` },
+                    { label: "Tiempo muerto total del mes (NPT)", value: nptMes },
+                    { label: "% NPT del mes", value: `${pctNPTMes}%` },
+                    { label: "Pausas del mes (min)", value: pausasMes },
+                    { label: "% no conformes del mes", value: `${pctDefectosMes}%` },
+                    { label: "Velocidad promedio hoy", value: avgSpeedHoy },
+                    { label: "Velocidad promedio hoy (sesión)", value: avgSpeedSesionHoy },
+                    { label: "Velocidad promedio mes", value: avgSpeedMes },
+                    { label: "Velocidad promedio mes (sesión)", value: avgSpeedSesionMes },
+                ]);
+            } catch (e) {
+                setStats([]);
+            }
         };
 
         fetchData();
