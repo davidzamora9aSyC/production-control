@@ -2,8 +2,8 @@ import { BrowserRouter as Router, Routes, Route, useParams } from "react-router-
 import Login from "./components/Login";
 import NuevaMinuta from "./pages/NuevaMinuta";
 import Signup from "./components/Signup";
-import Dashboard from "./pages/Dashboard";
-import Dashboard2 from "./pages/Dashboard2";
+import DashboardLegacy from "./pages/Dashboard";
+import Dashboard from "./pages/Dashboard2";
 import { AspectRatioProvider } from "./context/AspectRatioContext";
 import Alertas from "./pages/Alertas";
 import Navbar from "./components/Navbar";
@@ -33,8 +33,8 @@ function App() {
           <Route path="/" element={<NuevaMinuta />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />
-          <Route path="/dashboard2" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
-          <Route path="/dashboard" element={<ProtectedLayout><Dashboard2 /></ProtectedLayout>} />
+          <Route path="/dashboard2" element={<ProtectedLayout><DashboardLegacy /></ProtectedLayout>} />
+          <Route path="/dashboard/*" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
           <Route path="/alertas" element={<ProtectedLayout><Alertas /></ProtectedLayout>} />
           <Route path="*" element={<ProtectedLayout><h1>Page not found</h1></ProtectedLayout>} />
           <Route path="/sesion/:id" element={<ProtectedLayout><Maquina /></ProtectedLayout>} />

@@ -7,7 +7,7 @@ import { useAspectRatio } from "../context/AspectRatioContext";
 import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 
-export default function Dashboard() {
+export default function Dashboard2() {
     const location = useLocation();
     const entradaReturn = location.state?.entradaReturn || false;
 
