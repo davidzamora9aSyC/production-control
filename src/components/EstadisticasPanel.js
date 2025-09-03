@@ -27,6 +27,9 @@ export default function EstadisticasPanel() {
             const resTotalDia = await fetch(`${API_BASE}/produccion/diaria/ultimos-30-dias?areaId=${proceso}`);
             const dataTotalDia = await resTotalDia.json();
 
+            const resMes = await fetch(`${API_BASE}/produccion/tiempo-muerto/mes-actual?areaId=${proceso}`);
+            const dataMes = await resMes.json();
+
             const hoy = new Date().toISOString().split("T")[0];
             const hoyData = dataDia.find(d => d.fecha === hoy);
             const piezasHoy = hoyData?.piezas || 0;
@@ -37,6 +40,7 @@ export default function EstadisticasPanel() {
                 { label: "Producción total ultimos 30 dias", value: dataTotalDia.reduce((acc, d) => acc + d.piezas, 0) },
                 { label: "Tiempo muerto total del día", value: 0 },
                 { label: "Piezas no conformes totales del día", value: pedaleadasHoy - piezasHoy },
+                { label: "Tiempo muerto total del mes", value: dataMes.total || 0 },
             ]);
         };
 

@@ -24,7 +24,6 @@ function GeneralView() {
         <ProduccionChart />
       </ExpandableCard>
       <EstadisticasPanel />
-
       <ExpandableCard>
         <ComponenteControl />
       </ExpandableCard>
