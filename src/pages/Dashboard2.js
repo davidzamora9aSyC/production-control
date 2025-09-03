@@ -108,7 +108,7 @@ export default function Dashboard() {
         : <GeneralView />;
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-[calc(100vh-5rem)]">
       <aside className="w-64 bg-gray-100 border-r p-4 space-y-6">
         <nav className="space-y-4">
           <div>
