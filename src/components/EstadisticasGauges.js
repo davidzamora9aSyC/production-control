@@ -51,7 +51,6 @@ export default function EstadisticasGauges() {
 
   useEffect(() => {
     const load = async () => {
-      if (!areaId) return;
       try {
         const [diaRes, mesRes] = await Promise.all([
           fetch(`${API_BASE}/indicadores/resumen/dia?fecha=${hoy}`),
@@ -83,8 +82,9 @@ export default function EstadisticasGauges() {
         };
 
         if (areaId) {
-          setDayData(Array.isArray(diaAll) ? diaAll.find(r => r.areaId === areaId) : null);
-          setMonthData(Array.isArray(mesAll) ? mesAll.find(r => r.areaId === areaId) : null);
+          const areaIdStr = String(areaId);
+          setDayData(Array.isArray(diaAll) ? diaAll.find(r => String(r.areaId) === areaIdStr) : null);
+          setMonthData(Array.isArray(mesAll) ? mesAll.find(r => String(r.areaId) === areaIdStr) : null);
         } else {
           setDayData(Array.isArray(diaAll) ? agg(diaAll) : null);
           setMonthData(Array.isArray(mesAll) ? agg(mesAll) : null);
