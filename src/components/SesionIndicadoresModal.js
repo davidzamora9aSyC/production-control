@@ -152,7 +152,7 @@ export default function SesionIndicadoresModal({ sesionId, onClose }) {
           </div>
 
           <div className="border rounded-lg p-3">
-            <div className="w-full h-full" style={{ height: "100%" }}>
+          <div className="w-full h-[60vh]">
               <ResponsiveContainer width="100%" height={"100%"}>
                 <LineChart data={data} margin={{ left: 10, right: 10, top: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" />
