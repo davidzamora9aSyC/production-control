@@ -1,0 +1,222 @@
+import { useEffect, useMemo, useState } from "react";
+import { API_BASE_URL } from "../api";
+import { useAuth } from "../context/AuthContext";
+
+const ALL_METRICS = [
+  { key: "produccionTotal", label: "Producción total" },
+  { key: "defectos", label: "Defectos" },
+  { key: "porcentajeDefectos", label: "% Defectos" },
+  { key: "avgSpeed", label: "Vel. promedio (sin NPT)" },
+  { key: "avgSpeedSesion", label: "Vel. promedio (con NPT)" },
+  { key: "nptMin", label: "NPT (min)" },
+  { key: "nptPorInactividad", label: "NPT por inactividad" },
+  { key: "porcentajeNPT", label: "% NPT" },
+  { key: "pausasMin", label: "Pausas (min)" },
+  { key: "pausasCount", label: "# Pausas" },
+  { key: "porcentajePausa", label: "% Pausa" },
+  { key: "duracionTotalMin", label: "Duración total (min)" },
+  { key: "sesionesCerradas", label: "Sesiones cerradas" },
+];
+
+const RANGOS = [
+  { value: "hoy", label: "Hoy" },
+  { value: "esta-semana", label: "Esta semana" },
+  { value: "este-mes", label: "Este mes" },
+  { value: "ultimos-30-dias", label: "Últimos 30 días" },
+  { value: "este-ano", label: "Este año" },
+  { value: "ultimos-12-meses", label: "Últimos 12 meses" },
+];
+
+function formatValue(key, val) {
+  if (val == null) return "-";
+  if (typeof val !== "number") return String(val);
+  if (key.startsWith("porcentaje")) return `${val.toFixed(2)}%`;
+  if (key === "avgSpeed" || key === "avgSpeedSesion") return val.toFixed(1);
+  return val;
+}
+
+function MetricSelector({ selected, onChange }) {
+  const allSelected = selected.length === ALL_METRICS.length;
+  const toggleAll = (checked) => {
+    if (checked) onChange(ALL_METRICS.map((m) => m.key));
+    else onChange([]);
+  };
+  const toggleOne = (key) => {
+    if (selected.includes(key)) onChange(selected.filter((k) => k !== key));
+    else onChange([...selected, key]);
+  };
+  return (
+    <div className="border rounded-lg p-3">
+      <div className="flex items-center justify-between mb-2">
+        <div className="font-semibold">Métricas</div>
+        <label className="text-sm flex items-center gap-2">
+          <input type="checkbox" checked={allSelected} onChange={(e) => toggleAll(e.target.checked)} /> Seleccionar todo
+        </label>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+        {ALL_METRICS.map((m) => (
+          <label key={m.key} className="text-sm flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={selected.includes(m.key)}
+              onChange={() => toggleOne(m.key)}
+            />
+            {m.label}
+          </label>
+        ))}
+      </div>
+      <div className="text-[11px] text-gray-500 mt-2">Si no seleccionas ninguna, el backend devolverá todas.</div>
+    </div>
+  );
+}
+
+export default function IndicadoresLista({ tipo = "trabajadores" }) {
+  // tipo: "trabajadores" | "maquinas"
+  const { token } = useAuth();
+  const [modoFecha, setModoFecha] = useState("rango"); // "rango" | "fechas"
+  const [rango, setRango] = useState("este-mes");
+  const [inicio, setInicio] = useState("");
+  const [fin, setFin] = useState("");
+  const [metrics, setMetrics] = useState(["produccionTotal", "avgSpeed", "porcentajeDefectos"]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [rows, setRows] = useState([]);
+
+  useEffect(() => {
+    // Default fechas: últimos 7 días
+    const today = new Date();
+    const start = new Date();
+    start.setDate(today.getDate() - 7);
+    setInicio(start.toISOString().slice(0, 10));
+    setFin(today.toISOString().slice(0, 10));
+  }, []);
+
+  const metaColumns = useMemo(() => {
+    return tipo === "trabajadores"
+      ? [
+          { key: "id", label: "ID" },
+          { key: "nombre", label: "Nombre" },
+          { key: "identificacion", label: "Identificación" },
+          { key: "grupo", label: "Grupo" },
+          { key: "turno", label: "Turno" },
+        ]
+      : [
+          { key: "id", label: "ID" },
+          { key: "nombre", label: "Nombre" },
+          { key: "tipo", label: "Tipo" },
+          { key: "areaId", label: "Área" },
+        ];
+  }, [tipo]);
+
+  const metricColumns = useMemo(() => {
+    const keys = metrics.length ? metrics : ALL_METRICS.map((m) => m.key);
+    return ALL_METRICS.filter((m) => keys.includes(m.key));
+  }, [metrics]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const params = new URLSearchParams();
+      if (modoFecha === "rango") {
+        params.append("rango", rango);
+      } else {
+        if (inicio) params.append("inicio", inicio);
+        if (fin) params.append("fin", fin);
+      }
+      if (metrics.length) params.append("metrics", metrics.join(","));
+
+      const url = `${API_BASE_URL}/indicadores/${tipo}?${params.toString()}`;
+      const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      if (!res.ok) throw new Error("No se pudo cargar");
+      const json = await res.json();
+      setRows(Array.isArray(json) ? json : []);
+    } catch (e) {
+      setRows([]);
+      setError(e.message || "Error al cargar");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="w-full">
+      <div className="flex items-end justify-between mb-3">
+        <div>
+          <div className="font-semibold text-2xl">Indicadores por {tipo === "trabajadores" ? "trabajadores" : "máquinas"}</div>
+          <div className="text-xs text-gray-600">Selecciona rango y métricas para ver el agregado devuelto por el backend.</div>
+        </div>
+        <div className="flex items-center gap-3 flex-wrap justify-end">
+          <div className="flex items-center gap-2">
+            <label className="text-sm">Modo</label>
+            <select value={modoFecha} onChange={(e) => setModoFecha(e.target.value)} className="border rounded px-2 py-1 text-sm">
+              <option value="rango">Rango predefinido</option>
+              <option value="fechas">Fechas</option>
+            </select>
+          </div>
+          {modoFecha === "rango" ? (
+            <div className="flex items-center gap-2">
+              <label className="text-sm">Rango</label>
+              <select value={rango} onChange={(e) => setRango(e.target.value)} className="border rounded px-2 py-1 text-sm">
+                {RANGOS.map((r) => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <label className="text-sm">Inicio</label>
+                <input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} className="border rounded px-2 py-1 text-sm" />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm">Fin</label>
+                <input type="date" value={fin} onChange={(e) => setFin(e.target.value)} className="border rounded px-2 py-1 text-sm" />
+              </div>
+            </>
+          )}
+          <button onClick={fetchData} className="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">Actualizar</button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3">
+        <MetricSelector selected={metrics} onChange={setMetrics} />
+        <div className="border rounded-2xl shadow-md overflow-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50">
+                {metaColumns.map((c) => (
+                  <th key={c.key} className="px-3 py-2 text-left font-medium border-b">{c.label}</th>
+                ))}
+                {metricColumns.map((c) => (
+                  <th key={c.key} className="px-3 py-2 text-left font-medium border-b">{c.label}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id} className="odd:bg-white even:bg-gray-50">
+                  {metaColumns.map((c) => (
+                    <td key={c.key} className="px-3 py-2 border-b">{r[c.key] ?? "-"}</td>
+                  ))}
+                  {metricColumns.map((c) => (
+                    <td key={c.key} className="px-3 py-2 border-b">{formatValue(c.key, r[c.key])}</td>
+                  ))}
+                </tr>
+              ))}
+              {!rows.length && (
+                <tr>
+                  <td className="px-3 py-3 text-gray-500" colSpan={metaColumns.length + metricColumns.length}>
+                    {loading ? "Cargando…" : error ? error : "Sin datos. Ajusta los filtros y pulsa Actualizar."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="text-[11px] text-gray-500">En fechas manuales se toma todo el día de inicio y fin en zona America/Bogota.</div>
+      </div>
+    </div>
+  );
+}
+

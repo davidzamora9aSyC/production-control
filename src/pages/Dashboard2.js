@@ -5,6 +5,9 @@ import IndicadorChart from "../components/IndicadorChart";
 import EstadisticasGauges from "../components/EstadisticasGauges";
 import AlertasComponent from "../components/AlertasComponent";
 import ExpandableCard from "../components/ExpandableCard";
+import AreaRealtimeSpeed from "../components/AreaRealtimeSpeed";
+import SesionesVelocidadNormalizada from "../components/SesionesVelocidadNormalizada";
+import IndicadoresLista from "../components/IndicadoresLista";
 
 
 function GeneralView() {
@@ -24,6 +27,9 @@ function GeneralView() {
         <ProduccionChart />
       </ExpandableCard>
       <ExpandableCard>
+        <AreaRealtimeSpeed />
+      </ExpandableCard>
+      <ExpandableCard>
         <IndicadorChart metricKey="porcentajeDefectos" title="% No conformes por" />
       </ExpandableCard>
       <ExpandableCard>
@@ -36,60 +42,46 @@ function GeneralView() {
   );
 }
 
-function TrabajadoresMejores() {
+function AreasView() {
   return (
-    <div className="p-6 space-y-4 overflow-y-auto h-full">
-      <h2 className="text-2xl font-semibold">Comparativa de trabajadores</h2>
-      <div className="flex flex-wrap gap-4">
-        <div>
-          <label className="block mb-1">Área</label>
-          <select className="border rounded p-2">
-            <option>Área 1</option>
-            <option>Área 2</option>
-            <option>Área 3</option>
-          </select>
-        </div>
-        <div>
-          <label className="block mb-1">Métrica</label>
-          <select className="border rounded p-2">
-            <option>Producción</option>
-            <option>Eficiencia</option>
-            <option>Calidad</option>
-          </select>
-        </div>
-      </div>
-      <div className="mt-4 border rounded p-4 text-gray-500">
-        Aquí se mostrará la comparativa de trabajadores seleccionados.
-      </div>
+    <div className="p-6 space-y-6 overflow-y-auto h-full">
+      <h2 className="text-2xl font-semibold">Indicadores por áreas</h2>
+      <ExpandableCard>
+        <AreaRealtimeSpeed />
+      </ExpandableCard>
+      <ExpandableCard>
+        <SesionesVelocidadNormalizada />
+      </ExpandableCard>
+    </div>
+  );
+}
+
+function TrabajadoresMejores() {
+  const ResumenTrabajador = require("../components/ResumenTrabajador").default;
+  return (
+    <div className="p-6 space-y-6 overflow-y-auto h-full">
+      <h2 className="text-2xl font-semibold">Trabajadores</h2>
+      <ExpandableCard>
+        <IndicadoresLista tipo="trabajadores" />
+      </ExpandableCard>
+      <ExpandableCard>
+        <ResumenTrabajador />
+      </ExpandableCard>
     </div>
   );
 }
 
 function MaquinasMejores() {
+  const ResumenMaquina = require("../components/ResumenMaquina").default;
   return (
-    <div className="p-6 space-y-4 overflow-y-auto h-full">
-      <h2 className="text-2xl font-semibold">Comparativa de máquinas</h2>
-      <div className="flex flex-wrap gap-4">
-        <div>
-          <label className="block mb-1">Área</label>
-          <select className="border rounded p-2">
-            <option>Área 1</option>
-            <option>Área 2</option>
-            <option>Área 3</option>
-          </select>
-        </div>
-        <div>
-          <label className="block mb-1">Métrica</label>
-          <select className="border rounded p-2">
-            <option>Rendimiento</option>
-            <option>Disponibilidad</option>
-            <option>Uso</option>
-          </select>
-        </div>
-      </div>
-      <div className="mt-4 border rounded p-4 text-gray-500">
-        Aquí se mostrará la comparativa de máquinas seleccionadas.
-      </div>
+    <div className="p-6 space-y-6 overflow-y-auto h-full">
+      <h2 className="text-2xl font-semibold">Máquinas</h2>
+      <ExpandableCard>
+        <IndicadoresLista tipo="maquinas" />
+      </ExpandableCard>
+      <ExpandableCard>
+        <ResumenMaquina />
+      </ExpandableCard>
     </div>
   );
 }
@@ -103,6 +95,8 @@ export default function Dashboard() {
     ? <TrabajadoresMejores />
     : view === "maquinas"
       ? <MaquinasMejores />
+      : view === "areas"
+        ? <AreasView />
       : view === "alertas"
         ? <div className="p-6 space-y-6 h-full overflow-y-auto"><AlertasComponent /></div>
         : <GeneralView />;
@@ -114,6 +108,12 @@ export default function Dashboard() {
           <div>
             <Link to="/dashboard/general" className={`block w-full text-left p-2 rounded hover:bg-gray-200 ${view === "general" ? "bg-gray-200" : ""}`}>
               General
+            </Link>
+          </div>
+          <div>
+            <div className="font-semibold text-gray-700 mb-2">Áreas</div>
+            <Link to="/dashboard/areas" className={`block w-full text-left p-2 rounded hover:bg-gray-200 ${view === "areas" ? "bg-gray-200" : ""}`}>
+              Indicadores por áreas
             </Link>
           </div>
           <div>
