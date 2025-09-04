@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../api";
 import { FaInfoCircle } from "react-icons/fa";
+import SesionIndicadoresModal from "../components/SesionIndicadoresModal";
 
 const ITEMS_POR_PAGINA = 8;
 
@@ -10,6 +11,7 @@ export default function Sesiones() {
     const [pagina, setPagina] = useState(1);
     const [datos, setDatos] = useState([]);
     const [orden, setOrden] = useState({ columna: null, ascendente: true });
+    const [modalSesionId, setModalSesionId] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -246,6 +248,7 @@ export default function Sesiones() {
                                     </span>
                                   </div>
                                 </th>
+                                <th className="p-2 md:p-3 lg:p-4">Indicadores</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -275,6 +278,14 @@ export default function Sesiones() {
                                     <td className="p-2 md:p-3 lg:p-4 border-r break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">{Number(item.porcentajeNPT).toFixed(2)}%</td>
                                     <td className="p-2 md:p-3 lg:p-4 border-r break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">{item.defectos}</td>
                                     <td className="p-2 md:p-3 lg:p-4 break-words max-w-[8rem] md:max-w-[12rem] lg:max-w-[16rem]">{item.produccionTotal}</td>
+                                    <td className="p-2 md:p-3 lg:p-4">
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); setModalSesionId(item.id); }}
+                                        className="px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+                                      >
+                                        Ver indicadores
+                                      </button>
+                                    </td>
                                 </tr>
                                 );
                             })}
@@ -288,6 +299,9 @@ export default function Sesiones() {
                     <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} className="px-3 py-1 border rounded">Siguiente</button>
                 </div>
             </div>
+            {modalSesionId && (
+              <SesionIndicadoresModal sesionId={modalSesionId} onClose={() => setModalSesionId(null)} />
+            )}
         </div>
     );
 }
