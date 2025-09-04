@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useParams } from "react-router-dom";
 import Login from "./components/Login";
 import NuevaMinuta from "./pages/NuevaMinuta";
-import Signup from "./components/Signup";
 import DashboardLegacy from "./pages/Dashboard";
 import Dashboard from "./pages/Dashboard2";
 import { AspectRatioProvider } from "./context/AspectRatioContext";
@@ -35,7 +34,6 @@ function App() {
           <Routes>
             <Route path="/" element={<NuevaMinuta />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Signup />} />
             <Route
               path="/dashboard2"
               element={

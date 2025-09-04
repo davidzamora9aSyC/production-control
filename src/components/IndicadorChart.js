@@ -20,8 +20,8 @@ export default function IndicadorChart({ metricKey, title, isPercent = true }) {
         const list = await res.json();
         const arr = Array.isArray(list) ? list : [];
         setAreas(arr);
-        if (proceso && !arr.some(x => x.id === proceso)) setProceso(arr[0]?.id || "");
-        if (!proceso && arr.length > 0) setProceso(arr[0].id);
+        // Mantener "Todos" (valor "") por defecto. Si el área seleccionada desaparece, volver a Todos.
+        if (proceso && !arr.some(x => String(x.id) === String(proceso))) setProceso("");
       } catch (e) {
         setAreas([]);
       }
@@ -41,16 +41,20 @@ export default function IndicadorChart({ metricKey, title, isPercent = true }) {
 
   useEffect(() => {
     const load = async () => {
-      if (!proceso) return;
       setLoading(true);
       try {
         const needsAreaParam = endpoint.endsWith("ano-actual") || endpoint.endsWith("mes-actual");
-        const url = needsAreaParam ? `${API_BASE}${endpoint}?areaId=${encodeURIComponent(proceso)}` : `${API_BASE}${endpoint}`;
+        const url = needsAreaParam && proceso
+          ? `${API_BASE}${endpoint}?areaId=${encodeURIComponent(proceso)}`
+          : `${API_BASE}${endpoint}`;
         const res = await fetch(url);
         const json = await res.json();
         const arr = Array.isArray(json) ? json : [];
-        // filtrar por area cuando el endpoint trae varias areas
-        const filtered = needsAreaParam ? arr : arr.filter(r => r.areaId === proceso);
+        // Si el endpoint trae varias áreas (ultimos-XX), filtrar solo si hay un área seleccionada.
+        // Para "Todos" (proceso === ""), no filtrar ni enviar areaId.
+        const filtered = needsAreaParam
+          ? arr
+          : (proceso ? arr.filter(r => String(r.areaId) === String(proceso)) : arr);
         setRaw(filtered);
       } catch (e) {
         setRaw([]);
@@ -113,6 +117,7 @@ export default function IndicadorChart({ metricKey, title, isPercent = true }) {
         <div>
           <span className="font-semibold text-2xl mr-4">{title}</span>
           <select value={proceso} onChange={e => setProceso(e.target.value)} className="border-b border-black focus:outline-none">
+            <option value="">Todos</option>
             {areas.map(a => (
               <option key={a.id} value={a.id}>{a.nombre}</option>
             ))}

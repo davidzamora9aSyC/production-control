@@ -66,30 +66,6 @@ export function AuthProvider({ children }) {
     return true;
   };
 
-  const register = async (username, password) => {
-    // Intento de registro si existe el endpoint; si devuelve token, se inicia sesión.
-    const res = await fetch(`${API_BASE}/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-    if (!res.ok) {
-      let msg = "No se pudo registrar";
-      try { const j = await res.json(); if (j?.message) msg = j.message; } catch {}
-      throw new Error(msg);
-    }
-    const data = await res.json().catch(() => ({}));
-    const accessToken = data?.access_token || data?.accessToken;
-    if (accessToken) {
-      localStorage.setItem(TOKEN_KEY, accessToken);
-      setToken(accessToken);
-      setIsAuthenticated(true);
-      return true;
-    }
-    // Si no devuelve token, queda registrado pero no autenticado
-    return false;
-  };
-
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
@@ -105,7 +81,7 @@ export function AuthProvider({ children }) {
   };
 
   const value = useMemo(
-    () => ({ token, isAuthenticated, isChecking, login, logout, register, revalidate }),
+    () => ({ token, isAuthenticated, isChecking, login, logout, revalidate }),
     [token, isAuthenticated, isChecking]
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
