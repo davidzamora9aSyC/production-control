@@ -14,6 +14,8 @@ import OrdenesProduccion from "./pages/OrdenesProduccion";
 import DetalleOrden from "./pages/DetalleOrden";
 import Personas from "./pages/Personas";
 import Equipos from "./pages/Equipos";
+import { AuthProvider } from "./context/AuthContext";
+import RequireAuth from "./components/RequireAuth";
 
 const ProtectedLayout = ({ children }) => (
   <>
@@ -28,23 +30,88 @@ const ProtectedLayout = ({ children }) => (
 function App() {
   return (
     <AspectRatioProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<NuevaMinuta />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Signup />} />
-          <Route path="/dashboard2" element={<ProtectedLayout><DashboardLegacy /></ProtectedLayout>} />
-          <Route path="/dashboard/*" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
-          <Route path="/alertas" element={<ProtectedLayout><Alertas /></ProtectedLayout>} />
-          <Route path="*" element={<ProtectedLayout><h1>Page not found</h1></ProtectedLayout>} />
-          <Route path="/sesion/:id" element={<ProtectedLayout><Maquina /></ProtectedLayout>} />
-          <Route path="/sesiones" element={<ProtectedLayout><Sesiones/></ProtectedLayout>} />
-          <Route path="/ordenes" element={<ProtectedLayout><OrdenesProduccion/></ProtectedLayout>} />
-          <Route path="/ordenes/:id" element={<ProtectedLayout><DetalleOrden /></ProtectedLayout>} />
-          <Route path="/sesiones/personas" element={<ProtectedLayout><Personas/></ProtectedLayout>} />
-          <Route path="/sesiones/equipos" element={<ProtectedLayout><Equipos/></ProtectedLayout>} />
-        </Routes>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<NuevaMinuta />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Signup />} />
+            <Route
+              path="/dashboard2"
+              element={
+                <RequireAuth>
+                  <ProtectedLayout><DashboardLegacy /></ProtectedLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/dashboard/*"
+              element={
+                <RequireAuth>
+                  <ProtectedLayout><Dashboard /></ProtectedLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/alertas"
+              element={
+                <RequireAuth>
+                  <ProtectedLayout><Alertas /></ProtectedLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/sesion/:id"
+              element={
+                <RequireAuth>
+                  <ProtectedLayout><Maquina /></ProtectedLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/sesiones"
+              element={
+                <RequireAuth>
+                  <ProtectedLayout><Sesiones/></ProtectedLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/ordenes"
+              element={
+                <RequireAuth>
+                  <ProtectedLayout><OrdenesProduccion/></ProtectedLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/ordenes/:id"
+              element={
+                <RequireAuth>
+                  <ProtectedLayout><DetalleOrden /></ProtectedLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/sesiones/personas"
+              element={
+                <RequireAuth>
+                  <ProtectedLayout><Personas/></ProtectedLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/sesiones/equipos"
+              element={
+                <RequireAuth>
+                  <ProtectedLayout><Equipos/></ProtectedLayout>
+                </RequireAuth>
+              }
+            />
+            <Route path="*" element={<ProtectedLayout><h1>Page not found</h1></ProtectedLayout>} />
+          </Routes>
+        </Router>
+      </AuthProvider>
     </AspectRatioProvider>
   );
 }

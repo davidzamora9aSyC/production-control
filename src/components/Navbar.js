@@ -1,11 +1,13 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import logoNavbar from "../assets/logoNavbar.png";
+import { useAuth } from "../context/AuthContext";
 
 
 export default function Navbar() {
     const location = useLocation();
     const navigate = useNavigate();
+    const { logout } = useAuth();
 
     const [dropdownAbierto, setDropdownAbierto] = useState(false);
     const dropdownRef = useRef();
@@ -78,7 +80,7 @@ export default function Navbar() {
                   )}
                 </li>
             </ul>
-            <button onClick={()=>navigate("/login")} className="text-xl font-bold">Cerrar sesión</button>
+            <button onClick={()=>{ logout(); navigate("/login", { replace: true }); }} className="text-xl font-bold">Cerrar sesión</button>
         </nav>
     );
 }
