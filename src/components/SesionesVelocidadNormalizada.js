@@ -118,52 +118,60 @@ export default function SesionesVelocidadNormalizada() {
             el valor resultante es adimensional (≈1.0 equivale al promedio de su sesión) y da igual peso a máquinas rápidas y lentas.
           </div>
         </div>
-        <div className="flex items-center gap-3 flex-wrap justify-end">
-          <div className="flex items-center gap-2">
-            <label className="text-sm">Modo</label>
-            <select value={modoFecha} onChange={(e) => setModoFecha(e.target.value)} className="border rounded px-2 py-1 text-sm">
-              <option value="rango">Rango predefinido</option>
-              <option value="fechas">Fechas</option>
-            </select>
-          </div>
-          {modoFecha === "rango" ? (
+        <div className="flex flex-col gap-2 items-end">
+          <div className="flex items-center gap-3 flex-wrap justify-end">
             <div className="flex items-center gap-2">
-              <label className="text-sm">Rango</label>
-              <select value={rango} onChange={(e) => setRango(e.target.value)} className="border rounded px-2 py-1 text-sm">
-                <option value="hoy">Hoy</option>
-                <option value="esta-semana">Esta semana</option>
-                <option value="este-mes">Este mes</option>
-                <option value="ultimos-30-dias">Últimos 30 días</option>
-                <option value="este-ano">Este año</option>
-                <option value="ultimos-12-meses">Últimos 12 meses</option>
+              <label className="text-sm">Modo</label>
+              <select value={modoFecha} onChange={(e) => setModoFecha(e.target.value)} className="border rounded px-2 py-1 text-sm">
+                <option value="rango">Rango predefinido</option>
+                <option value="fechas">Fechas</option>
               </select>
             </div>
-          ) : (
-            <>
+            {modoFecha === "rango" ? (
               <div className="flex items-center gap-2">
-                <label className="text-sm">Inicio</label>
-                <input type="datetime-local" value={inicio} onChange={(e) => setInicio(e.target.value)} className="border rounded px-2 py-1 text-sm" />
+                <label className="text-sm">Rango</label>
+                <select value={rango} onChange={(e) => setRango(e.target.value)} className="border rounded px-2 py-1 text-sm">
+                  <option value="hoy">Hoy</option>
+                  <option value="esta-semana">Esta semana</option>
+                  <option value="este-mes">Este mes</option>
+                  <option value="ultimos-30-dias">Últimos 30 días</option>
+                  <option value="este-ano">Este año</option>
+                  <option value="ultimos-12-meses">Últimos 12 meses</option>
+                </select>
               </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm">Fin</label>
-                <input type="datetime-local" value={fin} onChange={(e) => setFin(e.target.value)} className="border rounded px-2 py-1 text-sm" />
-              </div>
-            </>
-          )}
-          <div className="flex items-center gap-2">
-            <label className="text-sm">Área</label>
-            <select value={areaId} onChange={(e) => setAreaId(e.target.value)} className="border-b border-black focus:outline-none">
-              <option value="">Todas</option>
-              {areas.map((a) => (
-                <option key={a.id} value={a.id}>{a.nombre}</option>
-              ))}
-            </select>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm">Inicio</label>
+                  <input type="datetime-local" value={inicio} onChange={(e) => setInicio(e.target.value)} className="border rounded px-2 py-1 text-sm" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm">Fin</label>
+                  <input type="datetime-local" value={fin} onChange={(e) => setFin(e.target.value)} className="border rounded px-2 py-1 text-sm" />
+                </div>
+              </>
+            )}
           </div>
-          <div className="flex items-center gap-2">
-            <label className="text-sm">Puntos</label>
-            <input type="number" min={10} max={200} value={points} onChange={(e) => setPoints(Number(e.target.value))} className="border-b border-black w-20 text-right focus:outline-none" />
+          <div className="flex items-center gap-3 flex-wrap justify-end">
+            <div className="flex items-center gap-1">
+              <label className="text-sm">Puntos</label>
+              <span
+                className="text-gray-500 cursor-help text-sm"
+                title="Cantidad de posiciones a las que se reescala cada sesión para promediar en el eje 0–100%. Valores mayores suavizan la curva pero requieren más cómputo."
+              >ⓘ</span>
+              <input type="number" min={10} max={200} value={points} onChange={(e) => setPoints(Number(e.target.value))} className="border-b border-black w-20 text-right focus:outline-none" />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm">Área</label>
+              <select value={areaId} onChange={(e) => setAreaId(e.target.value)} className="border-b border-black focus:outline-none">
+                <option value="">Todas</option>
+                {areas.map((a) => (
+                  <option key={a.id} value={a.id}>{a.nombre}</option>
+                ))}
+              </select>
+            </div>
+            <button onClick={fetchData} className="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">Actualizar</button>
           </div>
-          <button onClick={fetchData} className="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">Actualizar</button>
         </div>
       </div>
 

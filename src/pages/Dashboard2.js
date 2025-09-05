@@ -119,13 +119,13 @@ export default function Dashboard() {
           <div>
             <div className="font-semibold text-gray-700 mb-2">Trabajadores</div>
             <Link to="/dashboard/trabajadores" className={`block w-full text-left p-2 rounded hover:bg-gray-200 ${view === "trabajadores" ? "bg-gray-200" : ""}`}>
-              Ver mejores
+              Ver indicadores
             </Link>
           </div>
           <div>
             <div className="font-semibold text-gray-700 mb-2">Máquina</div>
             <Link to="/dashboard/maquinas" className={`block w-full text-left p-2 rounded hover:bg-gray-200 ${view === "maquinas" ? "bg-gray-200" : ""}`}>
-              Ver mejores
+              Ver indicadores
             </Link>
           </div>
           <div>
