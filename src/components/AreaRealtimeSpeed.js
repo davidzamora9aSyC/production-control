@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import { API_BASE_URL } from "../api";
 import { useAuth } from "../context/AuthContext";
 
-export default function AreaRealtimeSpeed({ defaultMode = "sum" }) {
+export default function AreaRealtimeSpeed() {
   const { token } = useAuth();
   const [areas, setAreas] = useState([]);
   const [areaId, setAreaId] = useState("");
-  const [mode, setMode] = useState(defaultMode);
-  const [data, setData] = useState([]);
+  const [data, setData] = useState([]); // [{ minuto, name, [areaName]: meanNorm }]
+  const [seriesKeys, setSeriesKeys] = useState([]); // area display names used as dataKeys
   const [updatedAt, setUpdatedAt] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -31,20 +31,52 @@ export default function AreaRealtimeSpeed({ defaultMode = "sum" }) {
     setError("");
     try {
       const params = new URLSearchParams();
-      if (mode && mode !== "sum") params.append("mode", mode);
       if (areaId) params.append("areaId", areaId);
       const url = `${API_BASE_URL}/indicadores/realtime/area-velocidad${params.toString() ? `?${params.toString()}` : ""}`;
       const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       if (!res.ok) throw new Error("No se pudo cargar la velocidad en tiempo real");
       const json = await res.json();
-      const list = Array.isArray(json) ? json : (json ? [json] : []);
+
       const mapName = (id) => areas.find((a) => String(a.id) === String(id))?.nombre || id;
-      setData(list.map((r) => ({ ...r, name: mapName(r.areaId) })));
-      const stamp = list[0]?.minuto || new Date().toISOString();
-      setUpdatedAt(stamp);
+
+      // Normaliza a lista de series { areaId, puntos: [{minuto, meanNorm}], inicio, fin }
+      const series = Array.isArray(json) ? json : (json ? [json] : []);
+
+      // Construir conjunto de todos los minutos presentes
+      const minutosSet = new Set();
+      series.forEach((s) => (s.puntos || []).forEach((p) => minutosSet.add(p.minuto)));
+      const minutos = Array.from(minutosSet).sort();
+
+      // Mapa de valores por área y minuto
+      const areaKeys = series.map((s) => mapName(s.areaId));
+      const byAreaAndMinute = {};
+      series.forEach((s) => {
+        const display = mapName(s.areaId);
+        if (!byAreaAndMinute[display]) byAreaAndMinute[display] = {};
+        (s.puntos || []).forEach((p) => {
+          byAreaAndMinute[display][p.minuto] = Number(p.meanNorm);
+        });
+      });
+
+      // Serie para el gráfico, una fila por minuto con campos por área
+      const rows = minutos.map((m) => {
+        const d = new Date(m);
+        const name = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+        const row = { minuto: m, name };
+        areaKeys.forEach((k) => {
+          row[k] = byAreaAndMinute[k]?.[m] ?? null;
+        });
+        return row;
+      });
+
+      setData(rows);
+      setSeriesKeys(areaKeys);
+      const lastMin = minutos[minutos.length - 1];
+      setUpdatedAt(lastMin || new Date().toISOString());
     } catch (e) {
       setError(e.message || "Error al cargar");
       setData([]);
+      setSeriesKeys([]);
     } finally {
       setLoading(false);
     }
@@ -55,7 +87,15 @@ export default function AreaRealtimeSpeed({ defaultMode = "sum" }) {
     const id = setInterval(fetchData, 15000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [areaId, mode]);
+  }, [areaId]);
+
+  // Cuando llegan los nombres de áreas por primera vez, rehacer el mapeo para usar nombres en la leyenda
+  useEffect(() => {
+    if (areas.length) {
+      fetchData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [areas.length]);
 
   // Si las áreas llegan después del primer fetch, actualizar los labels del eje X
   useEffect(() => {
@@ -65,10 +105,8 @@ export default function AreaRealtimeSpeed({ defaultMode = "sum" }) {
   }, [areas]);
 
   const description = useMemo(() => (
-    mode === "sum"
-      ? "Suma de velocidades de ventana (10 min) de sesiones activas por área."
-      : "Promedio simple de velocidades de ventana (10 min) de sesiones activas por área."
-  ), [mode]);
+    "Serie por minuto de la velocidad de ventana normalizada (10 min) por área del día de hoy. Cada sesión se normaliza por su propio promedio diario, de modo que todas las máquinas pesen igual; el valor es adimensional (≈1.0 equivale al promedio de su sesión)."
+  ), []);
 
   return (
     <div className="w-full">
@@ -85,11 +123,6 @@ export default function AreaRealtimeSpeed({ defaultMode = "sum" }) {
               <option key={a.id} value={a.id}>{a.nombre}</option>
             ))}
           </select>
-          <label className="text-sm">Modo</label>
-          <select value={mode} onChange={(e) => setMode(e.target.value)} className="border-b border-black focus:outline-none">
-            <option value="sum">Suma</option>
-            <option value="avg">Promedio</option>
-          </select>
         </div>
       </div>
 
@@ -97,13 +130,25 @@ export default function AreaRealtimeSpeed({ defaultMode = "sum" }) {
         <div className="text-xs text-gray-500 mb-2">Último minuto: {updatedAt ? new Date(updatedAt).toLocaleString() : "—"}</div>
         <div style={{ width: "100%", height: 260 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
+            <LineChart data={data}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
-              <YAxis />
+              <YAxis domain={["auto", "auto"]} />
               <Tooltip formatter={(v) => `${Number(v).toFixed(2)}`} />
-              <Bar dataKey="velocidad" fill="#3b82f6" />
-            </BarChart>
+              <Legend />
+              {seriesKeys.map((k, idx) => (
+                <Line
+                  key={k}
+                  type="monotone"
+                  dataKey={k}
+                  stroke={PALETTE[idx % PALETTE.length]}
+                  strokeWidth={2}
+                  dot={false}
+                  isAnimationActive={false}
+                  connectNulls
+                />
+              ))}
+            </LineChart>
           </ResponsiveContainer>
         </div>
         {loading && <div className="text-sm text-gray-600 mt-2">Actualizando…</div>}
@@ -112,3 +157,17 @@ export default function AreaRealtimeSpeed({ defaultMode = "sum" }) {
     </div>
   );
 }
+
+// Paleta simple y consistente entre renders
+const PALETTE = [
+  "#3b82f6", // blue-500
+  "#10b981", // emerald-500
+  "#f59e0b", // amber-500
+  "#ef4444", // red-500
+  "#8b5cf6", // violet-500
+  "#06b6d4", // cyan-500
+  "#84cc16", // lime-500
+  "#f97316", // orange-500
+  "#14b8a6", // teal-500
+  "#a78bfa", // violet-400
+];

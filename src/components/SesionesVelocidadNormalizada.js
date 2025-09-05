@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
 import { API_BASE_URL } from "../api";
 import { useAuth } from "../context/AuthContext";
 
@@ -38,18 +38,50 @@ export default function SesionesVelocidadNormalizada() {
     loadAreas();
   }, [token]);
 
+  const computeRange = () => {
+    const now = new Date();
+    const end = now;
+    const start = new Date(now);
+    switch (rango) {
+      case "hoy":
+        start.setHours(0, 0, 0, 0);
+        break;
+      case "esta-semana": {
+        const day = now.getDay(); // 0 dom - 6 sab
+        const diffToMonday = (day === 0 ? -6 : 1 - day);
+        start.setDate(now.getDate() + diffToMonday);
+        start.setHours(0, 0, 0, 0);
+        break;
+      }
+      case "este-mes":
+        start.setDate(1); start.setHours(0, 0, 0, 0);
+        break;
+      case "ultimos-30-dias":
+        start.setDate(now.getDate() - 30);
+        break;
+      case "este-ano":
+        start.setMonth(0, 1); start.setHours(0, 0, 0, 0);
+        break;
+      case "ultimos-12-meses":
+        start.setMonth(now.getMonth() - 12);
+        break;
+      default:
+        start.setDate(now.getDate() - 7);
+    }
+    return { inicioISO: start.toISOString(), finISO: end.toISOString() };
+  };
+
   const fetchData = async () => {
     if (modoFecha === "fechas" && (!inicio || !fin)) return;
     setLoading(true);
     setError("");
     try {
       const params = new URLSearchParams();
-      if (modoFecha === "rango") {
-        params.append("rango", rango);
-      } else {
-        params.append("inicio", new Date(inicio).toISOString());
-        params.append("fin", new Date(fin).toISOString());
-      }
+      const { inicioISO, finISO } = (modoFecha === "rango")
+        ? computeRange()
+        : { inicioISO: new Date(inicio).toISOString(), finISO: new Date(fin).toISOString() };
+      params.append("inicio", inicioISO);
+      params.append("fin", finISO);
       if (areaId) params.append("areaId", areaId);
       if (points) params.append("points", String(points));
       const url = `${API_BASE_URL}/indicadores/sesiones/velocidad-normalizada?${params.toString()}`;
@@ -80,7 +112,11 @@ export default function SesionesVelocidadNormalizada() {
       <div className="flex items-end justify-between mb-3">
         <div>
           <div className="font-semibold text-2xl">Velocidad normalizada de sesiones</div>
-          <div className="text-xs text-gray-600">Promedio de la velocidad de ventana a lo largo del progreso normalizado (0–100%) del conjunto de sesiones en el rango.</div>
+          <div className="text-xs text-gray-600">
+            Curva promedio sobre el progreso normalizado (0–100%) de la velocidad de ventana (10 min) de sesiones cerradas en el rango.
+            Cada sesión se reescala a <span className="font-semibold">{points}</span> puntos y se normaliza por su propio promedio antes de promediar;
+            el valor resultante es adimensional (≈1.0 equivale al promedio de su sesión) y da igual peso a máquinas rápidas y lentas.
+          </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap justify-end">
           <div className="flex items-center gap-2">
@@ -144,6 +180,7 @@ export default function SesionesVelocidadNormalizada() {
               <XAxis dataKey="pct" domain={[0, 100]} type="number" tickFormatter={(v) => `${v}%`} />
               <YAxis />
               <Tooltip formatter={(v) => `${Number(v).toFixed(2)}`} labelFormatter={(l) => `${l}%`} />
+              <ReferenceLine y={1} stroke="#9ca3af" strokeDasharray="4 4" />
               <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
