@@ -81,6 +81,10 @@ export default function IndicadoresLista({ tipo = "trabajadores" }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [rows, setRows] = useState([]);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [sortKey, setSortKey] = useState(null); // solo claves de métricas
+  const [sortDir, setSortDir] = useState("desc"); // "asc" | "desc"
 
   useEffect(() => {
     // Default fechas: últimos 7 días
@@ -104,7 +108,7 @@ export default function IndicadoresLista({ tipo = "trabajadores" }) {
           { key: "id", label: "ID" },
           { key: "nombre", label: "Nombre" },
           { key: "tipo", label: "Tipo" },
-          { key: "areaId", label: "Área" },
+          { key: "areaNombre", label: "Área" },
         ];
   }, [tipo]);
 
@@ -112,6 +116,10 @@ export default function IndicadoresLista({ tipo = "trabajadores" }) {
     const keys = metrics.length ? metrics : ALL_METRICS.map((m) => m.key);
     return ALL_METRICS.filter((m) => keys.includes(m.key));
   }, [metrics]);
+  const sortableMetaKeys = useMemo(
+    () => (tipo === "trabajadores" ? ["nombre", "grupo", "turno"] : ["nombre", "tipo", "areaNombre"]),
+    [tipo]
+  );
 
   const fetchData = async () => {
     setLoading(true);
@@ -131,12 +139,68 @@ export default function IndicadoresLista({ tipo = "trabajadores" }) {
       if (!res.ok) throw new Error("No se pudo cargar");
       const json = await res.json();
       setRows(Array.isArray(json) ? json : []);
+      setPage(1);
     } catch (e) {
       setRows([]);
       setError(e.message || "Error al cargar");
     } finally {
       setLoading(false);
     }
+  };
+
+  const metricKeys = useMemo(() => (metrics.length ? metrics : ALL_METRICS.map((m) => m.key)), [metrics]);
+
+  // Ordenación
+  const finalSortedRows = useMemo(() => {
+    if (!sortKey) return rows;
+    const isMetric = metricKeys.includes(sortKey);
+    const isMeta = sortableMetaKeys.includes(sortKey);
+    if (!isMetric && !isMeta) return rows;
+    const dirMul = sortDir === "asc" ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      let av = a?.[sortKey];
+      let bv = b?.[sortKey];
+      const aNull = av == null || (isMetric && Number.isNaN(av));
+      const bNull = bv == null || (isMetric && Number.isNaN(bv));
+      if (aNull && bNull) return 0;
+      if (aNull) return 1; // nulls last
+      if (bNull) return -1;
+      if (isMetric) {
+        if (typeof av !== "number") av = Number(av);
+        if (typeof bv !== "number") bv = Number(bv);
+        if (Number.isNaN(av) && Number.isNaN(bv)) return 0;
+        if (Number.isNaN(av)) return 1;
+        if (Number.isNaN(bv)) return -1;
+        if (av === bv) return 0;
+        const base = av > bv ? 1 : -1;
+        return base * dirMul;
+      } else {
+        const as = String(av ?? "");
+        const bs = String(bv ?? "");
+        const comp = as.localeCompare(bs, undefined, { sensitivity: "base" });
+        return comp * dirMul;
+      }
+    });
+  }, [rows, sortKey, sortDir, metricKeys, sortableMetaKeys]);
+
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(finalSortedRows.length / pageSize)), [finalSortedRows.length]);
+  useEffect(() => {
+    setPage((p) => (p > totalPages ? totalPages : p));
+  }, [totalPages]);
+
+  const pageStart = (page - 1) * pageSize;
+  const pageEnd = Math.min(pageStart + pageSize, finalSortedRows.length);
+  const pageRows = finalSortedRows.slice(pageStart, pageEnd);
+
+  const toggleSort = (key) => {
+    if (!metricKeys.includes(key) && !sortableMetaKeys.includes(key)) return;
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("desc");
+    }
+    setPage(1);
   };
 
   return (
@@ -185,16 +249,50 @@ export default function IndicadoresLista({ tipo = "trabajadores" }) {
           <table className="min-w-full text-sm">
             <thead>
               <tr className="bg-gray-50">
-                {metaColumns.map((c) => (
-                  <th key={c.key} className="px-3 py-2 text-left font-medium border-b">{c.label}</th>
-                ))}
-                {metricColumns.map((c) => (
-                  <th key={c.key} className="px-3 py-2 text-left font-medium border-b">{c.label}</th>
-                ))}
+                {metaColumns.map((c) => {
+                  const sortable = sortableMetaKeys.includes(c.key);
+                  const active = sortable && sortKey === c.key;
+                  const arrow = active ? (sortDir === "asc" ? "▲" : "▼") : "";
+                  if (!sortable) {
+                    return (
+                      <th key={c.key} className="px-3 py-2 text-left font-medium border-b">{c.label}</th>
+                    );
+                  }
+                  return (
+                    <th
+                      key={c.key}
+                      className="px-3 py-2 text-left font-medium border-b cursor-pointer select-none hover:bg-gray-100"
+                      title="Ordenar"
+                      onClick={() => toggleSort(c.key)}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        {c.label}
+                        {arrow && <span className="text-gray-500 text-[10px]">{arrow}</span>}
+                      </span>
+                    </th>
+                  );
+                })}
+                {metricColumns.map((c) => {
+                  const active = sortKey === c.key;
+                  const arrow = active ? (sortDir === "asc" ? "▲" : "▼") : "";
+                  return (
+                    <th
+                      key={c.key}
+                      className="px-3 py-2 text-left font-medium border-b cursor-pointer select-none hover:bg-gray-100"
+                      title="Ordenar"
+                      onClick={() => toggleSort(c.key)}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        {c.label}
+                        {arrow && <span className="text-gray-500 text-[10px]">{arrow}</span>}
+                      </span>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {pageRows.map((r) => (
                 <tr key={r.id} className="odd:bg-white even:bg-gray-50">
                   {metaColumns.map((c) => (
                     <td key={c.key} className="px-3 py-2 border-b">{r[c.key] ?? "-"}</td>
@@ -214,9 +312,56 @@ export default function IndicadoresLista({ tipo = "trabajadores" }) {
             </tbody>
           </table>
         </div>
+        {/* Paginación */}
+        {rows.length > 0 && (
+          <div className="flex items-center justify-between text-sm mt-2">
+            <div className="text-gray-600">
+              Mostrando {pageStart + 1}–{pageEnd} de {finalSortedRows.length}
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                className="px-2 py-1 border rounded disabled:opacity-50"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                Anterior
+              </button>
+              {(() => {
+                const buttons = [];
+                const max = totalPages;
+                const showSimple = max <= 7;
+                const pushBtn = (n) => buttons.push(
+                  <button
+                    key={n}
+                    className={`px-2 py-1 border rounded ${page === n ? "bg-gray-200" : ""}`}
+                    onClick={() => setPage(n)}
+                  >{n}</button>
+                );
+                if (showSimple) {
+                  for (let n = 1; n <= max; n++) pushBtn(n);
+                } else {
+                  pushBtn(1);
+                  if (page > 3) buttons.push(<span key="l-ellipsis" className="px-1">…</span>);
+                  const start = Math.max(2, page - 1);
+                  const end = Math.min(max - 1, page + 1);
+                  for (let n = start; n <= end; n++) pushBtn(n);
+                  if (page < max - 2) buttons.push(<span key="r-ellipsis" className="px-1">…</span>);
+                  pushBtn(max);
+                }
+                return buttons;
+              })()}
+              <button
+                className="px-2 py-1 border rounded disabled:opacity-50"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
         <div className="text-[11px] text-gray-500">En fechas manuales se toma todo el día de inicio y fin en zona America/Bogota.</div>
       </div>
     </div>
   );
 }
-

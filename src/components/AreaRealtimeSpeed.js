@@ -57,6 +57,13 @@ export default function AreaRealtimeSpeed({ defaultMode = "sum" }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [areaId, mode]);
 
+  // Si las áreas llegan después del primer fetch, actualizar los labels del eje X
+  useEffect(() => {
+    if (!areas.length || !data.length) return;
+    const mapName = (id) => areas.find((a) => String(a.id) === String(id))?.nombre || id;
+    setData((prev) => prev.map((r) => ({ ...r, name: mapName(r.areaId) })));
+  }, [areas]);
+
   const description = useMemo(() => (
     mode === "sum"
       ? "Suma de velocidades de ventana (10 min) de sesiones activas por área."
@@ -105,4 +112,3 @@ export default function AreaRealtimeSpeed({ defaultMode = "sum" }) {
     </div>
   );
 }
-

@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../api";
 import { useAuth } from "../context/AuthContext";
 
-function Stat({ label, value, suffix = "", desc }) {
+function Stat({ label, value, suffix = "", desc, extra = null }) {
   return (
     <div className="p-3 border rounded-lg">
       <div className="text-xs text-gray-500" title={desc}>{label}</div>
-      <div className="text-xl font-semibold">{value}{suffix}</div>
+      <div className="text-xl font-semibold flex items-baseline gap-2">
+        <span>{value}{suffix}</span>
+        {extra}
+      </div>
     </div>
   );
 }
@@ -96,7 +99,21 @@ export default function ResumenMaquina() {
         {data && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             <Stat label="Producción total" value={data.produccionTotal ?? 0} desc="Suma de piezas contadas en el rango" />
-            <Stat label="Defectos" value={data.defectos ?? 0} desc="Total de piezas no conformes" />
+            {(() => {
+              const defectosRaw = data.defectos ?? 0;
+              const isNeg = typeof defectosRaw === "number" && defectosRaw < 0;
+              const sobrantes = isNeg ? Math.floor(Math.abs(defectosRaw)) : null;
+              return (
+                <Stat
+                  label="Defectos"
+                  value={isNeg ? 0 : defectosRaw}
+                  desc="Total de piezas no conformes"
+                  extra={isNeg ? (
+                    <span className="text-xs text-gray-600">piezas sobrantes {sobrantes}</span>
+                  ) : null}
+                />
+              );
+            })()}
             <Stat label="% Defectos" value={(data.porcentajeDefectos ?? 0).toFixed(2)} suffix="%" desc="Defectos/(Producción+Defectos) * 100" />
             <Stat label="NPT (min)" value={data.nptMin ?? 0} desc="Minutos no productivos totales" />
             <Stat label="NPT por inactividad" value={data.nptPorInactividad ?? 0} desc="Minutos inactivos continuos > 3 min" />
@@ -117,4 +134,3 @@ export default function ResumenMaquina() {
     </div>
   );
 }
-
