@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../api";
+import { useAreas } from "../context/AreasContext";
 
 export default function MaquinaForm({ onSave, onClose, equipo, modo, onError }) {
   const [form, setForm] = useState({
@@ -12,20 +13,17 @@ export default function MaquinaForm({ onSave, onClose, equipo, modo, onError }) 
     areaId: equipo?.areaId || equipo?.area?.id || ""
   });
 
-  const [areas, setAreas] = useState([]);
+  const { areas, error: areasError } = useAreas();
 
+  // Propagar error de áreas al consumidor como ocurría con el fetch local
+  // (solo la primera vez que aparezca un error)
+  const [areasNotified, setAreasNotified] = useState(false);
   useEffect(() => {
-    fetch(`${API_BASE_URL}/areas`)
-      .then(res => {
-        if (!res.ok) throw new Error("Error al cargar áreas");
-        return res.json();
-      })
-      .then(data => setAreas(Array.isArray(data) ? data : []))
-      .catch(err => {
-        onError && onError(err.message || "No fue posible cargar las áreas");
-        setAreas([]);
-      });
-  }, []);
+    if (!areasNotified && areasError) {
+      onError && onError(areasError);
+      setAreasNotified(true);
+    }
+  }, [areasError, areasNotified, onError]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

@@ -8,6 +8,7 @@ import ExpandableCard from "../components/ExpandableCard";
 import AreaRealtimeSpeed from "../components/AreaRealtimeSpeed";
 import SesionesVelocidadNormalizada from "../components/SesionesVelocidadNormalizada";
 import IndicadoresLista from "../components/IndicadoresLista";
+import IndicadoresSearchBar from "../components/IndicadoresSearchBar";
 
 
 function GeneralView() {
@@ -62,6 +63,9 @@ function TrabajadoresMejores() {
     <div className="p-6 space-y-6 overflow-y-auto h-full">
       <h2 className="text-2xl font-semibold">Trabajadores</h2>
       <ExpandableCard>
+        <IndicadoresSearchBar tipo="trabajadores" />
+      </ExpandableCard>
+      <ExpandableCard>
         <IndicadoresLista tipo="trabajadores" />
       </ExpandableCard>
       <ExpandableCard>
@@ -76,6 +80,9 @@ function MaquinasMejores() {
   return (
     <div className="p-6 space-y-6 overflow-y-auto h-full">
       <h2 className="text-2xl font-semibold">Máquinas</h2>
+      <ExpandableCard>
+        <IndicadoresSearchBar tipo="maquinas" />
+      </ExpandableCard>
       <ExpandableCard>
         <IndicadoresLista tipo="maquinas" />
       </ExpandableCard>

@@ -1,22 +1,15 @@
 import { useState, useEffect } from "react";
+import { useAreas } from "../context/AreasContext";
 
 export default function EstadisticasPanel() {
     const [proceso, setProceso] = useState("8f56484e-8717-43f1-ae33-4ddf1bc7ac35");
-    const [areas, setAreas] = useState([]);
+    const { areas } = useAreas();
 
     const [stats, setStats] = useState([]);
 
     useEffect(() => {
-        const fetchAreas = async () => {
-            const API_BASE = "https://smartindustries.org";
-            const res = await fetch(`${API_BASE}/areas`);
-            const data = await res.json();
-            setAreas(data);
-            if (data.length > 0) setProceso(data[0].id);
-        };
-
-        fetchAreas();
-    }, []);
+        if (areas.length > 0) setProceso((p) => p || areas[0].id);
+    }, [areas]);
 
     useEffect(() => {
         const fetchData = async () => {

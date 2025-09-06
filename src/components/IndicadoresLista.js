@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE_URL } from "../api";
 import { useAuth } from "../context/AuthContext";
+import ElementoIndicadoresModal from "./ElementoIndicadoresModal";
 
 const ALL_METRICS = [
   { key: "produccionTotal", label: "Producción total" },
@@ -85,6 +86,7 @@ export default function IndicadoresLista({ tipo = "trabajadores" }) {
   const pageSize = 10;
   const [sortKey, setSortKey] = useState(null); // solo claves de métricas
   const [sortDir, setSortDir] = useState("desc"); // "asc" | "desc"
+  const [modalRow, setModalRow] = useState(null); // fila seleccionada para ver serie
 
   useEffect(() => {
     // Default fechas: últimos 7 días
@@ -295,7 +297,19 @@ export default function IndicadoresLista({ tipo = "trabajadores" }) {
               {pageRows.map((r) => (
                 <tr key={r.id} className="odd:bg-white even:bg-gray-50">
                   {metaColumns.map((c) => (
-                    <td key={c.key} className="px-3 py-2 border-b">{r[c.key] ?? "-"}</td>
+                    <td key={c.key} className="px-3 py-2 border-b">
+                      {c.key === "id" ? (
+                        <button
+                          className="px-2 py-1 rounded bg-indigo-600 text-white text-xs hover:bg-indigo-700"
+                          title="Ver serie de indicadores"
+                          onClick={() => setModalRow(r)}
+                        >
+                          Ver indicadores
+                        </button>
+                      ) : (
+                        r[c.key] ?? "-"
+                      )}
+                    </td>
                   ))}
                   {metricColumns.map((c) => (
                     <td key={c.key} className="px-3 py-2 border-b">{formatValue(c.key, r[c.key])}</td>
@@ -361,6 +375,14 @@ export default function IndicadoresLista({ tipo = "trabajadores" }) {
           </div>
         )}
         <div className="text-[11px] text-gray-500">En fechas manuales se toma todo el día de inicio y fin en zona America/Bogota.</div>
+        {modalRow && (
+          <ElementoIndicadoresModal
+            tipo={tipo}
+            id={modalRow.id}
+            nombre={modalRow.nombre}
+            onClose={() => setModalRow(null)}
+          />
+        )}
       </div>
     </div>
   );

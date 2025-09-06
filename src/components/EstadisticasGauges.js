@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useAreas } from "../context/AreasContext";
 
 const API_BASE = "https://smartindustries.org";
 
@@ -29,25 +30,12 @@ function Gauge({ percent, label, valueText }) {
 
 export default function EstadisticasGauges() {
   const [areaId, setAreaId] = useState("");
-  const [areas, setAreas] = useState([]);
+  const { areas } = useAreas();
   const [dayData, setDayData] = useState(null);
   const [monthData, setMonthData] = useState(null);
   const hoy = useMemo(() => new Date().toISOString().split("T")[0], []);
 
-  useEffect(() => {
-    const loadAreas = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/areas`);
-        const list = await res.json();
-        const arr = Array.isArray(list) ? list : [];
-        setAreas(arr);
-        // Dejar "Todos" ("") como selección por defecto si no hay selección
-      } catch {
-        setAreas([]);
-      }
-    };
-    loadAreas();
-  }, []);
+  // áreas provienen del contexto compartido
 
   useEffect(() => {
     const load = async () => {

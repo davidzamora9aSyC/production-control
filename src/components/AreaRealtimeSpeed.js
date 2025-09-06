@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import { API_BASE_URL } from "../api";
 import { useAuth } from "../context/AuthContext";
+import { useAreas } from "../context/AreasContext";
 
 export default function AreaRealtimeSpeed() {
   const { token } = useAuth();
-  const [areas, setAreas] = useState([]);
+  const { areas } = useAreas();
   const [areaId, setAreaId] = useState("");
   const [data, setData] = useState([]); // [{ minuto, name, [areaName]: meanNorm }]
   const [seriesKeys, setSeriesKeys] = useState([]); // area display names used as dataKeys
@@ -13,18 +14,7 @@ export default function AreaRealtimeSpeed() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const loadAreas = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/areas`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-        const arr = await res.json();
-        setAreas(Array.isArray(arr) ? arr : []);
-      } catch {
-        setAreas([]);
-      }
-    };
-    loadAreas();
-  }, [token]);
+  // áreas compartidas via contexto (se cargan una sola vez)
 
   const fetchData = async () => {
     setLoading(true);

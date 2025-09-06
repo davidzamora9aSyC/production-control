@@ -1,6 +1,8 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useState, useEffect, useMemo, useContext } from "react";
 import { ExpandButton, ExpandContext } from "./ExpandableCard";
+import { useAreas } from "../context/AreasContext";
+import { fetchJsonCached } from "../api";
 
 const API_BASE = "https://smartindustries.org";
 
@@ -10,24 +12,12 @@ export default function IndicadorChart({ metricKey, title, isPercent = true }) {
   const [rango, setRango] = useState("Ultimos 12 meses");
   const [raw, setRaw] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [areas, setAreas] = useState([]);
   const { expanded } = useContext(ExpandContext);
+  const { areas } = useAreas();
 
   useEffect(() => {
-    const loadAreas = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/areas`);
-        const list = await res.json();
-        const arr = Array.isArray(list) ? list : [];
-        setAreas(arr);
-        // Mantener "Todos" (valor "") por defecto. Si el área seleccionada desaparece, volver a Todos.
-        if (proceso && !arr.some(x => String(x.id) === String(proceso))) setProceso("");
-      } catch (e) {
-        setAreas([]);
-      }
-    };
-    loadAreas();
-  }, []);
+    if (proceso && !areas.some(x => String(x.id) === String(proceso))) setProceso("");
+  }, [areas, proceso]);
 
   useEffect(() => {
     if (periodo === "Meses" && (rango !== "Ultimos 12 meses" && rango !== "Año actual")) setRango("Ultimos 12 meses");
@@ -47,8 +37,7 @@ export default function IndicadorChart({ metricKey, title, isPercent = true }) {
         const url = needsAreaParam && proceso
           ? `${API_BASE}${endpoint}?areaId=${encodeURIComponent(proceso)}`
           : `${API_BASE}${endpoint}`;
-        const res = await fetch(url);
-        const json = await res.json();
+        const json = await fetchJsonCached(url, {}, { ttlMs: 15000 });
         const arr = Array.isArray(json) ? json : [];
         // Si el endpoint trae varias áreas (ultimos-XX), filtrar solo si hay un área seleccionada.
         // Para "Todos" (proceso === ""), no filtrar ni enviar areaId.

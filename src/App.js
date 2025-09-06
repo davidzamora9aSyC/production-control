@@ -14,6 +14,7 @@ import DetalleOrden from "./pages/DetalleOrden";
 import Personas from "./pages/Personas";
 import Equipos from "./pages/Equipos";
 import { AuthProvider } from "./context/AuthContext";
+import { AreasProvider } from "./context/AreasContext";
 import RequireAuth from "./components/RequireAuth";
 
 const ProtectedLayout = ({ children }) => (
@@ -30,6 +31,7 @@ function App() {
   return (
     <AspectRatioProvider>
       <AuthProvider>
+        <AreasProvider>
         <Router>
           <Routes>
             <Route path="/" element={<NuevaMinuta />} />
@@ -109,6 +111,7 @@ function App() {
             <Route path="*" element={<ProtectedLayout><h1>Page not found</h1></ProtectedLayout>} />
           </Routes>
         </Router>
+        </AreasProvider>
       </AuthProvider>
     </AspectRatioProvider>
   );

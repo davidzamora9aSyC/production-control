@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
 import { API_BASE_URL } from "../api";
 import { useAuth } from "../context/AuthContext";
+import { useAreas } from "../context/AreasContext";
 
 export default function SesionesVelocidadNormalizada() {
   const { token } = useAuth();
-  const [areas, setAreas] = useState([]);
+  const { areas } = useAreas();
   const [areaId, setAreaId] = useState("");
   const [modoFecha, setModoFecha] = useState("rango"); // "rango" | "fechas"
   const [rango, setRango] = useState("este-mes");
@@ -25,18 +26,7 @@ export default function SesionesVelocidadNormalizada() {
     setFin(today.toISOString().slice(0, 16));
   }, []);
 
-  useEffect(() => {
-    const loadAreas = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/areas`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-        const arr = await res.json();
-        setAreas(Array.isArray(arr) ? arr : []);
-      } catch {
-        setAreas([]);
-      }
-    };
-    loadAreas();
-  }, [token]);
+  // Áreas compartidas via contexto
 
   const computeRange = () => {
     const now = new Date();
