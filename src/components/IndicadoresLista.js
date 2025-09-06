@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { API_BASE_URL } from "../api";
 import { useAuth } from "../context/AuthContext";
 import ElementoIndicadoresModal from "./ElementoIndicadoresModal";
+import { FaInfoCircle } from "react-icons/fa";
+import INDICADOR_DESCRIPTIONS from "../utils/indicadorDescriptions";
+import Tooltip from "./Tooltip";
 
 const ALL_METRICS = [
   { key: "produccionTotal", label: "Producción total" },
@@ -62,7 +65,14 @@ function MetricSelector({ selected, onChange }) {
               checked={selected.includes(m.key)}
               onChange={() => toggleOne(m.key)}
             />
-            {m.label}
+            <span className="inline-flex items-center gap-1">
+              {m.label}
+              {INDICADOR_DESCRIPTIONS[m.key] && (
+                <Tooltip content={INDICADOR_DESCRIPTIONS[m.key]}>
+                  <FaInfoCircle className="text-gray-500 cursor-help" size={12} />
+                </Tooltip>
+              )}
+            </span>
           </label>
         ))}
       </div>

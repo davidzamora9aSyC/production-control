@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from "recharts";
 import { useAuth } from "../context/AuthContext";
+import { FaInfoCircle } from "react-icons/fa";
+import INDICADOR_DESCRIPTIONS from "../utils/indicadorDescriptions";
+import Tooltip from "./Tooltip";
 
 const API_BASE = "https://smartindustries.org";
 
@@ -144,7 +147,14 @@ export default function SesionIndicadoresModal({ sesionId, onClose }) {
                   <label key={m.key} className={`break-inside-avoid flex items-center gap-2 text-sm my-1.5 px-1 ${disabled ? "opacity-50" : ""}`}>
                     <input type="checkbox" checked={checked} disabled={disabled} onChange={() => toggleMetric(m.key)} />
                     <span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: m.color }} />
-                    <span>{m.label}</span>
+                    <span className="inline-flex items-center gap-1">
+                      {m.label}
+                      {INDICADOR_DESCRIPTIONS[m.key] && (
+                        <Tooltip content={INDICADOR_DESCRIPTIONS[m.key]}>
+                          <FaInfoCircle className="text-gray-500 cursor-help" size={12} />
+                        </Tooltip>
+                      )}
+                    </span>
                   </label>
                 );
               })}
@@ -170,7 +180,7 @@ export default function SesionIndicadoresModal({ sesionId, onClose }) {
                       tickFormatter={formatTick(a.key)}
                     />
                   ))}
-                  <Tooltip
+                  <RechartsTooltip
                     formatter={(value, name) => {
                       const def = METRIC_DEFS.find((m) => m.key === name);
                       return [formatTooltipVal(name, value), def?.label || name];
