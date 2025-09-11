@@ -12,9 +12,10 @@ export default function Login() {
 
     useEffect(() => {
         if (isAuthenticated) {
-            navigate("/dashboard", { replace: true });
+            const from = location.state?.from?.pathname || "/dashboard";
+            navigate(from, { replace: true });
         }
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated, navigate, location.state]);
 
     const handleLogin = async () => {
         setError("");

@@ -25,7 +25,6 @@ export default function Navbar() {
     const links = [
         { path: "/dashboard", label: "Resumen General" },
         { path: "/ordenes", label: "Órdenes de producción" },
-        { path: "/alertas", label: "Alertas" },
     ];
 
     return (

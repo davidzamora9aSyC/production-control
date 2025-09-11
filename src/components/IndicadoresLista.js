@@ -76,7 +76,7 @@ function MetricSelector({ selected, onChange }) {
           </label>
         ))}
       </div>
-      <div className="text-[11px] text-gray-500 mt-2">Si no seleccionas ninguna, el backend devolverá todas.</div>
+      <div className="text-[11px] text-gray-500 mt-2">Si no seleccionas ninguna, se mostrarán todas las métricas.</div>
     </div>
   );
 }
@@ -220,7 +220,7 @@ export default function IndicadoresLista({ tipo = "trabajadores" }) {
       <div className="flex items-end justify-between mb-3">
         <div>
           <div className="font-semibold text-2xl">Indicadores por {tipo === "trabajadores" ? "trabajadores" : "máquinas"}</div>
-          <div className="text-xs text-gray-600">Selecciona rango y métricas para ver el agregado devuelto por el backend.</div>
+          <div className="text-xs text-gray-600">Selecciona rango y métricas para ver el resumen de indicadores.</div>
         </div>
         <div className="flex items-center gap-3 flex-wrap justify-end">
           <div className="flex items-center gap-2">

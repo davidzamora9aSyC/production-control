@@ -4,6 +4,7 @@ import ProduccionChart from "../components/ProduccionChart";
 import IndicadorChart from "../components/IndicadorChart";
 import EstadisticasGauges from "../components/EstadisticasGauges";
 import AlertasComponent from "../components/AlertasComponent";
+import AlertasEntidadTabla from "../components/AlertasEntidadTabla";
 import ExpandableCard from "../components/ExpandableCard";
 import AreaRealtimeSpeed from "../components/AreaRealtimeSpeed";
 import SesionesVelocidadNormalizada from "../components/SesionesVelocidadNormalizada";
@@ -69,6 +70,12 @@ function TrabajadoresMejores() {
         <IndicadoresLista tipo="trabajadores" />
       </ExpandableCard>
       <ExpandableCard>
+        <div className="space-y-2">
+          <div className="text-lg font-semibold">Alertas por trabajador</div>
+          <AlertasEntidadTabla tipo="trabajador" />
+        </div>
+      </ExpandableCard>
+      <ExpandableCard>
         <ResumenTrabajador />
       </ExpandableCard>
     </div>
@@ -85,6 +92,12 @@ function MaquinasMejores() {
       </ExpandableCard>
       <ExpandableCard>
         <IndicadoresLista tipo="maquinas" />
+      </ExpandableCard>
+      <ExpandableCard>
+        <div className="space-y-2">
+          <div className="text-lg font-semibold">Alertas por máquina</div>
+          <AlertasEntidadTabla tipo="maquina" />
+        </div>
       </ExpandableCard>
       <ExpandableCard>
         <ResumenMaquina />

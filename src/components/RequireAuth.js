@@ -8,7 +8,10 @@ export default function RequireAuth({ children }) {
 
   // Revalida token cuando cambia la ruta
   useEffect(() => {
-    revalidate();
+    // Revalida solo cuando cambia la ruta y ya terminó el arranque
+    if (!isChecking && isAuthenticated) {
+      revalidate();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
