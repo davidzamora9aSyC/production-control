@@ -25,13 +25,33 @@ function formatInfo(alerta) {
     if (!codigo) return "";
     switch (codigo) {
         case "TRABAJADOR_DEMASIADOS_DESCANSOS_EN_DIA":
-            return `Total descansos: ${m.total ?? "-"} / Límite: ${m.limite ?? "-"}`;
+            return `Descansos del día: ${m.total ?? "-"} (límite ${m.limite ?? "-"})`;
         case "TRABAJADOR_PAUSA_LARGA":
-            return `Pausa ${m.pausaId || "-"}: ${m.duracionMin ?? "-"} min${m.abierta ? " (abierta)" : ""} / Límite: ${m.limite ?? "-"}`;
+            return `Pausa de ${m.duracionMin ?? "-"} min (límite ${m.limite ?? "-"})${m.abierta === undefined ? "" : m.abierta ? " — en curso" : " — cerrada"}`;
         case "SIN_ACTIVIDAD":
-            return `Sesión ${m.sesionId || "-"}: ${m.minutosSinActividad ?? "-"} min sin actividad / Límite: ${m.limite ?? "-"}${m.motivo ? ` — ${m.motivo}` : ""}`;
+            {
+                const motivo = typeof m.motivo === "string" && m.motivo.trim()
+                    ? m.motivo.replace(/_/g, " ").toLowerCase()
+                    : "";
+                return `Sin actividad durante ${m.minutosSinActividad ?? "-"} min (límite ${m.limite ?? "-"})${motivo ? ` — motivo: ${motivo}` : ""}`;
+            }
         default:
-            try { return JSON.stringify(m); } catch { return ""; }
+            try {
+                const entries = Object.entries(m)
+                    .filter(([k]) => !k.toLowerCase().endsWith("id"))
+                    .map(([k, v]) => {
+                        const label = k
+                            .replace(/([a-z])([A-Z])/g, "$1 $2")
+                            .replace(/_/g, " ")
+                            .toLowerCase();
+                        if (typeof v === "boolean") return `${label}: ${v ? "sí" : "no"}`;
+                        if (v === null || v === undefined) return `${label}: -`;
+                        return `${label}: ${v}`;
+                    });
+                return entries.join(" · ");
+            } catch {
+                return "";
+            }
     }
 }
 

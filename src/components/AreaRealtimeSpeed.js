@@ -98,6 +98,11 @@ export default function AreaRealtimeSpeed() {
     "Serie por minuto de la velocidad de ventana normalizada (10 min) por área del día de hoy. Cada sesión se normaliza por su propio promedio diario, de modo que todas las máquinas pesen igual; el valor es adimensional (≈1.0 equivale al promedio de su sesión)."
   ), []);
 
+  const hasData = useMemo(() => {
+    if (!data.length || !seriesKeys.length) return false;
+    return data.some((row) => seriesKeys.some((key) => row[key] !== null && row[key] !== undefined));
+  }, [data, seriesKeys]);
+
   return (
     <div className="w-full">
       <div className="flex items-end justify-between mb-3">
@@ -118,29 +123,37 @@ export default function AreaRealtimeSpeed() {
 
       <div className="border rounded-2xl shadow-md px-4 py-3">
         <div className="text-xs text-gray-500 mb-2">Último minuto: {updatedAt ? new Date(updatedAt).toLocaleString() : "—"}</div>
-        <div style={{ width: "100%", height: 260 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis domain={["auto", "auto"]} />
-              <Tooltip formatter={(v) => `${Number(v).toFixed(2)}`} />
-              <Legend />
-              {seriesKeys.map((k, idx) => (
-                <Line
-                  key={k}
-                  type="monotone"
-                  dataKey={k}
-                  stroke={PALETTE[idx % PALETTE.length]}
-                  strokeWidth={2}
-                  dot={false}
-                  isAnimationActive={false}
-                  connectNulls
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        {hasData ? (
+          <div style={{ width: "100%", height: 260 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis domain={["auto", "auto"]} />
+                <Tooltip formatter={(v) => `${Number(v).toFixed(2)}`} />
+                <Legend />
+                {seriesKeys.map((k, idx) => (
+                  <Line
+                    key={k}
+                    type="monotone"
+                    dataKey={k}
+                    stroke={PALETTE[idx % PALETTE.length]}
+                    strokeWidth={2}
+                    dot={false}
+                    isAnimationActive={false}
+                    connectNulls
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          !loading && !error && (
+            <div className="text-sm text-gray-600 py-12 text-center">
+              Sin información disponible. Necesitas al menos una sesión abierta en las máquinas del área seleccionada para ver la velocidad en tiempo real.
+            </div>
+          )
+        )}
         {loading && <div className="text-sm text-gray-600 mt-2">Actualizando…</div>}
         {error && <div className="text-sm text-red-600 mt-2">{error}</div>}
       </div>
