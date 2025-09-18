@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-export default function Tooltip({ content, children, offset = 8 }) {
+export default function Tooltip({ content, children, offset = 8, shiftX = 0 }) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0, place: "bottom" }); // place: bottom|top
@@ -31,7 +31,7 @@ export default function Tooltip({ content, children, offset = 8 }) {
   const show = (e) => {
     const r = e.currentTarget.getBoundingClientRect();
     const top = r.bottom + offset;
-    const left = r.left + r.width / 2; // center; tooltip uses translateX(-50%) baseline
+    const left = r.left + r.width / 2 + shiftX; // shift horizontally if requested
     setPos({ top, left, place: "bottom" });
     setVisible(true);
   };

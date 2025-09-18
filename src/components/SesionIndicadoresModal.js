@@ -150,7 +150,7 @@ export default function SesionIndicadoresModal({ sesionId, onClose }) {
                     <span className="inline-flex items-center gap-1">
                       {m.label}
                       {INDICADOR_DESCRIPTIONS[m.key] && (
-                        <Tooltip content={INDICADOR_DESCRIPTIONS[m.key]}>
+                        <Tooltip content={INDICADOR_DESCRIPTIONS[m.key]} shiftX={40}>
                           <FaInfoCircle className="text-gray-500 cursor-help" size={12} />
                         </Tooltip>
                       )}
