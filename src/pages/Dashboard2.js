@@ -10,6 +10,7 @@ import AreaRealtimeSpeed from "../components/AreaRealtimeSpeed";
 import SesionesVelocidadNormalizada from "../components/SesionesVelocidadNormalizada";
 import IndicadoresLista from "../components/IndicadoresLista";
 import IndicadoresSearchBar from "../components/IndicadoresSearchBar";
+import IndicadoresProducto from "../components/IndicadoresProducto";
 
 
 function GeneralView() {
@@ -106,6 +107,17 @@ function MaquinasMejores() {
   );
 }
 
+function ProductosView() {
+  return (
+    <div className="p-6 space-y-6 overflow-y-auto h-full">
+      <h2 className="text-2xl font-semibold">Productos</h2>
+      <ExpandableCard>
+        <IndicadoresProducto />
+      </ExpandableCard>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const location = useLocation();
   const path = location.pathname.replace(/\/+$/, "");
@@ -117,9 +129,11 @@ export default function Dashboard() {
       ? <MaquinasMejores />
       : view === "areas"
         ? <AreasView />
-      : view === "alertas"
-        ? <div className="p-6 space-y-6 h-full overflow-y-auto"><AlertasComponent /></div>
-        : <GeneralView />;
+        : view === "productos"
+          ? <ProductosView />
+          : view === "alertas"
+            ? <div className="p-6 space-y-6 h-full overflow-y-auto"><AlertasComponent /></div>
+            : <GeneralView />;
 
   return (
     <div className="flex h-[calc(100vh-5rem)]">
@@ -146,6 +160,12 @@ export default function Dashboard() {
             <div className="font-semibold text-gray-700 mb-2">Máquina</div>
             <Link to="/dashboard/maquinas" className={`block w-full text-left p-2 rounded hover:bg-gray-200 ${view === "maquinas" ? "bg-gray-200" : ""}`}>
               Ver indicadores
+            </Link>
+          </div>
+          <div>
+            <div className="font-semibold text-gray-700 mb-2">Productos</div>
+            <Link to="/dashboard/productos" className={`block w-full text-left p-2 rounded hover:bg-gray-200 ${view === "productos" ? "bg-gray-200" : ""}`}>
+              Indicadores por producto
             </Link>
           </div>
           <div>
