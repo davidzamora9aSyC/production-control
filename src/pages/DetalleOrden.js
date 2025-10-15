@@ -121,6 +121,9 @@ export default function DetalleOrden() {
         <div className="bg-gray-100 px-4 py-2 rounded-full text-sm text-gray-800 font-medium">
           ID: {orden?.numero}
         </div>
+        <div className="bg-indigo-100 px-4 py-2 rounded-full text-sm text-indigo-800 font-medium">
+          Producto: {orden?.producto || "Sin producto"}
+        </div>
         <div className="bg-gray-100 px-4 py-2 rounded-full text-sm text-gray-800 font-medium flex items-center gap-4">
           <span>Avance: {avance}% ({totalCompletado}/{totalAsignado})</span>
           <span
