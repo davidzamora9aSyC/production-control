@@ -79,8 +79,9 @@ export default function DetalleOrden() {
     }
   };
 
-  const imprimirQRPaso = (id) => {
-    QRCode.toDataURL(String(id))
+  const imprimirQROrden = () => {
+    if (!orden?.id) return;
+    QRCode.toDataURL(String(orden.id))
       .then(url => {
         const ventana = window.open("", "_blank");
         if (!ventana) return;
@@ -89,7 +90,7 @@ export default function DetalleOrden() {
         imagen.src = url;
         imagen.onload = () => {
           ventana.document.body.innerHTML = `<img src="${url}" style="width:250px;height:250px" />`;
-          ventana.document.title = `QR Paso ${id}`;
+          ventana.document.title = `QR Orden ${orden.id}`;
           ventana.focus();
           ventana.print();
           ventana.close();
@@ -97,21 +98,22 @@ export default function DetalleOrden() {
       })
       .catch(err => {
         console.error("Error al imprimir QR:", err);
-        setErrorMsg("Error al imprimir QR del paso");
+        setErrorMsg("Error al imprimir QR de la orden");
       });
   };
 
-  const descargarQRPaso = (id) => {
-    QRCode.toDataURL(String(id))
+  const descargarQROrden = () => {
+    if (!orden?.id) return;
+    QRCode.toDataURL(String(orden.id))
       .then(url => {
         const a = document.createElement("a");
         a.href = url;
-        a.download = `paso_${id}.png`;
+        a.download = `orden_${orden.id}.png`;
         a.click();
       })
       .catch(err => {
         console.error("Error al generar QR:", err);
-        setErrorMsg("Error al generar QR del paso");
+        setErrorMsg("Error al generar QR de la orden");
       });
   };
 
@@ -134,6 +136,22 @@ export default function DetalleOrden() {
           <span>Estado: {orden?.estado}</span>
           <span>{orden ? new Date(orden.fechaOrden).toLocaleString() : ''}</span>
         </div>
+        {orden?.id && (
+          <div className="ml-auto flex gap-2">
+            <button
+              className="bg-purple-600 text-white px-3 py-2 rounded hover:bg-purple-700 text-sm"
+              onClick={descargarQROrden}
+            >
+              Descargar QR
+            </button>
+            <button
+              className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 text-sm"
+              onClick={imprimirQROrden}
+            >
+              Imprimir QR
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-between items-center mb-2">
@@ -160,8 +178,6 @@ export default function DetalleOrden() {
                 <th className="px-4 py-2 border-r">Cantidad producida</th>
                 <th className="px-4 py-2 border-r">Cant. producto no conforme</th>
                 <th className="px-4 py-2 border-r">Estado</th>
-                <th className="px-4 py-2 border-r">Descargar QR</th>
-                <th className="px-4 py-2 border-r">Imprimir QR</th>
                 <th className="px-4 py-2">Acciones</th>
               </tr>
             </thead>
@@ -178,22 +194,6 @@ export default function DetalleOrden() {
                       (asignaciones[item.id]?.[0]?.pasoOrden?.estado) ||
                       item.estado
                     }
-                  </td>
-                  <td className="px-4 py-2 border-r">
-                    <button
-                      className="bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700"
-                      onClick={() => descargarQRPaso(item.id)}
-                    >
-                      Descargar
-                    </button>
-                  </td>
-                  <td className="px-4 py-2 border-r">
-                    <button
-                      className="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
-                      onClick={() => imprimirQRPaso(item.id)}
-                    >
-                      Imprimir
-                    </button>
                   </td>
                   <td className="px-4 py-2">
                     <button
