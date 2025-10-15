@@ -3,11 +3,21 @@ import { API_BASE_URL } from "../api";
 import { useAuth } from "../context/AuthContext";
 
 const PERIODOS = [
-  { value: "diario", label: "Diario" },
-  { value: "semanal", label: "Semanal" },
-  { value: "mensual", label: "Mensual" },
-  { value: "trimestral", label: "Trimestral" },
+  { value: "diario", label: "Día actual" },
+  { value: "semanal", label: "Semana en curso" },
+  { value: "mensual", label: "Mes en curso" },
 ];
+
+const COMPARAR_CON_OPTS = [
+  { value: "previo", label: "Comparar con periodo previo" },
+  { value: "mismoPeriodoAnterior", label: "Comparar con mismo periodo del año anterior" },
+  { value: "ninguno", label: "Sin comparación" },
+];
+
+const COMPARAR_CON_LABELS = COMPARAR_CON_OPTS.reduce((acc, opt) => {
+  acc[opt.value] = opt.label;
+  return acc;
+}, {});
 
 const INDICATOR_TITLES = {
   cumplimiento_plan: "Cumplimiento del plan",
@@ -285,14 +295,16 @@ export default function IndicadoresProducto() {
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm text-gray-700">Comparar con</label>
-            <input
-              type="text"
+            <label className="text-sm text-gray-700">Comparación</label>
+            <select
               value={compararCon}
               onChange={(e) => setCompararCon(e.target.value)}
-              placeholder="Ej: previo"
-              className="border rounded px-3 py-2 text-sm min-w-[12rem]"
-            />
+              className="border rounded px-3 py-2 text-sm min-w-[16rem]"
+            >
+              {COMPARAR_CON_OPTS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm text-gray-700">Objetivo % NC</label>
@@ -358,7 +370,7 @@ export default function IndicadoresProducto() {
                 <div>{formatDateTime(data.comparativo?.inicio)}</div>
                 <div>{formatDateTime(data.comparativo?.fin)}</div>
                 <div className="text-xs text-gray-500 mt-1">
-                  Tipo: {data.comparativo?.tipo || compararCon || "-"}
+                  Tipo: {COMPARAR_CON_LABELS[data.comparativo?.tipo] || COMPARAR_CON_LABELS[compararCon] || "-"}
                 </div>
               </div>
               <div>
