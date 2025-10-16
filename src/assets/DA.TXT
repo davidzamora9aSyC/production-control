@@ -1,0 +1,87 @@
+                                                                             CODIGO: FO-P-17
+                                                                         -------------------
+
+                                 DISTRIBUIDORA DE REPUESTOS                   VERSION: 04
+
+                                     COLOMBIANOS S.A.S.                     01/11/2023
+
+    REFERENCIA: EMP001/PROD                                      FACTORY - SQL - (ORDEN.REP)
+    -----------------------------------------------------------------------------------------
+
+                               ORDEN DE PRODUCCION No. 184522
+   -----------------------------------------------------------------------------------------
+
+    PRODUCTO: 2-11-1185    BUJE CORTO BRAZO TRANVERZAL GRADUABLE 323  O ASAHI          (U )
+
+
+
+    FECHA ORDEN:14/10/2025                       20                              14/10/2025
+
+
+
+
+
+    CODIGO              MATERIALES                                                                                                    UD            CANTIDAD
+   -----------------------------------------------------------------------------------------
+    62          TUBO EXTERNO BUJE CAUCHO BARQUITO                          20.00
+
+    78          TUBO INTERNO CORTO BUJE CAUCHO BRAZO GRADUAB.              20.00
+
+
+
+    M5002       MEZCLA DE CAUCHO DUREZA 60-65 NORMAL                        0.70
+
+    HORAS DE MANO DE OBRA                                                                                     VARIABLES          FIJAS
+   -----------------------------------------------------------------------------------------
+                ADHESIVO                                                    0.33      0.0000
+
+                VULCANIZADO                                                 0.25      0.0000
+
+                REFILADO                                                    0.25      0.0000
+
+                PINTURA LIQUIDA                                             0.05      0.0000
+
+                EMPAQUE                                                     0.02      0.0000
+
+                ALISTAMIENTO SOLD-VULC                                      0.05      0.0000
+                TIEMPO MUERTO VULCANIZADO                                   0.02      0.0000
+
+                TIEMPO MUERTO VULCANIZADO                                   0.06      0.0000
+
+                TIEMPO MUERTO VULCANIZADO                                   0.12      0.0000
+
+    PROCESOS                                                  CONTROL DE CALIDAD                              MAQUINA
+   -----------------------------------------------------------------------------------------
+    01 ALISTAMIENTO VUL           COMP 62/78                   MANUAL
+
+    02 ADHESIVO                   COMP 62/78                   BROCHA MANUAL
+
+    03 VULCANIZADO                MOLDE: 1006 UB: 1-C10        MQ VULCANIZADORA
+
+                                  CARGA: 140g
+
+                                  CAVIDAD: 4
+
+    04 REFILADO                   COD 2-11-1185                CORTAFRIO CORTACUTICULA Y PUNL
+
+    05 PINTURA LIQUIDA                                         PISTOLA DE PINTURA
+    06 EMPAQUE                    COD 2-11-1185                SELLADORA
+
+
+
+                PREPARADO POR:                                 APROBADO POR:
+    -----------------------------------------------------------------------------------------
+                  DANIH                                       GUSTAVO GARZON
+
+       ENTRADA NUMERO:________________________      SALIDA NUMERO:________________________
+
+         DISPOSICION FINAL PRO NO CONFORME: _____________________________________________________
+
+
+        ORDEN CERRADA POR:________________________SE REALIZO INSPECCION AL 100% :________________________
+   -----------------------------------------------------------------------------------------
+
+
+
+
+   -----------------------------------------------------------------------------------------

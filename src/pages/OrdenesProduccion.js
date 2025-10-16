@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ModalCargarCSV from "../components/ModalCargarCSV";
 import { API_BASE_URL } from "../api";
+import parseOrdenProduccionTxt from "../utils/parseOrdenProduccionTxt";
 
 const ITEMS_POR_PAGINA = 8;
 
@@ -44,15 +45,41 @@ export default function OrdenesProduccion() {
     URL.revokeObjectURL(url);
   };
 
-  const onUpload = async (archivo) => {
-    const loading = document.createElement("div");
-    loading.textContent = "Cargando órdenes...";
-    loading.className = "fixed top-0 left-0 w-full h-full bg-white bg-opacity-80 flex justify-center items-center text-2xl";
-    loading.id = "cargando-ordenes";
-    document.body.appendChild(loading);
-  
-    const texto = await archivo.text();
+  const construirCsvDesdeOrdenes = (ordenesParsed) => {
+    const headers = ["numero", "producto", "cantidadAProducir", "fechaOrden", "fechaVencimiento", "nombre", "codigoInterno", "cantidadRequerida", "cantidadProducida", "estadoPaso", "numeroPaso"];
+    const rows = ordenesParsed.flatMap(orden => {
+      const base = [orden.numero, orden.producto, orden.cantidadAProducir, orden.fechaOrden, orden.fechaVencimiento];
+      return (orden.pasos || []).map(paso => [
+        ...base,
+        paso.nombre,
+        paso.codigoInterno || "",
+        paso.cantidadRequerida ?? orden.cantidadAProducir,
+        paso.cantidadProducida ?? 0,
+        paso.estado ?? "pendiente",
+        paso.numeroPaso ?? ""
+      ]);
+    });
+    if (rows.length === 0) return null;
+    return [headers, ...rows].map(cols => cols.map(col => `"${String(col ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  };
+
+  const descargarCsvOrdenes = (ordenesParsed, nombreArchivo = "ordenes_parseadas.csv") => {
+    const contenido = construirCsvDesdeOrdenes(ordenesParsed);
+    if (!contenido) return;
+    const blob = new Blob([contenido], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = nombreArchivo;
+    enlace.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const construirOrdenesDesdeCsv = (texto) => {
     const filas = texto.split(/\r?\n/).map(f => f.trim()).filter(Boolean);
+    if (filas.length <= 1) {
+      throw new Error("El archivo CSV no contiene datos");
+    }
     const headers = filas[0].split(',').map(h => h.trim());
     const idx = h => headers.indexOf(h);
 
@@ -111,7 +138,7 @@ export default function OrdenesProduccion() {
       });
     }
 
-    const ordenes = Object.values(pasosAgrupados).map(o => ({
+    return Object.values(pasosAgrupados).map(o => ({
       numero: o.numero,
       producto: o.producto,
       cantidadAProducir: o.cantidadAProducir,
@@ -119,8 +146,28 @@ export default function OrdenesProduccion() {
       fechaVencimiento: o.fechaVencimiento.toISOString(),
       pasos: o.pasos
     }));
+  };
+
+  const onUpload = async (archivo) => {
+    const loading = document.createElement("div");
+    loading.textContent = "Cargando órdenes...";
+    loading.className = "fixed top-0 left-0 w-full h-full bg-white bg-opacity-80 flex justify-center items-center text-2xl";
+    loading.id = "cargando-ordenes";
+    document.body.appendChild(loading);
+    let ordenes = [];
+    const extension = archivo.name.split(".").pop()?.toLowerCase();
+    let descargarCsvNombre = archivo.name.replace(/\.[^.]+$/, "") + "-parseado.csv";
     
     try {
+      if (extension === "txt") {
+        const texto = await archivo.text();
+        ordenes = parseOrdenProduccionTxt(texto);
+        descargarCsvOrdenes(ordenes, descargarCsvNombre);
+      } else {
+        const texto = await archivo.text();
+        ordenes = construirOrdenesDesdeCsv(texto);
+      }
+
       for (const orden of ordenes) {
         const res = await fetch(`${API_BASE_URL}/ordenes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(orden) });
         const text = await res.text();
