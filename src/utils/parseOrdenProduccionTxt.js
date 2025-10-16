@@ -101,15 +101,18 @@ export function parseOrdenProduccionTxt(rawText) {
   const pasosBase = extractPasos(lines, cantidad);
   if (pasosBase.length === 0) throw new Error("No se encontraron procesos en el archivo");
 
-  const pasos = pasosBase.map((p, idx) => ({
-    nombre: p.nombre,
-    codigoInterno: "",
-    cantidadRequerida: Number.isFinite(p.cantidadRequerida) ? p.cantidadRequerida : cantidad,
-    cantidadProducida: 0,
-    cantidadPedaleos: undefined,
-    estado: "pendiente",
-    numeroPaso: Number.isFinite(p.numeroPaso) ? p.numeroPaso : idx + 1,
-  }));
+  const pasos = pasosBase.map((p, idx) => {
+    const numeroPaso = Number.isFinite(p.numeroPaso) ? p.numeroPaso : idx + 1;
+    return {
+      nombre: p.nombre,
+      codigoInterno: `PASO-${String(numeroPaso).padStart(3, "0")}`,
+      cantidadRequerida: Number.isFinite(p.cantidadRequerida) ? p.cantidadRequerida : cantidad,
+      cantidadProducida: 0,
+      cantidadPedaleos: undefined,
+      estado: "pendiente",
+      numeroPaso,
+    };
+  });
 
   return [
     {
