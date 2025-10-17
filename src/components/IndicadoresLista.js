@@ -24,12 +24,49 @@ const ALL_METRICS = [
 
 const RANGOS = [
   { value: "hoy", label: "Hoy" },
-  { value: "esta-semana", label: "Esta semana" },
-  { value: "este-mes", label: "Este mes" },
+  { value: "semana", label: "Esta semana" },
+  { value: "mes", label: "Este mes" },
   { value: "ultimos-30-dias", label: "Últimos 30 días" },
-  { value: "este-ano", label: "Este año" },
+  { value: "ano", label: "Este año" },
   { value: "ultimos-12-meses", label: "Últimos 12 meses" },
 ];
+
+const COMPARISON_OPTIONS = [
+  { value: "previo", label: "Periodo previo" },
+  { value: "mismo-periodo-anterior", label: "Mismo periodo anterior" },
+  { value: "personalizado", label: "Fechas manuales" },
+  { value: "ninguno", label: "Sin comparación" },
+];
+
+const MIN_METRICS = new Set([
+  "defectos",
+  "nptMin",
+  "nptPorInactividad",
+  "pausasMin",
+  "pausasCount",
+  "porcentajeDefectos",
+  "porcentajeNPT",
+  "porcentajePausa",
+]);
+
+const NEUTRAL_METRICS = new Set(["duracionTotalMin"]);
+
+function trendClassForValue(metricKey, current, previous) {
+  const base = "text-gray-900";
+  if (previous == null || current == null) return base;
+  const currNum = Number(current);
+  const prevNum = Number(previous);
+  if (!Number.isFinite(currNum) || !Number.isFinite(prevNum)) return base;
+  if (currNum === prevNum) return base;
+  if (NEUTRAL_METRICS.has(metricKey)) return base;
+  const better = MIN_METRICS.has(metricKey) ? currNum < prevNum : currNum > prevNum;
+  return better ? "text-green-600" : "text-red-600";
+}
+
+function comparisonLabel(value) {
+  const found = COMPARISON_OPTIONS.find((opt) => opt.value === value);
+  return found ? found.label : value;
+}
 
 function formatValue(key, val) {
   if (val == null) return "-";
@@ -85,13 +122,18 @@ export default function IndicadoresLista({ tipo = "trabajadores" }) {
   // tipo: "trabajadores" | "maquinas"
   const { token } = useAuth();
   const [modoFecha, setModoFecha] = useState("rango"); // "rango" | "fechas"
-  const [rango, setRango] = useState("este-mes");
+  const [rango, setRango] = useState("mes");
   const [inicio, setInicio] = useState("");
   const [fin, setFin] = useState("");
+  const [compararCon, setCompararCon] = useState("previo");
+  const [compararInicio, setCompararInicio] = useState("");
+  const [compararFin, setCompararFin] = useState("");
   const [metrics, setMetrics] = useState(["produccionTotal", "avgSpeed", "porcentajeDefectos"]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [rows, setRows] = useState([]);
+  const [periodoInfo, setPeriodoInfo] = useState(null);
+  const [comparativoInfo, setComparativoInfo] = useState(null);
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [sortKey, setSortKey] = useState(null); // solo claves de métricas
@@ -134,26 +176,52 @@ export default function IndicadoresLista({ tipo = "trabajadores" }) {
   );
 
   const fetchData = async () => {
+    if (modoFecha === "fechas" && (!inicio || !fin)) {
+      setError("Selecciona fecha de inicio y fin.");
+      return;
+    }
+    if (compararCon === "personalizado" && (!compararInicio || !compararFin)) {
+      setError("Selecciona fechas para la comparación.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
       const params = new URLSearchParams();
       if (modoFecha === "rango") {
-        params.append("rango", rango);
+        if (rango) params.append("rango", rango);
       } else {
         if (inicio) params.append("inicio", inicio);
         if (fin) params.append("fin", fin);
       }
       if (metrics.length) params.append("metrics", metrics.join(","));
+      if (compararCon) {
+        params.append("compararCon", compararCon);
+        if (compararCon === "personalizado") {
+          params.append("compararInicio", compararInicio);
+          params.append("compararFin", compararFin);
+        }
+      }
 
-      const url = `${API_BASE_URL}/indicadores/${tipo}?${params.toString()}`;
+      const queryString = params.toString();
+      const url = `${API_BASE_URL}/indicadores/${tipo}${queryString ? `?${queryString}` : ""}`;
       const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       if (!res.ok) throw new Error("No se pudo cargar");
       const json = await res.json();
-      setRows(Array.isArray(json) ? json : []);
+      if (json && !Array.isArray(json)) {
+        setPeriodoInfo(json.periodo ?? null);
+        setComparativoInfo(json.comparativo ?? null);
+      } else {
+        setPeriodoInfo(null);
+        setComparativoInfo(null);
+      }
+      const dataRows = Array.isArray(json?.data) ? json.data : (Array.isArray(json) ? json : []);
+      setRows(Array.isArray(dataRows) ? dataRows : []);
       setPage(1);
     } catch (e) {
       setRows([]);
+      setPeriodoInfo(null);
+      setComparativoInfo(null);
       setError(e.message || "Error al cargar");
     } finally {
       setLoading(false);
@@ -251,12 +319,46 @@ export default function IndicadoresLista({ tipo = "trabajadores" }) {
               </div>
             </>
           )}
+          <div className="flex items-center gap-2">
+            <label className="text-sm">Comparar con</label>
+            <select value={compararCon} onChange={(e) => setCompararCon(e.target.value)} className="border rounded px-2 py-1 text-sm">
+              {COMPARISON_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          {compararCon === "personalizado" && (
+            <>
+              <div className="flex items-center gap-2">
+                <label className="text-sm">Comparar inicio</label>
+                <input type="date" value={compararInicio} onChange={(e) => setCompararInicio(e.target.value)} className="border rounded px-2 py-1 text-sm" />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm">Comparar fin</label>
+                <input type="date" value={compararFin} onChange={(e) => setCompararFin(e.target.value)} className="border rounded px-2 py-1 text-sm" />
+              </div>
+            </>
+          )}
           <button onClick={fetchData} className="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">Actualizar</button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-3">
         <MetricSelector selected={metrics} onChange={setMetrics} />
+        {(periodoInfo || comparativoInfo) && (
+          <div className="text-xs text-gray-600 flex flex-wrap gap-4 px-1">
+            {periodoInfo && (
+              <span>
+                Periodo: {periodoInfo.inicio ?? "-"} → {periodoInfo.fin ?? "-"}
+              </span>
+            )}
+            {comparativoInfo && compararCon !== "ninguno" && (
+              <span>
+                Comparativo ({comparisonLabel(comparativoInfo.tipo ?? compararCon)}): {comparativoInfo.inicio ?? "-"} → {comparativoInfo.fin ?? "-"}
+              </span>
+            )}
+          </div>
+        )}
         <div className="border rounded-2xl shadow-md overflow-auto">
           <table className="min-w-full text-sm">
             <thead>
@@ -321,9 +423,20 @@ export default function IndicadoresLista({ tipo = "trabajadores" }) {
                       )}
                     </td>
                   ))}
-                  {metricColumns.map((c) => (
-                    <td key={c.key} className="px-3 py-2 border-b">{formatValue(c.key, r[c.key])}</td>
-                  ))}
+                  {metricColumns.map((c) => {
+                    const prevKey = `${c.key}Anterior`;
+                    const prevVal = r[prevKey];
+                    const hasComparison = compararCon !== "ninguno" && prevVal != null && prevVal !== undefined;
+                    const trendClass = hasComparison ? trendClassForValue(c.key, r[c.key], prevVal) : "text-gray-900";
+                    return (
+                      <td key={c.key} className="px-3 py-2 border-b">
+                        <div className={`font-medium ${trendClass}`}>{formatValue(c.key, r[c.key])}</div>
+                        {hasComparison && (
+                          <div className="text-xs text-gray-500">Comparativo: {formatValue(c.key, prevVal)}</div>
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
               {!rows.length && (
