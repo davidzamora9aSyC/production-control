@@ -7,7 +7,6 @@ import AlertasComponent from "../components/AlertasComponent";
 import AlertasEntidadTabla from "../components/AlertasEntidadTabla";
 import ExpandableCard from "../components/ExpandableCard";
 import AreaRealtimeSpeed from "../components/AreaRealtimeSpeed";
-import SesionesVelocidadNormalizada from "../components/SesionesVelocidadNormalizada";
 import IndicadoresLista from "../components/IndicadoresLista";
 import IndicadoresSearchBar from "../components/IndicadoresSearchBar";
 import IndicadoresProducto from "../components/IndicadoresProducto";
@@ -51,9 +50,6 @@ function AreasView() {
       <h2 className="text-2xl font-semibold">Indicadores por áreas</h2>
       <ExpandableCard>
         <AreaRealtimeSpeed />
-      </ExpandableCard>
-      <ExpandableCard>
-        <SesionesVelocidadNormalizada />
       </ExpandableCard>
     </div>
   );
