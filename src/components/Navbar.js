@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import logoNavbar from "../assets/logoNavbar.png";
 import { useAuth } from "../context/AuthContext";

@@ -22,7 +22,7 @@ export default function IndicadorChart({ metricKey, title, isPercent = true }) {
   useEffect(() => {
     if (periodo === "Meses" && (rango !== "Ultimos 12 meses" && rango !== "Año actual")) setRango("Ultimos 12 meses");
     if (periodo === "Días" && (rango !== "Ultimos 30 días" && rango !== "Mes actual")) setRango("Ultimos 30 días");
-  }, [periodo]);
+  }, [periodo, rango]);
 
   const endpoint = useMemo(() => {
     if (periodo === "Meses") return rango === "Año actual" ? "/indicadores/mensual/ano-actual" : "/indicadores/mensual/ultimos-12-meses";

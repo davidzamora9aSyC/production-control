@@ -26,7 +26,7 @@ export default function ProduccionChart() {
     useEffect(() => {
         if (periodo === "Meses" && (rango !== "Ultimos 12 meses" && rango !== "Año actual")) setRango("Ultimos 12 meses");
         if (periodo === "Días" && (rango !== "Ultimos 30 días" && rango !== "Mes actual")) setRango("Ultimos 30 días");
-    }, [periodo]);
+    }, [periodo, rango]);
 
     const endpoint = useMemo(() => {
         if (periodo === "Meses") return rango === "Año actual" ? "/produccion/mensual/ano-actual" : "/produccion/mensual/ultimos-12-meses";

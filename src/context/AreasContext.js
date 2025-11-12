@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
 import { API_BASE_URL } from "../api";
 import { useAuth } from "./AuthContext";
 
@@ -10,7 +10,7 @@ export function AreasProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchAreas = async () => {
+  const fetchAreas = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -24,16 +24,15 @@ export function AreasProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (areas.length === 0) {
       fetchAreas();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, areas.length]);
+  }, [areas.length, fetchAreas]);
 
-  const value = useMemo(() => ({ areas, loading, error, reload: fetchAreas }), [areas, loading, error]);
+  const value = useMemo(() => ({ areas, loading, error, reload: fetchAreas }), [areas, loading, error, fetchAreas]);
   return <AreasContext.Provider value={value}>{children}</AreasContext.Provider>;
 }
 

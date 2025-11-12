@@ -1,4 +1,3 @@
-import Navbar from "../components/Navbar";
 import ProduccionChart from "../components/ProduccionChart";
 import ComponenteControl from "../components/ComponenteControl";
 import EstadisticasPanel from "../components/EstadisticasPanel";

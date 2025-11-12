@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useParams } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./components/Login";
 import NuevaMinuta from "./pages/NuevaMinuta";
 import DashboardLegacy from "./pages/Dashboard";

@@ -1,4 +1,3 @@
-import Navbar from "../components/Navbar";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchJsonCached } from "../api";

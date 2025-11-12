@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useParams } from "react-router-dom";
-import { API_BASE_URL } from "../api";
-
-
-
-
 export default function Maquina() {
     const [fechaHora, setFechaHora] = useState(new Date());
     const [data, setData] = useState([]);

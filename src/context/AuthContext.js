@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
 
 const API_BASE = "https://smartindustries.org";
 const TOKEN_KEY = "auth:token";
@@ -9,6 +9,20 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+
+  const validateToken = useCallback(async (tkn) => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/validate`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${tkn}` },
+      });
+      if (!res.ok) return false;
+      const data = await res.json().catch(() => ({}));
+      return !!data?.valid;
+    } catch {
+      return false;
+    }
+  }, []);
 
   // Bootstrap: carga token y valida con backend
   useEffect(() => {
@@ -29,24 +43,9 @@ export function AuthProvider({ children }) {
       }
     };
     init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [validateToken]);
 
-  const validateToken = async (tkn) => {
-    try {
-      const res = await fetch(`${API_BASE}/auth/validate`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${tkn}` },
-      });
-      if (!res.ok) return false;
-      const data = await res.json().catch(() => ({}));
-      return !!data?.valid;
-    } catch {
-      return false;
-    }
-  };
-
-  const login = async (username, password) => {
+  const login = useCallback(async (username, password) => {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -64,25 +63,25 @@ export function AuthProvider({ children }) {
     setToken(accessToken);
     setIsAuthenticated(true);
     return true;
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setIsAuthenticated(false);
-  };
+  }, []);
 
-  const revalidate = async () => {
+  const revalidate = useCallback(async () => {
     setIsChecking(true);
     const ok = token ? await validateToken(token) : false;
     setIsAuthenticated(ok);
     setIsChecking(false);
     return ok;
-  };
+  }, [token, validateToken]);
 
   const value = useMemo(
     () => ({ token, isAuthenticated, isChecking, login, logout, revalidate }),
-    [token, isAuthenticated, isChecking]
+    [token, isAuthenticated, isChecking, login, logout, revalidate]
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -92,7 +92,7 @@ export default function AreaRealtimeSpeed() {
     if (!areas.length || !data.length) return;
     const mapName = (id) => areas.find((a) => String(a.id) === String(id))?.nombre || id;
     setData((prev) => prev.map((r) => ({ ...r, name: mapName(r.areaId) })));
-  }, [areas]);
+  }, [areas, data.length]);
 
   const description = useMemo(() => (
     "Serie por minuto de la velocidad de ventana normalizada (10 min) por área del día de hoy. Cada sesión se normaliza por su propio promedio diario, de modo que todas las máquinas pesen igual; el valor es adimensional (≈1.0 equivale al promedio de su sesión)."

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import EditarAsignacion from "../components/EditarAsignacion";
-import { API_BASE_URL } from "../api";
 import ErrorPopup from "../components/ErrorPopup";
 import QRCode from "qrcode";
 
@@ -15,7 +14,6 @@ const ESTADO_COLORES = {
   "en pausa": "bg-yellow-400",
   pausada: "bg-yellow-400",
   finalizado: "bg-blue-500",
-  finalizada: "bg-blue-500",
   finalizada: "bg-blue-500",
 };
 

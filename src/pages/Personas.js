@@ -1,4 +1,3 @@
-import Navbar from "../components/Navbar";
 import ModalCargarCSV from "../components/ModalCargarCSV";
 import TrabajadorForm from "../components/TrabajadorForm";
 import ErrorPopup from "../components/ErrorPopup";
