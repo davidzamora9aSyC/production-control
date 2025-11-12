@@ -1,6 +1,7 @@
 import Navbar from "../components/Navbar";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
 import ModalCargarCSV from "../components/ModalCargarCSV";
 import { API_BASE_URL } from "../api";
 import parseOrdenProduccionTxt from "../utils/parseOrdenProduccionTxt";
@@ -148,6 +149,20 @@ export default function OrdenesProduccion() {
     }));
   };
 
+  const construirOrdenesDesdeExcel = async (archivoExcel) => {
+    const buffer = await archivoExcel.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: "array" });
+    if (!workbook.SheetNames.length) {
+      throw new Error("El archivo Excel no contiene hojas.");
+    }
+    const hoja = workbook.Sheets[workbook.SheetNames[0]];
+    const csv = XLSX.utils.sheet_to_csv(hoja, { blankrows: false });
+    if (!csv.trim()) {
+      throw new Error("El archivo Excel está vacío.");
+    }
+    return construirOrdenesDesdeCsv(csv);
+  };
+
   const onUpload = async (archivo) => {
     const loading = document.createElement("div");
     loading.textContent = "Cargando órdenes...";
@@ -157,15 +172,19 @@ export default function OrdenesProduccion() {
     let ordenes = [];
     const extension = archivo.name.split(".").pop()?.toLowerCase();
     let descargarCsvNombre = archivo.name.replace(/\.[^.]+$/, "") + "-parseado.csv";
-    
+
     try {
       if (extension === "txt") {
         const texto = await archivo.text();
         ordenes = parseOrdenProduccionTxt(texto);
         descargarCsvOrdenes(ordenes, descargarCsvNombre);
-      } else {
+      } else if (extension === "xlsx" || extension === "xls") {
+        ordenes = await construirOrdenesDesdeExcel(archivo);
+      } else if (extension === "csv") {
         const texto = await archivo.text();
         ordenes = construirOrdenesDesdeCsv(texto);
+      } else {
+        throw new Error("Formato no soportado. Usa archivos TXT, CSV, XLS o XLSX.");
       }
 
       for (const orden of ordenes) {
