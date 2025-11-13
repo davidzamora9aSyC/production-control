@@ -1,5 +1,0 @@
-numero,producto,cantidadAProducir,fechaOrden,fechaVencimiento,nombre,codigoInterno,cantidadRequerida,cantidadProducida,estadoPaso,numeroPaso
-ORD-003,Faja Postquirœrgica,400,2025-07-30T15:41:55.671937,2025-08-01T15:41:55.671947,Corte,PASO-001,400,0,pendiente,1
-ORD-003,Faja Postquirœrgica,400,2025-07-30T15:41:55.671937,2025-08-01T15:41:55.671947,Ensamble,PASO-002,400,0,pendiente,2
-ORD-003,Faja Postquirœrgica,400,2025-07-30T15:41:55.671937,2025-08-01T15:41:55.671947,Costura,PASO-003,400,0,pendiente,3
-ORD-003,Faja Postquirœrgica,400,2025-07-30T15:41:55.671937,2025-08-01T15:41:55.671947,Revisi—n final,PASO-004,400,0,pendiente,4

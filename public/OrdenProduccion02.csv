@@ -1,3 +1,0 @@
-numero,producto,cantidadAProducir,fechaOrden,fechaVencimiento,nombre,codigoInterno,cantidadRequerida,cantidadProducida,estadoPaso,numeroPaso
-ORD-002,Faja Deportiva,400,2025-07-29T18:35:00.000Z,2025-07-30T18:35:00.000Z,Corte,PASO-001,400,0,pendiente,1
-ORD-002,Faja Deportiva,400,2025-07-29T18:35:00.000Z,2025-07-30T18:35:00.000Z,Costura,PASO-002,400,0,pendiente,2

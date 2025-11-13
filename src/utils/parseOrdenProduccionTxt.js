@@ -1,12 +1,23 @@
-const DATE_REGEX = /(\d{2})\/(\d{2})\/(\d{4})/;
+const DATE_REGEX = /(\d{1,2})\/(\d{1,2})\/(\d{4})/;
+const DATE_REGEX_GLOBAL = new RegExp(DATE_REGEX.source, "g");
 
-const normalizeText = (text) => text.replace(/\r/g, "");
+const normalizeText = (text) => (text || "")
+  .replace(/\r/g, "\n")
+  .replace(/\u00a0/g, " ")
+  .replace(/\t/g, " ");
+
+const sanitizeLine = (line) => (line || "")
+  .replace(/,/g, " ")
+  .replace(/\s+/g, " ")
+  .trim();
 
 const parseDate = (raw) => {
   const match = DATE_REGEX.exec(raw || "");
   if (!match) return null;
   const [, d, m, y] = match;
-  const iso = new Date(`${y}-${m}-${d}T00:00:00.000Z`);
+  const day = d.padStart(2, "0");
+  const month = m.padStart(2, "0");
+  const iso = new Date(`${y}-${month}-${day}T00:00:00.000Z`);
   return Number.isNaN(iso.getTime()) ? null : iso.toISOString();
 };
 
@@ -20,31 +31,89 @@ const extractNumero = (lines) => {
 
 const extractProducto = (lines) => {
   for (const line of lines) {
-    if (!line.includes("PRODUCTO:")) continue;
-    const match = line.split("PRODUCTO:")[1];
+    if (!/PRODUCTO/i.test(line)) continue;
+    const match = line.replace(/PRODUCTO\s*[:-]?/i, "").trim();
     if (!match) continue;
-
-    const codeMatch = match.trim().split(/\s+/)[0];
-    if (codeMatch) return codeMatch.trim();
+    const code = match.split(/\s+/)[0];
+    if (code) return code.trim();
   }
   return null;
 };
 
-const extractFechasYCantidad = (lines) => {
-  for (const line of lines) {
-    if (!line.includes("FECHA ORDEN")) continue;
-    const match = line.match(/FECHA\s+ORDEN:\s*(\d{2}\/\d{2}\/\d{4})\s+([\d.,]+)\s+(\d{2}\/\d{2}\/\d{4})/);
-    if (!match) continue;
+const pickDatesFromLine = (line) => {
+  const matches = line.match(DATE_REGEX_GLOBAL) || [];
+  return matches.map((date) => parseDate(date));
+};
 
-    const [, fechaOrdenRaw, cantidadRaw, fechaVencRaw] = match;
-    const cantidad = Number(cantidadRaw.replace(",", "."));
-    return {
-      fechaOrden: parseDate(fechaOrdenRaw),
-      fechaVencimiento: parseDate(fechaVencRaw),
-      cantidad: Number.isFinite(cantidad) ? cantidad : null,
-    };
+const findNthDate = (lines, n) => {
+  const collected = [];
+  for (const line of lines) {
+    const matches = line.match(DATE_REGEX_GLOBAL) || [];
+    matches.forEach((m) => collected.push(parseDate(m)));
+    if (collected.length > n) break;
   }
-  return { fechaOrden: null, fechaVencimiento: null, cantidad: null };
+  return collected[n] || null;
+};
+
+const parseCantidad = (raw) => {
+  if (!raw) return null;
+  const trimmed = raw.replace(/\s+/g, "");
+  const hasComma = trimmed.includes(",");
+  const hasDot = trimmed.includes(".");
+  let sanitized = trimmed;
+  if (hasComma && hasDot) {
+    if (trimmed.lastIndexOf(",") > trimmed.lastIndexOf(".")) {
+      sanitized = trimmed.replace(/\./g, "").replace(/,/g, ".");
+    } else {
+      sanitized = trimmed.replace(/,/g, "");
+    }
+  } else if (hasComma) {
+    sanitized = trimmed.replace(/,/g, ".");
+  }
+  const num = Number(sanitized);
+  return Number.isFinite(num) ? num : null;
+};
+
+const extractFechasYCantidad = (lines) => {
+  const result = { fechaOrden: null, fechaVencimiento: null, cantidad: null };
+
+  const fechaOrdenLinea = lines.find((line) => /FECHA\s+ORDEN/i.test(line));
+  if (fechaOrdenLinea) {
+    const fechasLinea = pickDatesFromLine(fechaOrdenLinea);
+    if (fechasLinea[0]) result.fechaOrden = fechasLinea[0];
+    if (fechasLinea[1] && !result.fechaVencimiento) {
+      result.fechaVencimiento = fechasLinea[1];
+    }
+    const cantidadMatch = fechaOrdenLinea.match(/CANT[.\s]*(?:IDA)?\s*(?:A\s+)?PRODUCIR[^0-9]*([\d.,]+)/i);
+    if (cantidadMatch) {
+      const cantidad = parseCantidad(cantidadMatch[1]);
+      if (Number.isFinite(cantidad)) result.cantidad = cantidad;
+    }
+  }
+
+  if (!result.fechaVencimiento) {
+    const lineaVenc = lines.find((line) => /FECHA\s+(VENT|VENC)/i.test(line));
+    if (lineaVenc) {
+      const [fecha] = pickDatesFromLine(lineaVenc);
+      if (fecha) result.fechaVencimiento = fecha;
+    }
+  }
+
+  if (!Number.isFinite(result.cantidad)) {
+    const lineaCantidad = lines.find((line) => /CANT[.\s]*(?:IDAD)?\s*(?:A\s+)?PRODUCIR/i.test(line));
+    if (lineaCantidad) {
+      const cantidadMatch = lineaCantidad.match(/CANT[.\s]*(?:IDAD)?\s*(?:A\s+)?PRODUCIR[^0-9]*([\d.,]+)/i);
+      if (cantidadMatch) {
+        const cantidad = parseCantidad(cantidadMatch[1]);
+        if (Number.isFinite(cantidad)) result.cantidad = cantidad;
+      }
+    }
+  }
+
+  if (!result.fechaOrden) result.fechaOrden = findNthDate(lines, 0);
+  if (!result.fechaVencimiento) result.fechaVencimiento = findNthDate(lines, 1);
+
+  return result;
 };
 
 const extractPasos = (lines, cantidadFallback = null) => {
@@ -66,7 +135,7 @@ const extractPasos = (lines, cantidadFallback = null) => {
     if (!Number.isFinite(numeroPaso)) continue;
 
     const resto = processMatch[2];
-    const nombre = resto.split(/\s{2,}/)[0].trim();
+    const nombre = resto.trim();
     if (!nombre) continue;
 
     pasos.push({
@@ -86,7 +155,12 @@ export function parseOrdenProduccionTxt(rawText) {
   }
 
   const normalized = normalizeText(rawText);
-  const lines = normalized.split("\n");
+  const rawLines = normalized.split("\n");
+  const lines = rawLines.map(sanitizeLine).filter(Boolean);
+
+  if (lines.length === 0) {
+    throw new Error("Archivo inválido: no contiene información utilizable");
+  }
 
   const numero = extractNumero(lines);
   const producto = extractProducto(lines);

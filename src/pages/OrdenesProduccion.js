@@ -148,18 +148,28 @@ export default function OrdenesProduccion() {
     }));
   };
 
-  const construirOrdenesDesdeExcel = async (archivoExcel) => {
+  const esCsvEstructurado = (texto) => {
+    const primeraLinea = (texto.split(/\r?\n/).find((l) => l.trim()) || "").toLowerCase();
+    const claves = ["numero", "producto", "cantidadaproducir", "nombre", "codigointerno"];
+    return claves.every((clave) => primeraLinea.includes(clave));
+  };
+
+  const convertirExcelATextoPlano = async (archivoExcel) => {
     const buffer = await archivoExcel.arrayBuffer();
     const workbook = XLSX.read(buffer, { type: "array" });
     if (!workbook.SheetNames.length) {
-      throw new Error("El archivo Excel no contiene hojas.");
+      throw new Error("El archivo de Excel no contiene hojas válidas");
     }
-    const hoja = workbook.Sheets[workbook.SheetNames[0]];
-    const csv = XLSX.utils.sheet_to_csv(hoja, { blankrows: false });
-    if (!csv.trim()) {
-      throw new Error("El archivo Excel está vacío.");
-    }
-    return construirOrdenesDesdeCsv(csv);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const csv = XLSX.utils.sheet_to_csv(sheet, { blankrows: false });
+    if (!csv.trim()) throw new Error("El archivo de Excel está vacío");
+    return csv;
+  };
+
+  const parseOrdenesDesdePlantilla = (texto, nombreDescarga) => {
+    const ordenesParsed = parseOrdenProduccionTxt(texto);
+    descargarCsvOrdenes(ordenesParsed, nombreDescarga);
+    return ordenesParsed;
   };
 
   const onUpload = async (archivo) => {
@@ -170,18 +180,22 @@ export default function OrdenesProduccion() {
     document.body.appendChild(loading);
     let ordenes = [];
     const extension = archivo.name.split(".").pop()?.toLowerCase();
-    let descargarCsvNombre = archivo.name.replace(/\.[^.]+$/, "") + "-parseado.csv";
+    const descargarCsvNombre = archivo.name.replace(/\.[^.]+$/, "") + "-parseado.csv";
 
     try {
       if (extension === "txt") {
         const texto = await archivo.text();
-        ordenes = parseOrdenProduccionTxt(texto);
-        descargarCsvOrdenes(ordenes, descargarCsvNombre);
+        ordenes = parseOrdenesDesdePlantilla(texto, descargarCsvNombre);
       } else if (extension === "xlsx" || extension === "xls") {
-        ordenes = await construirOrdenesDesdeExcel(archivo);
+        const textoExcel = await convertirExcelATextoPlano(archivo);
+        ordenes = parseOrdenesDesdePlantilla(textoExcel, descargarCsvNombre);
       } else if (extension === "csv") {
         const texto = await archivo.text();
-        ordenes = construirOrdenesDesdeCsv(texto);
+        if (esCsvEstructurado(texto)) {
+          ordenes = construirOrdenesDesdeCsv(texto);
+        } else {
+          ordenes = parseOrdenesDesdePlantilla(texto, descargarCsvNombre);
+        }
       } else {
         throw new Error("Formato no soportado. Usa archivos TXT, CSV, XLS o XLSX.");
       }
