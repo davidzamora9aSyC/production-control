@@ -130,6 +130,8 @@ export default function NuevaMinuta() {
     setMaquinaData(null);
     setSesionActivaMaquina(null);
     setSesionMaquinaError("");
+    setTrabajadorSeleccionado(null);
+    setTrabajadorData(null);
     fetch(`${API_BASE_URL}/maquinas/${target}`)
       .then(res => {
         if (!res.ok) throw new Error('Máquina no encontrada');
@@ -157,6 +159,8 @@ export default function NuevaMinuta() {
       setSesionActivaMaquina(null);
       setSesionMaquinaError("");
       setBuscandoSesionMaquina(false);
+      setTrabajadorSeleccionado(null);
+      setTrabajadorData(null);
       return;
     }
     setMaquinaSeleccionada(maquina);
@@ -386,11 +390,9 @@ export default function NuevaMinuta() {
     }
   };
 
-  const trabajadorDisplay = sesionActivaMaquina?.trabajador || trabajadorSeleccionado;
-  const trabajadorSelectorDisabled = Boolean(sesionActivaMaquina);
-  const trabajadorDisabledMessage = trabajadorSelectorDisabled
-    ? "Esta máquina ya tiene una sesión activa. Cambia de máquina para iniciar una nueva sesión."
-    : "";
+  const mostrarTrabajadorSelector = Boolean(maquinaSeleccionada) && !sesionActivaMaquina;
+  const mostrarMensajeSeleccionMaquina = !maquinaSeleccionada;
+  const mostrarDatosSesionTrabajador = Boolean(sesionActivaMaquina?.trabajador);
 
   return (
     <div className="p-6 max-w-4xl mx-auto text-sm sm:text-base">
@@ -438,19 +440,35 @@ export default function NuevaMinuta() {
               <p className="text-sm text-red-600 mt-2">{sesionMaquinaError}</p>
             )}
             {sesionActivaMaquina && !sesionMaquinaError && (
-              <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-900">
-                <p className="font-medium">Esta máquina ya tiene una sesión activa.</p>
-                <p>Operario: {sesionActivaMaquina.trabajador?.nombre ?? "Sin asignar"}</p>
-                <p>Inicio: {sesionActivaMaquina.fechaInicio ?? "-"}</p>
+              <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-900 space-y-2">
+                <div>
+                  <p className="font-medium">Esta máquina ya tiene una sesión activa.</p>
+                  <p>Inicio: {sesionActivaMaquina.fechaInicio ?? "-"}</p>
+                </div>
+                {mostrarDatosSesionTrabajador ? (
+                  <div className="bg-white/70 rounded p-2 text-[13px] text-gray-800">
+                    <p><strong>Operario:</strong> {sesionActivaMaquina.trabajador.nombre}</p>
+                    <p><strong>Identificación:</strong> {sesionActivaMaquina.trabajador.identificacion ?? "-"}</p>
+                    <p><strong>Grupo:</strong> {sesionActivaMaquina.trabajador.grupo ?? "-"}</p>
+                    <p><strong>Turno:</strong> {sesionActivaMaquina.trabajador.turno ?? "-"}</p>
+                  </div>
+                ) : (
+                  <p>No hay un operario asignado a esta sesión.</p>
+                )}
               </div>
             )}
           </div>
-          <TrabajadorQrSelector
-            selected={trabajadorDisplay}
-            onSelect={handleTrabajadorSeleccion}
-            disabled={trabajadorSelectorDisabled}
-            disabledMessage={trabajadorDisabledMessage}
-          />
+          {mostrarMensajeSeleccionMaquina && (
+            <div className="border rounded-xl p-4 bg-gray-50 text-sm text-gray-700">
+              Selecciona una máquina para poder escanear al trabajador que iniciará la sesión.
+            </div>
+          )}
+          {mostrarTrabajadorSelector && (
+            <TrabajadorQrSelector
+              selected={trabajadorSeleccionado}
+              onSelect={handleTrabajadorSeleccion}
+            />
+          )}
           <div className="border rounded-xl p-4 bg-gray-50">
             <div className="flex items-center justify-between">
               <div>
