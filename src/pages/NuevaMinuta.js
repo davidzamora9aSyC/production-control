@@ -469,38 +469,40 @@ export default function NuevaMinuta() {
               onSelect={handleTrabajadorSeleccion}
             />
           )}
-          <div className="border rounded-xl p-4 bg-gray-50">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Paso de orden de producción</div>
-                <p className="text-xs text-gray-600">
-                  Escanea el QR de la orden para vincular la sesión a un paso específico.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => openPasoModal("inicio")}
-                className="px-3 py-1.5 rounded-full border bg-white text-sm hover:bg-gray-100"
-              >
-                Trabajar en paso de orden
-              </button>
-            </div>
-            {pasoOrdenSeleccionado && (
-              <div className="mt-3 text-sm flex flex-col gap-1">
-                <div><strong>Orden:</strong> {pasoOrdenSeleccionado.ordenId}</div>
+          {!sesionActivaMaquina && (
+            <div className="border rounded-xl p-4 bg-gray-50">
+              <div className="flex items-center justify-between">
                 <div>
-                  <strong>Paso:</strong> {pasoOrdenSeleccionado.paso.nombre} (#{pasoOrdenSeleccionado.paso.numeroPaso ?? "-"})
+                  <div className="font-medium">Paso de orden de producción</div>
+                  <p className="text-xs text-gray-600">
+                    Escanea el QR de la orden para vincular la sesión a un paso específico.
+                  </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setPasoOrdenSeleccionado(null)}
-                  className="text-xs text-blue-600 mt-1 self-start hover:underline"
+                  onClick={() => openPasoModal("inicio")}
+                  className="px-3 py-1.5 rounded-full border bg-white text-sm hover:bg-gray-100"
                 >
-                  Quitar selección
+                  Trabajar en paso de orden
                 </button>
               </div>
-            )}
-          </div>
+              {pasoOrdenSeleccionado && (
+                <div className="mt-3 text-sm flex flex-col gap-1">
+                  <div><strong>Orden:</strong> {pasoOrdenSeleccionado.ordenId}</div>
+                  <div>
+                    <strong>Paso:</strong> {pasoOrdenSeleccionado.paso.nombre} (#{pasoOrdenSeleccionado.paso.numeroPaso ?? "-"})
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPasoOrdenSeleccionado(null)}
+                    className="text-xs text-blue-600 mt-1 self-start hover:underline"
+                  >
+                    Quitar selección
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           {sesionActivaMaquina ? (
             <button
               type="button"
