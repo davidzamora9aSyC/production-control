@@ -33,6 +33,9 @@ export default function NuevaMinuta() {
   const [maquinaSeleccionada, setMaquinaSeleccionada] = useState(null);
   const [maquinaData, setMaquinaData] = useState(null);
   const [maquinaError, setMaquinaError] = useState("");
+  const [sesionActivaMaquina, setSesionActivaMaquina] = useState(null);
+  const [buscandoSesionMaquina, setBuscandoSesionMaquina] = useState(false);
+  const [sesionMaquinaError, setSesionMaquinaError] = useState("");
   const [pasoModalOpen, setPasoModalOpen] = useState(false);
   const [pasoModalContext, setPasoModalContext] = useState(null);
   const [pasoOrdenSeleccionado, setPasoOrdenSeleccionado] = useState(null);
@@ -89,6 +92,34 @@ export default function NuevaMinuta() {
     setTrabajadorData(trabajador);
   };
 
+  const consultarSesionActivaPorMaquina = async (maquinaId) => {
+    if (!maquinaId) {
+      setSesionActivaMaquina(null);
+      setSesionMaquinaError("");
+      setBuscandoSesionMaquina(false);
+      return;
+    }
+    setBuscandoSesionMaquina(true);
+    setSesionMaquinaError("");
+    try {
+      const res = await fetch(`${API_BASE_URL}/sesiones-trabajo/maquina/${maquinaId}/activa`);
+      if (res.status === 404) {
+        setSesionActivaMaquina(null);
+        return;
+      }
+      if (!res.ok) {
+        throw new Error("No se pudo obtener la sesión activa de la máquina.");
+      }
+      const data = await res.json();
+      setSesionActivaMaquina(data);
+    } catch (err) {
+      setSesionActivaMaquina(null);
+      setSesionMaquinaError(err?.message || "Error al buscar la sesión activa de la máquina.");
+    } finally {
+      setBuscandoSesionMaquina(false);
+    }
+  };
+
   const handleFetchMaquina = (overrideId) => {
     const target = (overrideId ?? "").toString().trim();
     if (!target) {
@@ -97,6 +128,8 @@ export default function NuevaMinuta() {
     }
     setMaquinaError("");
     setMaquinaData(null);
+    setSesionActivaMaquina(null);
+    setSesionMaquinaError("");
     fetch(`${API_BASE_URL}/maquinas/${target}`)
       .then(res => {
         if (!res.ok) throw new Error('Máquina no encontrada');
@@ -105,10 +138,14 @@ export default function NuevaMinuta() {
       .then(data => {
         setMaquinaData(data);
         setMaquinaSeleccionada(data);
+        consultarSesionActivaPorMaquina(data.id ?? target);
       })
       .catch(() => {
         setMaquinaSeleccionada(null);
         setMaquinaError("Máquina no encontrada");
+        setSesionActivaMaquina(null);
+        setSesionMaquinaError("");
+        setBuscandoSesionMaquina(false);
       });
   };
 
@@ -117,6 +154,9 @@ export default function NuevaMinuta() {
       setMaquinaSeleccionada(null);
       setMaquinaData(null);
       setMaquinaError("");
+      setSesionActivaMaquina(null);
+      setSesionMaquinaError("");
+      setBuscandoSesionMaquina(false);
       return;
     }
     setMaquinaSeleccionada(maquina);
@@ -138,8 +178,6 @@ export default function NuevaMinuta() {
 
   const handleAccionCardSeleccion = (valor) => {
     setAccionCard(valor);
-    setTrabajadorAsignacion(null);
-    setSesionActivaAsignacion(null);
     setAsignacionSesionError("");
     setPasoManualSeleccionado(null);
     setCodigoOrden("");
@@ -205,8 +243,32 @@ export default function NuevaMinuta() {
     setMostrarModal(true);
   };
 
+  const handleSeleccionarSesionDesdeMaquina = () => {
+    if (!sesionActivaMaquina) return;
+    setTrabajadorAsignacion(sesionActivaMaquina.trabajador || null);
+    setSesionActivaAsignacion(sesionActivaMaquina);
+    setAsignacionSesionError("");
+    setPasoManualSeleccionado(null);
+    setPasoOrdenSeleccionado(null);
+    setCodigoOrden("");
+    setProceso("");
+    setProcesosDisponibles([]);
+    setPiezas("");
+    setMeta("");
+    setNpt("");
+    if (typeof window !== "undefined" && window?.scrollTo) {
+      const totalHeight = typeof document !== "undefined" ? document.body?.scrollHeight ?? 0 : 0;
+      window.scrollTo({ top: totalHeight, behavior: "smooth" });
+    }
+  };
+
   const handleIniciarSesion = (e) => {
     e.preventDefault();
+    if (sesionActivaMaquina) {
+      setModalMensaje("Esta máquina ya tiene una sesión activa. Selecciónala para registrar acciones.");
+      setMostrarModal(true);
+      return;
+    }
     const sesion = {
       trabajador: trabajadorData?.id,
       maquina: maquinaData?.id,
@@ -239,6 +301,8 @@ export default function NuevaMinuta() {
       setMaquinaSeleccionada(null);
       setMaquinaData(null);
       setMaquinaError("");
+      setSesionActivaMaquina(null);
+      setSesionMaquinaError("");
       setPasoOrdenSeleccionado(null);
       setModalMensaje(mensaje);
       setMostrarModal(true);
@@ -322,6 +386,12 @@ export default function NuevaMinuta() {
     }
   };
 
+  const trabajadorDisplay = sesionActivaMaquina?.trabajador || trabajadorSeleccionado;
+  const trabajadorSelectorDisabled = Boolean(sesionActivaMaquina);
+  const trabajadorDisabledMessage = trabajadorSelectorDisabled
+    ? "Esta máquina ya tiene una sesión activa. Cambia de máquina para iniciar una nueva sesión."
+    : "";
+
   return (
     <div className="p-6 max-w-4xl mx-auto text-sm sm:text-base">
       <div className="flex justify-end mb-4">
@@ -344,10 +414,6 @@ export default function NuevaMinuta() {
               className="w-full border rounded-full px-4 py-2 bg-gray-100"
             />
           </div>
-          <TrabajadorQrSelector
-            selected={trabajadorSeleccionado}
-            onSelect={handleTrabajadorSeleccion}
-          />
           <div>
             <MaquinaSelector
               selected={maquinaSeleccionada}
@@ -365,7 +431,26 @@ export default function NuevaMinuta() {
                 <p><strong>Tipo:</strong> {maquinaData.tipo}</p>
               </div>
             )}
+            {buscandoSesionMaquina && (
+              <p className="text-sm text-gray-600 mt-2">Consultando sesión activa de la máquina…</p>
+            )}
+            {sesionMaquinaError && (
+              <p className="text-sm text-red-600 mt-2">{sesionMaquinaError}</p>
+            )}
+            {sesionActivaMaquina && !sesionMaquinaError && (
+              <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-900">
+                <p className="font-medium">Esta máquina ya tiene una sesión activa.</p>
+                <p>Operario: {sesionActivaMaquina.trabajador?.nombre ?? "Sin asignar"}</p>
+                <p>Inicio: {sesionActivaMaquina.fechaInicio ?? "-"}</p>
+              </div>
+            )}
           </div>
+          <TrabajadorQrSelector
+            selected={trabajadorDisplay}
+            onSelect={handleTrabajadorSeleccion}
+            disabled={trabajadorSelectorDisabled}
+            disabledMessage={trabajadorDisabledMessage}
+          />
           <div className="border rounded-xl p-4 bg-gray-50">
             <div className="flex items-center justify-between">
               <div>
@@ -398,12 +483,22 @@ export default function NuevaMinuta() {
               </div>
             )}
           </div>
-          <button
-            type="submit"
-            className="mt-2 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 self-start"
-          >
-            Iniciar sesión
-          </button>
+          {sesionActivaMaquina ? (
+            <button
+              type="button"
+              onClick={() => handleSeleccionarSesionDesdeMaquina()}
+              className="mt-2 bg-indigo-600 text-white py-2 px-6 rounded-full hover:bg-indigo-700 self-start"
+            >
+              Seleccionar sesión
+            </button>
+          ) : (
+            <button
+              type="submit"
+              className="mt-2 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 self-start"
+            >
+              Iniciar sesión
+            </button>
+          )}
         </form>
       </div>
       <div className="bg-white rounded-xl shadow-md p-6 mt-6 space-y-4">

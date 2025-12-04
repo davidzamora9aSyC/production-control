@@ -24,6 +24,8 @@ export default function TrabajadorQrSelector({
   onSelect = () => {},
   className = "",
   title = "Trabajador",
+  disabled = false,
+  disabledMessage = "",
 }) {
   const [cameraActive, setCameraActive] = useState(false);
   const [scanMessage, setScanMessage] = useState("");
@@ -54,7 +56,15 @@ export default function TrabajadorQrSelector({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (disabled) {
+      stopScanner();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [disabled]);
+
   const startScanner = async () => {
+    if (disabled) return;
     setScanError("");
     setScanMessage("");
     try {
@@ -104,6 +114,7 @@ export default function TrabajadorQrSelector({
   };
 
   const clearSelection = () => {
+    if (disabled) return;
     stopScanner();
     setScanMessage("");
     setScanError("");
@@ -122,7 +133,10 @@ export default function TrabajadorQrSelector({
           <button
             type="button"
             onClick={cameraActive ? stopScanner : startScanner}
-            className="px-3 py-1.5 rounded-full border text-sm hover:bg-gray-50"
+            disabled={disabled}
+            className={`px-3 py-1.5 rounded-full border text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed ${
+              disabled ? "cursor-not-allowed" : ""
+            }`}
           >
             {cameraActive ? "Detener cámara" : "Escanear QR"}
           </button>
@@ -130,14 +144,18 @@ export default function TrabajadorQrSelector({
             <button
               type="button"
               onClick={clearSelection}
-              className="px-3 py-1.5 rounded-full border text-sm text-gray-600 hover:bg-gray-50"
+              disabled={disabled}
+              className="px-3 py-1.5 rounded-full border text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Limpiar
             </button>
           )}
         </div>
       </div>
-      <div className="border rounded-lg overflow-hidden bg-black/70">
+      {disabled && (
+        <p className="text-xs text-yellow-700">{disabledMessage || "La búsqueda está bloqueada temporalmente."}</p>
+      )}
+      <div className={`border rounded-lg overflow-hidden bg-black/70 ${disabled ? "opacity-40" : ""}`}>
         <video ref={videoRef} className="w-full h-48 object-cover" muted playsInline />
       </div>
       {scanMessage && <p className="text-xs text-green-600">{scanMessage}</p>}
