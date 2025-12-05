@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../api";
-import TrabajadorQrSelector from "../components/TrabajadorQrSelector";
-import MaquinaSelector from "../components/MaquinaSelector";
 import PasoOrdenSelectorModal from "../components/PasoOrdenSelectorModal";
+import SesionSeleccionadaPanel from "../components/SesionSeleccionadaPanel";
+import SesionIniciador from "../components/SesionIniciador";
+import AccionesRapidas from "../components/AccionesRapidas";
+
+const ACCION_FINALIZAR_PASO = "Finalizar trabajo de paso de producción";
 
 const OPERACIONES_SESION = [
   "Finalizar sesión",
@@ -11,13 +14,61 @@ const OPERACIONES_SESION = [
   "Volver del descanso",
   "Inicio de mantenimiento",
   "Fin de mantenimiento",
-  "Terminar paso",
+  ACCION_FINALIZAR_PASO,
 ];
 
 const ACCION_CARD_OPTIONS = [
-  { value: "asignar-paso", label: "Asignar orden a sesión activa" },
+  { value: "asignar-paso", label: "Trabajar nuevo paso de orden" },
   ...OPERACIONES_SESION.map((value) => ({ value, label: value })),
 ];
+
+const ACCIONES_POR_ESTADO = {
+  produccion: [
+    "asignar-paso",
+    "Finalizar sesión",
+    "Salir a descanso",
+    "Inicio de mantenimiento",
+    ACCION_FINALIZAR_PASO,
+  ],
+  inactivo: ["asignar-paso", "Finalizar sesión"],
+  descanso: ["Volver del descanso"],
+  mantenimiento: ["Fin de mantenimiento"],
+  finalizada: [],
+  otro: ["asignar-paso", "Finalizar sesión"],
+  default: ["asignar-paso", "Finalizar sesión"],
+};
+
+const obtenerSesionId = (sesion) => {
+  if (!sesion) return null;
+  if (typeof sesion.sesionTrabajo === "object" && sesion.sesionTrabajo?.id) {
+    return sesion.sesionTrabajo.id;
+  }
+  if (typeof sesion.sesionTrabajo === "string") {
+    return sesion.sesionTrabajo;
+  }
+ 
+  if (sesion.id) return sesion.id;
+
+  return null;
+};
+
+const normalizarSesion = (sesion) => {
+  if (!sesion) return null;
+  const sesionObjeto =
+    typeof sesion.sesionTrabajo === "object" ? sesion.sesionTrabajo : null;
+  const normalizada = {
+    ...(sesionObjeto || {}),
+    ...sesion,
+  };
+  normalizada.id = obtenerSesionId(sesion);
+  if (!normalizada.trabajador) {
+    normalizada.trabajador = sesionObjeto?.trabajador || sesion.trabajador || null;
+  }
+  if (!normalizada.maquina) {
+    normalizada.maquina = sesionObjeto?.maquina || sesion.maquina || null;
+  }
+  return normalizada;
+};
 
 export default function NuevaMinuta() {
   const [fechaHora, setFechaHora] = useState("");
@@ -27,7 +78,6 @@ export default function NuevaMinuta() {
   const [accion, setAccion] = useState("");
   const [codigoOrden, setCodigoOrden] = useState("");
   const [proceso, setProceso] = useState("");
-  const [procesosDisponibles, setProcesosDisponibles] = useState([]);
   const [trabajadorData, setTrabajadorData] = useState(null);
   const [trabajadorSeleccionado, setTrabajadorSeleccionado] = useState(null);
   const [maquinaSeleccionada, setMaquinaSeleccionada] = useState(null);
@@ -41,18 +91,30 @@ export default function NuevaMinuta() {
   const [pasoOrdenSeleccionado, setPasoOrdenSeleccionado] = useState(null);
   const [trabajadorAsignacion, setTrabajadorAsignacion] = useState(null);
   const [sesionActivaAsignacion, setSesionActivaAsignacion] = useState(null);
-  const [asignacionSesionError, setAsignacionSesionError] = useState("");
-  const [buscandoSesionActiva, setBuscandoSesionActiva] = useState(false);
+  const [sesionAsignacionesVersion, setSesionAsignacionesVersion] = useState(0);
   const [pasoManualSeleccionado, setPasoManualSeleccionado] = useState(null);
   const [asignandoPasoManual, setAsignandoPasoManual] = useState(false);
+  const [asignacionesSesion, setAsignacionesSesion] = useState([]);
+  const [asignacionPasoFinalizarId, setAsignacionPasoFinalizarId] = useState("");
   const [modalMensaje, setModalMensaje] = useState("");
   const [mostrarModal, setMostrarModal] = useState(false);
   const [accionCard, setAccionCard] = useState("");
+  const [piezasDefectuosas, setPiezasDefectuosas] = useState("");
+  const [sesionDetalle, setSesionDetalle] = useState(null);
   const navigate = useNavigate();
 
   const openPasoModal = (context) => {
     setPasoModalContext(context);
     setPasoModalOpen(true);
+  };
+
+  const obtenerAccionesDisponiblesPorEstado = (estado) => {
+    const estadoKey = (estado || "otro").toLowerCase();
+    const permitidas = ACCIONES_POR_ESTADO[estadoKey] ?? ACCIONES_POR_ESTADO.default;
+    return {
+      permitidas,
+      opciones: ACCION_CARD_OPTIONS.filter((opt) => permitidas.includes(opt.value)),
+    };
   };
 
   const closePasoModal = () => {
@@ -97,7 +159,7 @@ export default function NuevaMinuta() {
       setSesionActivaMaquina(null);
       setSesionMaquinaError("");
       setBuscandoSesionMaquina(false);
-      return;
+      return null;
     }
     setBuscandoSesionMaquina(true);
     setSesionMaquinaError("");
@@ -105,16 +167,18 @@ export default function NuevaMinuta() {
       const res = await fetch(`${API_BASE_URL}/sesiones-trabajo/maquina/${maquinaId}/activa`);
       if (res.status === 404) {
         setSesionActivaMaquina(null);
-        return;
+        return null;
       }
       if (!res.ok) {
         throw new Error("No se pudo obtener la sesión activa de la máquina.");
       }
       const data = await res.json();
       setSesionActivaMaquina(data);
+      return data;
     } catch (err) {
       setSesionActivaMaquina(null);
       setSesionMaquinaError(err?.message || "Error al buscar la sesión activa de la máquina.");
+      return null;
     } finally {
       setBuscandoSesionMaquina(false);
     }
@@ -180,16 +244,26 @@ export default function NuevaMinuta() {
     }
   };
 
+  const establecerSesionActiva = (sesion) => {
+    const sesionFinal = normalizarSesion(sesion);
+    if (!obtenerSesionId(sesionFinal)) return null;
+    setSesionDetalle(null);
+    setSesionActivaAsignacion(sesionFinal);
+    setTrabajadorAsignacion(sesionFinal.trabajador || null);
+    setSesionAsignacionesVersion((prev) => prev + 1);
+    return sesionFinal;
+  };
+
   const handleAccionCardSeleccion = (valor) => {
     setAccionCard(valor);
-    setAsignacionSesionError("");
     setPasoManualSeleccionado(null);
     setCodigoOrden("");
     setProceso("");
-    setProcesosDisponibles([]);
     setPiezas("");
     setMeta("");
     setNpt("");
+    setAsignacionPasoFinalizarId("");
+    setPiezasDefectuosas("");
     if (valor === "asignar-paso") {
       setAccion("");
     } else {
@@ -197,49 +271,42 @@ export default function NuevaMinuta() {
     }
   };
 
-  const handleTrabajadorAsignacionSeleccion = async (trabajador) => {
-    setTrabajadorAsignacion(trabajador);
+  const limpiarSesionSeleccionada = () => {
+    setTrabajadorAsignacion(null);
     setSesionActivaAsignacion(null);
-    setAsignacionSesionError("");
+    setSesionDetalle(null);
+    setAsignacionesSesion([]);
     setPasoManualSeleccionado(null);
     setCodigoOrden("");
     setProceso("");
-    setProcesosDisponibles([]);
     setPiezas("");
     setMeta("");
     setNpt("");
-    if (!trabajador) return;
-    setBuscandoSesionActiva(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/sesiones-trabajo/activas`);
-      if (!res.ok) throw new Error("No se pudieron obtener las sesiones activas.");
-      const data = await res.json();
-      const lista = Array.isArray(data) ? data : [];
-      const match = lista.find(
-        (s) =>
-          s.trabajador?.id === trabajador.id ||
-          (s.trabajador?.identificacion && s.trabajador.identificacion === trabajador.identificacion)
-      );
-      if (match) {
-        setSesionActivaAsignacion(match);
-      } else {
-        setAsignacionSesionError("El trabajador no tiene una sesión activa.");
-      }
-    } catch (err) {
-      setAsignacionSesionError(err?.message || "Error al buscar la sesión activa.");
-    } finally {
-      setBuscandoSesionActiva(false);
-    }
+    setPiezasDefectuosas("");
+    setAccion("");
+    setAccionCard("");
+    setAsignacionPasoFinalizarId("");
+    setTrabajadorSeleccionado(null);
+    setTrabajadorData(null);
+    setMaquinaSeleccionada(null);
+    setMaquinaData(null);
+    setMaquinaError("");
+    setSesionActivaMaquina(null);
+    setSesionMaquinaError("");
+    setPasoOrdenSeleccionado(null);
+    setSesionAsignacionesVersion(0);
   };
 
   const handleAsignarPasoManual = async () => {
-    if (!sesionActivaAsignacion?.id || !pasoManualSeleccionado?.paso?.id || asignandoPasoManual) return;
+    const sesionId = obtenerSesionId(sesionActivaAsignacion);
+    if (!sesionId || !pasoManualSeleccionado?.paso?.id || asignandoPasoManual) return;
     setAsignandoPasoManual(true);
-    const resultado = await asignarPasoASesion(sesionActivaAsignacion.id, pasoManualSeleccionado.paso.id);
+    const resultado = await asignarPasoASesion(sesionId, pasoManualSeleccionado.paso.id);
     setAsignandoPasoManual(false);
     if (resultado.ok) {
       setModalMensaje("Paso asignado a la sesión activa correctamente.");
       setPasoManualSeleccionado(null);
+      setSesionAsignacionesVersion((prev) => prev + 1);
     } else {
       const detalle = resultado.error ? `: ${resultado.error}` : ".";
       setModalMensaje(`No se pudo asignar el paso${detalle}`);
@@ -247,16 +314,23 @@ export default function NuevaMinuta() {
     setMostrarModal(true);
   };
 
-  const handleSeleccionarSesionDesdeMaquina = () => {
-    if (!sesionActivaMaquina) return;
-    setTrabajadorAsignacion(sesionActivaMaquina.trabajador || null);
-    setSesionActivaAsignacion(sesionActivaMaquina);
-    setAsignacionSesionError("");
+  const handleSeleccionarSesionDesdeMaquina = async () => {
+    if (!sesionActivaMaquina || !obtenerSesionId(sesionActivaMaquina)) {
+      const fallbackId = maquinaData?.id || maquinaSeleccionada?.id || sesionActivaAsignacion?.maquina?.id;
+      if (!fallbackId) return;
+      const refreshed = await consultarSesionActivaPorMaquina(fallbackId);
+      if (!refreshed || !obtenerSesionId(refreshed)) return;
+      await establecerSesionActiva(refreshed);
+    } else {
+      const refreshed =
+        (sesionActivaMaquina?.maquina?.id && (await consultarSesionActivaPorMaquina(sesionActivaMaquina.maquina.id))) ||
+        sesionActivaMaquina;
+      await establecerSesionActiva(refreshed);
+    }
     setPasoManualSeleccionado(null);
     setPasoOrdenSeleccionado(null);
     setCodigoOrden("");
     setProceso("");
-    setProcesosDisponibles([]);
     setPiezas("");
     setMeta("");
     setNpt("");
@@ -276,6 +350,7 @@ export default function NuevaMinuta() {
     const sesion = {
       trabajador: trabajadorData?.id,
       maquina: maquinaData?.id,
+      desdeTablet: true,
     };
     fetch(`${API_BASE_URL}/sesiones-trabajo`, {
       method: 'POST',
@@ -300,6 +375,32 @@ export default function NuevaMinuta() {
           mensaje = `${mensaje} y paso asignado correctamente.`;
         }
       }
+      const maquinaIdRef =
+        data?.maquina?.id ||
+        maquinaData?.id ||
+        sesionActivaMaquina?.maquina?.id ||
+        sesionActivaAsignacion?.maquina?.id ||
+        sesionActivaAsignacion?.maquina ||
+        trabajadorAsignacion?.ultimaSesionMaquinaId ||
+        trabajadorData?.ultimaSesionMaquinaId ||
+        trabajadorSeleccionado?.ultimaSesionMaquinaId;
+      let sesionActual = data || null;
+      if (maquinaIdRef) {
+        const refreshed = await consultarSesionActivaPorMaquina(maquinaIdRef);
+        if (refreshed) {
+          sesionActual = refreshed;
+        }
+      }
+      if (sesionActual) {
+        await establecerSesionActiva(sesionActual);
+      } else {
+        const sesionFallback = normalizarSesion({
+          trabajador: trabajadorData || null,
+          maquina: maquinaData || sesionActivaMaquina?.maquina || null,
+        });
+        setSesionActivaAsignacion(sesionFallback);
+        setTrabajadorAsignacion(sesionFallback?.trabajador || null);
+      }
       setTrabajadorSeleccionado(null);
       setTrabajadorData(null);
       setMaquinaSeleccionada(null);
@@ -308,6 +409,9 @@ export default function NuevaMinuta() {
       setSesionActivaMaquina(null);
       setSesionMaquinaError("");
       setPasoOrdenSeleccionado(null);
+      setAsignacionesSesion([]);
+      setAsignacionPasoFinalizarId("");
+      setPiezasDefectuosas("");
       setModalMensaje(mensaje);
       setMostrarModal(true);
     })
@@ -315,6 +419,294 @@ export default function NuevaMinuta() {
       setModalMensaje(err?.message || 'Error al iniciar sesión');
       setMostrarModal(true);
     });
+  };
+
+  const finalizarSesionTrabajo = async () => {
+    const sesionId = obtenerSesionId(sesionActivaAsignacion);
+    if (!sesionId) {
+      setModalMensaje("No hay una sesión activa para finalizar.");
+      setMostrarModal(true);
+      return;
+    }
+    const maquinaSesionId = sesionActivaAsignacion.maquina?.id;
+    try {
+      const res = await fetch(`${API_BASE_URL}/sesiones-trabajo/${sesionId}/finalizar`, {
+        method: "POST",
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        const msg = data?.message || data?.error || "No se pudo finalizar la sesión.";
+        throw new Error(msg);
+      }
+      setModalMensaje("Sesión finalizada correctamente.");
+      if (maquinaSesionId && maquinaSeleccionada?.id === maquinaSesionId) {
+        setSesionActivaMaquina(null);
+        setMaquinaSeleccionada(null);
+        setMaquinaData(null);
+      }
+      setSesionActivaAsignacion(null);
+      setTrabajadorAsignacion(null);
+      setSesionDetalle(null);
+      setAsignacionesSesion([]);
+      setAccion("");
+      setAccionCard("");
+      setPiezas("");
+      setMeta("");
+      setNpt("");
+      setCodigoOrden("");
+      setProceso("");
+      setAsignacionPasoFinalizarId("");
+      setMostrarModal(true);
+      setSesionAsignacionesVersion(0);
+    } catch (err) {
+      setModalMensaje(err?.message || "No se pudo finalizar la sesión.");
+      setMostrarModal(true);
+    }
+  };
+
+  const obtenerAsignacionActivaDeSesion = async (sesionId) => {
+    if (!sesionId) return null;
+    const res = await fetch(`${API_BASE_URL}/sesion-trabajo-pasos/por-sesion/${sesionId}`);
+    const data = await res.json().catch(() => []);
+    if (!res.ok) {
+      const msg = data?.message || data?.error || "No se pudieron obtener las asignaciones.";
+      throw new Error(msg);
+    }
+    const lista = Array.isArray(data) ? data : [];
+    if (!lista.length) return null;
+    const activa = lista.find(
+      (item) =>
+        item.fechaFin == null ||
+        item.fin == null ||
+        item.estado === "ACTIVO" ||
+        item.estadoSesionPaso === "ACTIVO"
+    );
+    return activa || lista[0];
+  };
+
+  const actualizarProduccionEnAsignacion = async (asignacionId, piezasBuenas, pedaleos, contextoError) => {
+    if (!asignacionId) return;
+    const resPaso = await fetch(`${API_BASE_URL}/sesion-trabajo-pasos/${asignacionId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cantidadProducida: piezasBuenas,
+        cantidadPedaleos: pedaleos,
+      }),
+    });
+    if (!resPaso.ok) {
+      const data = await resPaso.json().catch(() => null);
+      const msg =
+        data?.message ||
+        data?.error ||
+        `No se pudo actualizar el paso antes de ${contextoError || "la pausa"}.`;
+      throw new Error(msg);
+    }
+    await resPaso.json().catch(() => null);
+  };
+
+  const actualizarProduccionAntesDePausar = async (sesionId, piezasBuenas, pedaleos, contextoError) => {
+    if (!sesionId) return;
+    const asignacion = await obtenerAsignacionActivaDeSesion(sesionId);
+    if (!asignacion?.id) return;
+    await actualizarProduccionEnAsignacion(asignacion.id, piezasBuenas, pedaleos, contextoError);
+  };
+
+  const obtenerMaquinaIdDeSesionActiva = () => {
+    const candidatos = [
+      sesionActivaAsignacion?.maquina,
+      sesionDetalle?.maquina,
+      sesionActivaMaquina?.maquina,
+    ];
+    for (const candidato of candidatos) {
+      if (!candidato) continue;
+      if (typeof candidato === "string") return candidato;
+      if (typeof candidato?.id === "string") return candidato.id;
+    }
+    return null;
+  };
+
+  const iniciarDescanso = async () => {
+    const sesionId = obtenerSesionId(sesionActivaAsignacion);
+    const trabajadorId = sesionActivaAsignacion?.trabajador?.id;
+    if (!sesionId || !trabajadorId) {
+      setModalMensaje("No hay una sesión activa con trabajador para registrar el descanso.");
+      setMostrarModal(true);
+      return;
+    }
+    const piezasBuenas = Number(piezas) || 0;
+    const piezasMalas = Number(piezasDefectuosas) || 0;
+    const pedaleos = piezasBuenas + piezasMalas;
+    try {
+      await actualizarProduccionAntesDePausar(sesionId, piezasBuenas, pedaleos, "salir a descanso");
+      const resDescanso = await fetch(`${API_BASE_URL}/estados-trabajador`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trabajador: trabajadorId,
+          descanso: true,
+        }),
+      });
+      if (!resDescanso.ok) {
+        const data = await resDescanso.json().catch(() => null);
+        const msg = data?.message || data?.error || "No se pudo iniciar el descanso.";
+        throw new Error(msg);
+      }
+      await resDescanso.json().catch(() => null);
+      setModalMensaje("Descanso iniciado correctamente.");
+      setPiezas("");
+      setPiezasDefectuosas("");
+      setAccion("");
+      setAccionCard("");
+      setMostrarModal(true);
+      setSesionAsignacionesVersion((prev) => prev + 1);
+    } catch (err) {
+      setModalMensaje(err?.message || "Error al iniciar el descanso.");
+      setMostrarModal(true);
+    }
+  };
+
+  const finalizarDescanso = async () => {
+    const trabajadorId = sesionActivaAsignacion?.trabajador?.id;
+    if (!trabajadorId) {
+      setModalMensaje("No hay un trabajador asociado para finalizar el descanso.");
+      setMostrarModal(true);
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE_URL}/estados-trabajador/trabajador/${trabajadorId}/finalizar-descanso`, {
+        method: "POST",
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        const msg =
+          res.status === 404
+            ? "El trabajador no tiene descansos activos."
+            : data?.message || data?.error || "No se pudo finalizar el descanso.";
+        throw new Error(msg);
+      }
+      setModalMensaje("Descanso finalizado correctamente.");
+      setAccion("");
+      setAccionCard("");
+      setPiezas("");
+      setPiezasDefectuosas("");
+      setSesionAsignacionesVersion((prev) => prev + 1);
+      setMostrarModal(true);
+    } catch (err) {
+      setModalMensaje(err?.message || "Error al finalizar el descanso.");
+      setMostrarModal(true);
+    }
+  };
+
+  const iniciarMantenimiento = async () => {
+    const sesionId = obtenerSesionId(sesionActivaAsignacion);
+    const maquinaId = obtenerMaquinaIdDeSesionActiva();
+    if (!sesionId || !maquinaId) {
+      setModalMensaje("No hay una sesión y máquina válidas para iniciar mantenimiento.");
+      setMostrarModal(true);
+      return;
+    }
+    const piezasBuenas = Number(piezas) || 0;
+    const piezasMalas = Number(piezasDefectuosas) || 0;
+    const pedaleos = piezasBuenas + piezasMalas;
+    try {
+      await actualizarProduccionAntesDePausar(sesionId, piezasBuenas, pedaleos, "iniciar el mantenimiento");
+      const res = await fetch(`${API_BASE_URL}/estados-maquina`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          maquina: maquinaId,
+          mantenimiento: true,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        const msg = data?.message || data?.error || "No se pudo iniciar el mantenimiento.";
+        throw new Error(msg);
+      }
+      setModalMensaje("Mantenimiento iniciado correctamente.");
+      setPiezas("");
+      setPiezasDefectuosas("");
+      setAccion("");
+      setAccionCard("");
+      setMostrarModal(true);
+      setSesionAsignacionesVersion((prev) => prev + 1);
+    } catch (err) {
+      setModalMensaje(err?.message || "Error al iniciar el mantenimiento.");
+      setMostrarModal(true);
+    }
+  };
+
+  const finalizarMantenimiento = async () => {
+    const maquinaId = obtenerMaquinaIdDeSesionActiva();
+    if (!maquinaId) {
+      setModalMensaje("No se pudo identificar la máquina para finalizar el mantenimiento.");
+      setMostrarModal(true);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/estados-maquina/maquina/${maquinaId}/finalizar-mantenimiento`,
+        { method: "POST" }
+      );
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        const msg =
+          res.status === 404
+            ? "La máquina no tiene mantenimiento activo."
+            : data?.message || data?.error || "No se pudo finalizar el mantenimiento.";
+        throw new Error(msg);
+      }
+      setModalMensaje("Mantenimiento finalizado correctamente.");
+      setAccion("");
+      setAccionCard("");
+      setPiezas("");
+      setPiezasDefectuosas("");
+      setMostrarModal(true);
+      setSesionAsignacionesVersion((prev) => prev + 1);
+    } catch (err) {
+      setModalMensaje(err?.message || "Error al finalizar el mantenimiento.");
+      setMostrarModal(true);
+    }
+  };
+
+  const finalizarTrabajoPaso = async () => {
+    if (!asignacionPasoFinalizarId) {
+      setModalMensaje("Selecciona la asignación que deseas finalizar.");
+      setMostrarModal(true);
+      return;
+    }
+    const piezasBuenas = Number(piezas) || 0;
+    const piezasMalas = Number(piezasDefectuosas) || 0;
+    const pedaleos = piezasBuenas + piezasMalas;
+    try {
+      await actualizarProduccionEnAsignacion(
+        asignacionPasoFinalizarId,
+        piezasBuenas,
+        pedaleos,
+        "finalizar el trabajo del paso"
+      );
+      const res = await fetch(
+        `${API_BASE_URL}/sesion-trabajo-pasos/${asignacionPasoFinalizarId}/finalizar`,
+        { method: "POST" }
+      );
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        const msg = data?.message || data?.error || "No se pudo finalizar la asignación seleccionada.";
+        throw new Error(msg);
+      }
+      setModalMensaje("Trabajo del paso finalizado correctamente.");
+      setAccion("");
+      setAccionCard("");
+      setPiezas("");
+      setPiezasDefectuosas("");
+      setAsignacionPasoFinalizarId("");
+      setMostrarModal(true);
+      setSesionAsignacionesVersion((prev) => prev + 1);
+    } catch (err) {
+      setModalMensaje(err?.message || "Error al finalizar el trabajo del paso.");
+      setMostrarModal(true);
+    }
   };
 
   const handleOperacionSubmit = (e) => {
@@ -327,6 +719,30 @@ export default function NuevaMinuta() {
     if (!accion) {
       setModalMensaje("Selecciona una acción para registrar.");
       setMostrarModal(true);
+      return;
+    }
+    if (accion === "Finalizar sesión") {
+      finalizarSesionTrabajo();
+      return;
+    }
+    if (accion === "Salir a descanso") {
+      iniciarDescanso();
+      return;
+    }
+    if (accion === "Volver del descanso") {
+      finalizarDescanso();
+      return;
+    }
+    if (accion === "Inicio de mantenimiento") {
+      iniciarMantenimiento();
+      return;
+    }
+    if (accion === "Fin de mantenimiento") {
+      finalizarMantenimiento();
+      return;
+    }
+    if (accion === ACCION_FINALIZAR_PASO) {
+      finalizarTrabajoPaso();
       return;
     }
     const minuta = {
@@ -351,12 +767,12 @@ export default function NuevaMinuta() {
     })
     .then(() => {
       setPiezas("");
+      setPiezasDefectuosas("");
       setMeta("");
       setNpt("");
       setAccion("");
       setCodigoOrden("");
       setProceso("");
-      setProcesosDisponibles([]);
       setModalMensaje('Acción registrada correctamente.');
       setMostrarModal(true);
     })
@@ -376,6 +792,7 @@ export default function NuevaMinuta() {
         body: JSON.stringify({
           sesionTrabajo: sesionId,
           pasoOrden: pasoId,
+          desdeTablet: true,
         }),
       });
       if (!res.ok) {
@@ -393,6 +810,27 @@ export default function NuevaMinuta() {
   const mostrarTrabajadorSelector = Boolean(maquinaSeleccionada) && !sesionActivaMaquina;
   const mostrarMensajeSeleccionMaquina = !maquinaSeleccionada;
   const mostrarDatosSesionTrabajador = Boolean(sesionActivaMaquina?.trabajador);
+  const sesionActivaId = obtenerSesionId(sesionActivaAsignacion);
+  const estadoSesionActual = (sesionDetalle?.estadoSesion || sesionActivaAsignacion?.estadoSesion || "otro").toLowerCase();
+  const { permitidas: accionesPermitidasEstado, opciones: accionesFiltradas } =
+    obtenerAccionesDisponiblesPorEstado(estadoSesionActual);
+  const accionesPermitidasKey = accionesPermitidasEstado.join("|");
+
+  useEffect(() => {
+    if (!accionCard) return;
+    if (!accionesPermitidasEstado.includes(accionCard)) {
+      setAccionCard("");
+      setAccion("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accionCard, accionesPermitidasKey]);
+
+  useEffect(() => {
+    if (!asignacionPasoFinalizarId) return;
+    if (!asignacionesSesion.some((item) => item.id === asignacionPasoFinalizarId)) {
+      setAsignacionPasoFinalizarId("");
+    }
+  }, [asignacionesSesion, asignacionPasoFinalizarId]);
 
   return (
     <div className="p-6 max-w-4xl mx-auto text-sm sm:text-base">
@@ -404,304 +842,66 @@ export default function NuevaMinuta() {
           Administración
         </button>
       </div>
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <h1 className="text-2xl font-semibold mb-6">Iniciar nueva sesión</h1>
-        <form onSubmit={handleIniciarSesion} className="flex flex-col gap-4">
-          <div>
-            <label className="block font-medium">Fecha y hora</label>
-            <input
-              type="text"
-              value={fechaHora}
-              readOnly
-              className="w-full border rounded-full px-4 py-2 bg-gray-100"
-            />
+      {!sesionActivaAsignacion && (
+        <>
+          <SesionIniciador
+            fechaHora={fechaHora}
+            maquinaSeleccionada={maquinaSeleccionada}
+            onMaquinaSelect={handleMaquinaSeleccion}
+            maquinaData={maquinaData}
+            maquinaError={maquinaError}
+            buscandoSesionMaquina={buscandoSesionMaquina}
+            sesionMaquinaError={sesionMaquinaError}
+            sesionActivaMaquina={sesionActivaMaquina}
+            mostrarDatosSesionTrabajador={mostrarDatosSesionTrabajador}
+            mostrarMensajeSeleccionMaquina={mostrarMensajeSeleccionMaquina}
+            mostrarTrabajadorSelector={mostrarTrabajadorSelector}
+            trabajadorSeleccionado={trabajadorSeleccionado}
+            onTrabajadorSelect={handleTrabajadorSeleccion}
+            pasoOrdenSeleccionado={pasoOrdenSeleccionado}
+            onPasoOrdenClear={() => setPasoOrdenSeleccionado(null)}
+            onOpenPasoModal={openPasoModal}
+            onSeleccionarSesionActiva={handleSeleccionarSesionDesdeMaquina}
+            onIniciarSesion={handleIniciarSesion}
+          />
+          <div className="bg-white rounded-xl shadow-md p-6 mt-6 text-sm text-gray-700">
+            <h2 className="text-xl font-semibold mb-2">Sesiones activas</h2>
+            <p>Inicia o selecciona una sesión para acceder a las acciones rápidas.</p>
           </div>
-          <div>
-            <MaquinaSelector
-              selected={maquinaSeleccionada}
-              onSelect={handleMaquinaSeleccion}
-            />
-            {maquinaError && (
-              <p className="text-red-600 mt-2">{maquinaError}</p>
-            )}
-            {maquinaData && (
-              <div className="mt-2 text-sm bg-gray-100 p-2 rounded">
-                <p><strong>Nombre:</strong> {maquinaData.nombre}</p>
-                <p><strong>Código:</strong> {maquinaData.codigo}</p>
-                <p><strong>Ubicación:</strong> {maquinaData.ubicacion}</p>
-                <p><strong>Área:</strong> {maquinaData.area?.nombre}</p>
-                <p><strong>Tipo:</strong> {maquinaData.tipo}</p>
-              </div>
-            )}
-            {buscandoSesionMaquina && (
-              <p className="text-sm text-gray-600 mt-2">Consultando sesión activa de la máquina…</p>
-            )}
-            {sesionMaquinaError && (
-              <p className="text-sm text-red-600 mt-2">{sesionMaquinaError}</p>
-            )}
-            {sesionActivaMaquina && !sesionMaquinaError && (
-              <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-900 space-y-2">
-                <div>
-                  <p className="font-medium">Esta máquina ya tiene una sesión activa.</p>
-                  <p>Inicio: {sesionActivaMaquina.fechaInicio ?? "-"}</p>
-                </div>
-                {mostrarDatosSesionTrabajador ? (
-                  <div className="bg-white/70 rounded p-2 text-[13px] text-gray-800">
-                    <p><strong>Operario:</strong> {sesionActivaMaquina.trabajador.nombre}</p>
-                    <p><strong>Identificación:</strong> {sesionActivaMaquina.trabajador.identificacion ?? "-"}</p>
-                    <p><strong>Grupo:</strong> {sesionActivaMaquina.trabajador.grupo ?? "-"}</p>
-                    <p><strong>Turno:</strong> {sesionActivaMaquina.trabajador.turno ?? "-"}</p>
-                  </div>
-                ) : (
-                  <p>No hay un operario asignado a esta sesión.</p>
-                )}
-              </div>
-            )}
-          </div>
-          {mostrarMensajeSeleccionMaquina && (
-            <div className="border rounded-xl p-4 bg-gray-50 text-sm text-gray-700">
-              Selecciona una máquina para poder escanear al trabajador que iniciará la sesión.
-            </div>
-          )}
-          {mostrarTrabajadorSelector && (
-            <TrabajadorQrSelector
-              selected={trabajadorSeleccionado}
-              onSelect={handleTrabajadorSeleccion}
-            />
-          )}
-          {!sesionActivaMaquina && (
-            <div className="border rounded-xl p-4 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Paso de orden de producción</div>
-                  <p className="text-xs text-gray-600">
-                    Escanea el QR de la orden para vincular la sesión a un paso específico.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openPasoModal("inicio")}
-                  className="px-3 py-1.5 rounded-full border bg-white text-sm hover:bg-gray-100"
-                >
-                  Trabajar en paso de orden
-                </button>
-              </div>
-              {pasoOrdenSeleccionado && (
-                <div className="mt-3 text-sm flex flex-col gap-1">
-                  <div><strong>Orden:</strong> {pasoOrdenSeleccionado.ordenId}</div>
-                  <div>
-                    <strong>Paso:</strong> {pasoOrdenSeleccionado.paso.nombre} (#{pasoOrdenSeleccionado.paso.numeroPaso ?? "-"})
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setPasoOrdenSeleccionado(null)}
-                    className="text-xs text-blue-600 mt-1 self-start hover:underline"
-                  >
-                    Quitar selección
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-          {sesionActivaMaquina ? (
-            <button
-              type="button"
-              onClick={() => handleSeleccionarSesionDesdeMaquina()}
-              className="mt-2 bg-indigo-600 text-white py-2 px-6 rounded-full hover:bg-indigo-700 self-start"
-            >
-              Seleccionar sesión
-            </button>
-          ) : (
-            <button
-              type="submit"
-              className="mt-2 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 self-start"
-            >
-              Iniciar sesión
-            </button>
-          )}
-        </form>
-      </div>
-      <div className="bg-white rounded-xl shadow-md p-6 mt-6 space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold">Sesiones activas</h2>
-          <p className="text-sm text-gray-600">
-            Selecciona la acción que necesitas realizar y luego escanea el QR del trabajador correspondiente.
-          </p>
-        </div>
-        <div>
-          <label className="block font-semibold text-sm">¿Qué deseas hacer?</label>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {ACCION_CARD_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => handleAccionCardSeleccion(opt.value)}
-                className={`px-3 py-1.5 rounded-full border text-sm ${
-                  accionCard === opt.value ? "bg-blue-600 text-white" : "bg-white"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        {!accionCard && (
-          <p className="text-sm text-gray-600">Selecciona una acción para continuar.</p>
-        )}
-        {accionCard && (
-          <>
-            <TrabajadorQrSelector
-              selected={trabajadorAsignacion}
-              onSelect={handleTrabajadorAsignacionSeleccion}
-              title="Trabajador con sesión activa"
-            />
-            {buscandoSesionActiva && <p className="text-sm text-gray-600">Buscando sesión activa…</p>}
-            {asignacionSesionError && (
-              <p className="text-sm text-red-600">{asignacionSesionError}</p>
-            )}
-            {sesionActivaAsignacion && (
-              <div className="text-sm bg-gray-50 border rounded p-3 space-y-1">
-                <div><strong>Sesión:</strong> {sesionActivaAsignacion.id}</div>
-                <div><strong>Máquina:</strong> {sesionActivaAsignacion.maquina?.nombre ?? "-"}</div>
-                <div><strong>Estado:</strong> {sesionActivaAsignacion.estadoSesion ?? sesionActivaAsignacion.estado ?? "-"}</div>
-              </div>
-            )}
-            {accionCard === "asignar-paso" && (
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border rounded-xl p-4">
-                <div className="text-sm text-gray-700">
-                  {pasoManualSeleccionado ? (
-                    <>
-                      <div><strong>Orden:</strong> {pasoManualSeleccionado.ordenId}</div>
-                      <div>
-                        <strong>Paso:</strong> {pasoManualSeleccionado.paso.nombre} (#{pasoManualSeleccionado.paso.numeroPaso ?? "-"})
-                      </div>
-                    </>
-                  ) : (
-                    <span>Selecciona una orden y un paso para asignarlo a la sesión activa.</span>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => openPasoModal("manual")}
-                    disabled={!trabajadorAsignacion}
-                    className="px-3 py-1.5 rounded-full border bg-white text-sm hover:bg-gray-100 disabled:opacity-50"
-                  >
-                    Seleccionar paso
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleAsignarPasoManual}
-                    disabled={
-                      asignandoPasoManual ||
-                      !sesionActivaAsignacion?.id ||
-                      !pasoManualSeleccionado?.paso?.id
-                    }
-                    className="px-3 py-1.5 rounded-full bg-indigo-600 text-white text-sm disabled:opacity-50"
-                  >
-                    {asignandoPasoManual ? "Asignando..." : "Asignar a sesión"}
-                  </button>
-                </div>
-              </div>
-            )}
-            {accionCard !== "asignar-paso" && accion && (
-              <form onSubmit={handleOperacionSubmit} className="border rounded-xl p-4 mt-4 space-y-4">
-                <div className="text-sm font-medium text-gray-700">
-                  Acción seleccionada: <span className="text-indigo-700">{accion}</span>
-                </div>
-                {["Volver del descanso", "Fin de mantenimiento"].includes(accion) && (
-                  <>
-                    <div>
-                      <label className="block font-medium">Código de orden de producción</label>
-                      <input
-                        type="text"
-                        value={codigoOrden}
-                        onChange={e => {
-                          setCodigoOrden(e.target.value);
-                          setProcesosDisponibles(["Corte", "Soldadura", "Ensamble"]);
-                        }}
-                        className="w-full border rounded-full px-4 py-2"
-                        placeholder="Ingrese el código de la orden"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-medium">Proceso a realizar</label>
-                      <select
-                        value={proceso}
-                        onChange={e => setProceso(e.target.value)}
-                        className="w-full border rounded-full px-4 py-2"
-                      >
-                        <option value="">Seleccione un proceso</option>
-                        {procesosDisponibles.map(p => (
-                          <option key={p} value={p}>{p}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </>
-                )}
-                {["Finalizar sesión", "Salir a descanso", "Inicio de mantenimiento"].includes(accion) && (
-                  <>
-                    <div>
-                      <label className="block font-medium">Cantidad de piezas hechas</label>
-                      <input
-                        type="number"
-                        value={piezas}
-                        onChange={e => setPiezas(e.target.value)}
-                        className="w-full border rounded-full px-4 py-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-medium">Meta</label>
-                      <input
-                        type="number"
-                        value={meta}
-                        onChange={e => setMeta(e.target.value)}
-                        className="w-full border rounded-full px-4 py-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-medium">% de cumplimiento</label>
-                      <input
-                        type="text"
-                        value={cumplimiento ? `${cumplimiento}%` : ""}
-                        readOnly
-                        className="w-full border rounded-full px-4 py-2 bg-gray-100"
-                        tabIndex={-1}
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-medium">NPT (min)</label>
-                      <input
-                        type="number"
-                        value={npt}
-                        onChange={e => setNpt(e.target.value)}
-                        className="w-full border rounded-full px-4 py-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-medium">% de NPT</label>
-                      <input
-                        type="text"
-                        value={nptPorcentaje ? `${nptPorcentaje}%` : ""}
-                        readOnly
-                        className="w-full border rounded-full px-4 py-2 bg-gray-100"
-                        tabIndex={-1}
-                      />
-                    </div>
-                  </>
-                )}
-                <button
-                  type="submit"
-                  disabled={!accion}
-                  className="px-4 py-2 rounded-full bg-blue-600 text-white text-sm self-start disabled:opacity-50"
-                >
-                  Registrar acción
-                </button>
-              </form>
-            )}
-          </>
-        )}
-      </div>
+        </>
+      )}
+      {sesionActivaAsignacion && (
+        <SesionSeleccionadaPanel
+          sesion={sesionActivaAsignacion}
+          onSeleccionarOtra={limpiarSesionSeleccionada}
+          refreshKey={sesionAsignacionesVersion}
+          onSesionDetalleChange={setSesionDetalle}
+          onAsignacionesChange={setAsignacionesSesion}
+        >
+          <AccionesRapidas
+            accionesDisponibles={accionesFiltradas}
+            accionCard={accionCard}
+            accion={accion}
+            accionFinalizarPasoLabel={ACCION_FINALIZAR_PASO}
+            onAccionCardSeleccion={handleAccionCardSeleccion}
+            pasoManualSeleccionado={pasoManualSeleccionado}
+            onOpenPasoModal={openPasoModal}
+            onAsignarPasoManual={handleAsignarPasoManual}
+            asignandoPasoManual={asignandoPasoManual}
+            sesionActiva={sesionActivaAsignacion}
+            sesionActivaId={sesionActivaId}
+            trabajadorAsignacion={trabajadorAsignacion}
+            asignacionesSesion={asignacionesSesion}
+            asignacionPasoFinalizarId={asignacionPasoFinalizarId}
+            setAsignacionPasoFinalizarId={setAsignacionPasoFinalizarId}
+            piezas={piezas}
+            setPiezas={setPiezas}
+            piezasDefectuosas={piezasDefectuosas}
+            setPiezasDefectuosas={setPiezasDefectuosas}
+            onOperacionSubmit={handleOperacionSubmit}
+          />
+        </SesionSeleccionadaPanel>
+      )}
       {mostrarModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
           <div className="bg-white p-6 rounded shadow-lg">
@@ -717,9 +917,6 @@ export default function NuevaMinuta() {
                 setMaquinaData(null);
                 setMaquinaError("");
                 setPasoOrdenSeleccionado(null);
-                setTrabajadorAsignacion(null);
-                setSesionActivaAsignacion(null);
-                setAsignacionSesionError("");
                 setPasoManualSeleccionado(null);
                 setAccion("");
                 setAccionCard("");
