@@ -347,6 +347,11 @@ export default function NuevaMinuta() {
       setMostrarModal(true);
       return;
     }
+    if (!pasoOrdenSeleccionado?.paso?.id) {
+      setModalMensaje("Debes seleccionar un paso de una orden de producción antes de iniciar la sesión.");
+      setMostrarModal(true);
+      return;
+    }
     const sesion = {
       trabajador: trabajadorData?.id,
       maquina: maquinaData?.id,
@@ -863,6 +868,7 @@ export default function NuevaMinuta() {
             onOpenPasoModal={openPasoModal}
             onSeleccionarSesionActiva={handleSeleccionarSesionDesdeMaquina}
             onIniciarSesion={handleIniciarSesion}
+            requierePasoOrden
           />
           <div className="bg-white rounded-xl shadow-md p-6 mt-6 text-sm text-gray-700">
             <h2 className="text-xl font-semibold mb-2">Sesiones activas</h2>

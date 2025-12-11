@@ -20,7 +20,12 @@ export default function SesionIniciador({
   onOpenPasoModal,
   onSeleccionarSesionActiva,
   onIniciarSesion,
+  requierePasoOrden = false,
 }) {
+  const pasoSeleccionado = Boolean(pasoOrdenSeleccionado?.paso?.id);
+  const debeSeleccionarPaso = requierePasoOrden && !sesionActivaMaquina;
+  const botonInicioDeshabilitado = debeSeleccionarPaso && !pasoSeleccionado;
+
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
       <h1 className="text-2xl font-semibold mb-6">Iniciar o seleccionar sesión</h1>
@@ -102,6 +107,11 @@ export default function SesionIniciador({
                 <div className="font-medium">Paso de orden de producción</div>
                 <p className="text-xs text-gray-600">
                   Escanea el QR de la orden para vincular la sesión a un paso específico.
+                  {debeSeleccionarPaso && (
+                    <span className="block text-red-600 mt-1">
+                      Debes seleccionar un paso para poder iniciar la sesión.
+                    </span>
+                  )}
                 </p>
               </div>
               <button
@@ -143,7 +153,10 @@ export default function SesionIniciador({
         ) : (
           <button
             type="submit"
-            className="mt-2 bg-blue-600 text-white py-2 px-6 rounded-full hover:bg-blue-700 self-start"
+            disabled={botonInicioDeshabilitado}
+            className={`mt-2 bg-blue-600 text-white py-2 px-6 rounded-full self-start ${
+              botonInicioDeshabilitado ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
+            }`}
           >
             Iniciar sesión
           </button>
