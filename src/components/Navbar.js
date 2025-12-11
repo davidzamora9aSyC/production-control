@@ -11,6 +11,7 @@ export default function Navbar() {
 
     const [dropdownAbierto, setDropdownAbierto] = useState(false);
     const [funcionesAbierto, setFuncionesAbierto] = useState(false);
+    const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
     const dropdownRef = useRef();
     const funcionesRef = useRef();
 
@@ -27,17 +28,32 @@ export default function Navbar() {
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    useEffect(() => {
+      setMenuMovilAbierto(false);
+    }, [location.pathname]);
+
     const links = [
         { path: "/dashboard", label: "Resumen General" },
         { path: "/ordenes", label: "Órdenes de producción" },
     ];
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 py-4 border-b bg-white">
-            <span onClick={() => navigate("/dashboard")} className="cursor-pointer">
-                <img src={logoNavbar} alt="Logo" className="h-12" />
-            </span>
-            <ul className="flex gap-16 ml-12 text-lg">
+        <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 border-b bg-white">
+            <div className="flex items-center gap-4">
+              <span onClick={() => navigate("/dashboard")} className="cursor-pointer">
+                  <img src={logoNavbar} alt="Logo" className="h-12" />
+              </span>
+              <button
+                className="md:hidden inline-flex flex-col gap-1 focus:outline-none"
+                onClick={() => setMenuMovilAbierto((prev) => !prev)}
+                aria-label="Abrir menú"
+              >
+                <span className="w-6 h-0.5 bg-gray-800"></span>
+                <span className="w-6 h-0.5 bg-gray-800"></span>
+                <span className="w-6 h-0.5 bg-gray-800"></span>
+              </button>
+            </div>
+            <ul className="hidden md:flex gap-16 ml-12 text-lg">
                 {links.map(link => (
                   <li key={link.path} className="relative">
                     <span
@@ -109,7 +125,62 @@ export default function Navbar() {
                   )}
                 </li>
             </ul>
-            <button onClick={()=>{ logout(); navigate("/login", { replace: true }); }} className="text-xl font-bold">Cerrar sesión</button>
+            <button
+              onClick={()=>{ logout(); navigate("/login", { replace: true }); }}
+              className="hidden md:inline-block text-xl font-bold"
+            >
+              Cerrar sesión
+            </button>
+            {menuMovilAbierto && (
+              <div className="md:hidden fixed top-20 left-0 right-0 bg-white border-t shadow-lg z-40">
+                <div className="px-6 py-4 space-y-4">
+                  <div className="flex flex-col gap-3">
+                    {links.map(link => (
+                      <button
+                        key={link.path}
+                        onClick={() => navigate(link.path)}
+                        className={`text-left text-lg ${location.pathname === link.path ? "font-bold text-black" : "text-gray-700"}`}
+                      >
+                        {link.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Recursos</p>
+                    <div className="mt-2 flex flex-col gap-2">
+                      {[
+                        { path: "/sesiones", label: "Sesiones actuales" },
+                        { path: "/sesiones/personas", label: "Personas" },
+                        { path: "/sesiones/equipos", label: "Equipos" },
+                      ].map(sub => (
+                        <button
+                          key={sub.path}
+                          onClick={() => navigate(sub.path)}
+                          className={`text-left ${location.pathname === sub.path ? "font-bold text-black" : "text-gray-700"}`}
+                        >
+                          {sub.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Funciones</p>
+                    <button
+                      onClick={() => navigate("/funciones/wifi-qr")}
+                      className={`mt-2 text-left ${location.pathname === "/funciones/wifi-qr" ? "font-bold text-black" : "text-gray-700"}`}
+                    >
+                      WiFi a QR
+                    </button>
+                  </div>
+                  <button
+                    onClick={()=>{ logout(); navigate("/login", { replace: true }); }}
+                    className="w-full bg-red-50 text-red-600 font-semibold py-2 rounded-lg"
+                  >
+                    Cerrar sesión
+                  </button>
+                </div>
+              </div>
+            )}
         </nav>
     );
 }
