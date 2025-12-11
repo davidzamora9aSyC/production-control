@@ -13,6 +13,7 @@ import OrdenesProduccion from "./pages/OrdenesProduccion";
 import DetalleOrden from "./pages/DetalleOrden";
 import Personas from "./pages/Personas";
 import Equipos from "./pages/Equipos";
+import WifiQrTool from "./pages/WifiQrTool";
 import { AuthProvider } from "./context/AuthContext";
 import { AreasProvider } from "./context/AreasContext";
 import RequireAuth from "./components/RequireAuth";
@@ -105,6 +106,14 @@ function App() {
               element={
                 <RequireAuth>
                   <ProtectedLayout><Equipos/></ProtectedLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/funciones/wifi-qr"
+              element={
+                <RequireAuth>
+                  <ProtectedLayout><WifiQrTool /></ProtectedLayout>
                 </RequireAuth>
               }
             />

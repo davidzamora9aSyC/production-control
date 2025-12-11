@@ -4,6 +4,7 @@ import ModalCargarCSV from "../components/ModalCargarCSV";
 import MaquinaForm from "../components/MaquinaForm";
 import ErrorPopup from "../components/ErrorPopup";
 import { API_BASE_URL } from "../api";
+import QRCode from "qrcode";
 
 const ITEMS_POR_PAGINA = 8;
 
@@ -80,6 +81,46 @@ export default function Equipos() {
         document.body.removeChild(link);
     };
 
+    const descargarQR = (equipo) => {
+        QRCode.toDataURL(String(equipo.id))
+            .then(url => {
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `equipo_${equipo.codigo || equipo.nombre || equipo.id}.png`;
+                link.click();
+            })
+            .catch(err => {
+                console.error("Error al generar QR del equipo:", err);
+                setErrorMsg("Error al generar identificador del equipo");
+            });
+    };
+
+    const imprimirQR = (equipo) => {
+        QRCode.toDataURL(String(equipo.id))
+            .then(url => {
+                const ventana = window.open("", "_blank");
+                if (!ventana) return;
+                const imagen = new Image();
+                imagen.src = url;
+                imagen.onload = () => {
+                    ventana.document.body.innerHTML = `
+                      <div style="text-align:center">
+                        <p style="font-size:18px;margin-bottom:4px">${equipo.nombre || ""}</p>
+                        <p style="font-size:14px;margin-bottom:8px">UUID: ${equipo.id}</p>
+                        <img src="${url}" style="width:250px;height:250px" />
+                      </div>`;
+                    ventana.document.title = `QR Equipo ${equipo.codigo || equipo.id}`;
+                    ventana.focus();
+                    ventana.print();
+                    ventana.close();
+                };
+            })
+            .catch(err => {
+                console.error("Error al imprimir QR del equipo:", err);
+                setErrorMsg("Error al imprimir QR del equipo");
+            });
+    };
+
     return (
         <div className="bg-white h-screen overflow-hidden animate-slideLeft">
             <div className="px-20 pt-10">
@@ -119,6 +160,7 @@ export default function Equipos() {
                                 <th className="px-4 py-2 border-r">Fecha instalación</th>
                                 <th className="px-4 py-2 border-r">Observaciones</th>
                                 <th className="px-4 py-2 border-r">Área</th>
+                                <th className="px-4 py-2 border-r">Identificador</th>
                                 <th className="px-4 py-2">Acciones</th>
                             </tr>
                         </thead>
@@ -139,6 +181,28 @@ export default function Equipos() {
                                     <td className="px-4 py-2 border-r">{item.fechaInstalacion}</td>
                                     <td className="px-4 py-2 border-r">{item.observaciones || "-"}</td>
                                     <td className="px-4 py-2 border-r">{item.areaNombre || "-"}</td>
+                                    <td className="px-4 py-2 border-r">
+                                        <div className="flex flex-col gap-1">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    descargarQR(item);
+                                                }}
+                                                className="bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700"
+                                            >
+                                                Descargar QR
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    imprimirQR(item);
+                                                }}
+                                                className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                                            >
+                                                Imprimir QR
+                                            </button>
+                                        </div>
+                                    </td>
                                     <td className="px-4 py-2 flex gap-2 justify-center">
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setEquipoEditar(item); setMostrarFormulario(true); }}

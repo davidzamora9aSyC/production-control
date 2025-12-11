@@ -10,12 +10,17 @@ export default function Navbar() {
     const { logout } = useAuth();
 
     const [dropdownAbierto, setDropdownAbierto] = useState(false);
+    const [funcionesAbierto, setFuncionesAbierto] = useState(false);
     const dropdownRef = useRef();
+    const funcionesRef = useRef();
 
     useEffect(() => {
       const handleClickOutside = (e) => {
         if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
           setDropdownAbierto(false);
+        }
+        if (funcionesRef.current && !funcionesRef.current.contains(e.target)) {
+          setFuncionesAbierto(false);
         }
       };
       document.addEventListener("mousedown", handleClickOutside);
@@ -75,6 +80,31 @@ export default function Navbar() {
                           </span>
                         </li>
                       ))}
+                    </ul>
+                  )}
+                </li>
+                <li key="funciones" className="relative" ref={funcionesRef}>
+                  <span
+                    onClick={() => setFuncionesAbierto(prev => !prev)}
+                    className="cursor-pointer transition-colors duration-300 text-xl font-semibold text-gray-600 hover:text-black"
+                  >
+                    Funciones
+                  </span>
+                  {funcionesAbierto && (
+                    <ul className="absolute bg-white shadow-lg rounded mt-2 w-60 z-50">
+                      <li className="border-b last:border-none">
+                        <span
+                          onClick={() => {
+                            navigate("/funciones/wifi-qr");
+                            setFuncionesAbierto(false);
+                          }}
+                          className={`block px-4 py-2 cursor-pointer hover:bg-gray-100 ${
+                            location.pathname === "/funciones/wifi-qr" ? "font-bold text-black" : "text-gray-700"
+                          }`}
+                        >
+                          WiFi a QR
+                        </span>
+                      </li>
                     </ul>
                   )}
                 </li>
