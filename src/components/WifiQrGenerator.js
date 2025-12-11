@@ -1,6 +1,9 @@
 import { useState } from "react";
 import QRCode from "qrcode";
 
+const WIFI_SECURITY = "WPA";
+const WIFI_HIDDEN = "false";
+
 const loadImage = (src) =>
   new Promise((resolve, reject) => {
     const img = new Image();
@@ -9,43 +12,31 @@ const loadImage = (src) =>
     img.src = src;
   });
 
-async function buildCredentialImage({ ssid, password, ssidQr, passwordQr }) {
+async function buildCredentialImage({ ssid, password, qr }) {
   const canvas = document.createElement("canvas");
-  canvas.width = 900;
-  canvas.height = 420;
+  canvas.width = 640;
+  canvas.height = 640;
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = "#1f2937";
-  ctx.font = "bold 28px Arial";
-  ctx.fillText("Credenciales WiFi", 32, 48);
+  ctx.font = "bold 30px Arial";
+  ctx.fillText("QR WiFi para tolva", 32, 60);
+  ctx.font = "18px Arial";
+  ctx.fillStyle = "#4b5563";
+  ctx.fillText(`SSID: ${ssid}`, 32, 100);
+  ctx.fillText(`Contraseña: ${password}`, 32, 130);
+  ctx.fillText(`Seguridad: ${WIFI_SECURITY}`, 32, 160);
 
-  const [ssidImg, passwordImg] = await Promise.all([loadImage(ssidQr), loadImage(passwordQr)]);
-
-  const blockWidth = 400;
-  const blockHeight = 320;
-  const startY = 90;
-
-  const drawBlock = ({ title, value, image, offsetX }) => {
-    ctx.fillStyle = "#f3f4f6";
-    ctx.fillRect(offsetX, startY, blockWidth, blockHeight);
-    ctx.strokeStyle = "#d1d5db";
-    ctx.strokeRect(offsetX, startY, blockWidth, blockHeight);
-
-    ctx.fillStyle = "#374151";
-    ctx.font = "bold 20px Arial";
-    ctx.fillText(title, offsetX + 20, startY + 35);
-    ctx.font = "16px Arial";
-    ctx.fillText(value, offsetX + 20, startY + 60);
-    ctx.drawImage(image, offsetX + 75, startY + 80, 250, 250);
-  };
-
-  drawBlock({ title: "Nombre de red", value: ssid, image: ssidImg, offsetX: 40 });
-  drawBlock({ title: "Contraseña", value: password, image: passwordImg, offsetX: 460 });
+  const qrImg = await loadImage(qr);
+  ctx.drawImage(qrImg, 95, 200, 450, 450);
 
   return canvas.toDataURL("image/png");
 }
+
+const buildWifiPayload = (ssid, password) =>
+  `WIFI:T:${WIFI_SECURITY};P:${password};S:${ssid};H:${WIFI_HIDDEN};`;
 
 export default function WifiQrGenerator() {
   const [ssid, setSsid] = useState("");
@@ -60,38 +51,30 @@ export default function WifiQrGenerator() {
     setGenerando(true);
     setError("");
     try {
-      const [ssidQr, passwordQr] = await Promise.all([
-        QRCode.toDataURL(ssid.trim(), { margin: 1 }),
-        QRCode.toDataURL(password.trim(), { margin: 1 }),
-      ]);
+      const cleanSsid = ssid.trim();
+      const cleanPassword = password.trim();
+      const payload = buildWifiPayload(cleanSsid, cleanPassword);
+      const qrUrl = await QRCode.toDataURL(payload, { margin: 1 });
       if (accion === "descargar") {
-        const dataUrl = await buildCredentialImage({ ssid: ssid.trim(), password: password.trim(), ssidQr, passwordQr });
+        const dataUrl = await buildCredentialImage({ ssid: cleanSsid, password: cleanPassword, qr: qrUrl });
         const link = document.createElement("a");
         link.href = dataUrl;
-        link.download = `wifi_${ssid.trim()}.png`;
+        link.download = `wifi_${cleanSsid}.png`;
         link.click();
       } else if (accion === "imprimir") {
         const html = `
           <div style="font-family:Arial,sans-serif;padding:24px;text-align:center">
-            <h1>Credenciales WiFi</h1>
-            <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:16px">
-              <div style="border:1px solid #d1d5db;border-radius:12px;padding:16px;width:280px;">
-                <h2 style="margin-bottom:8px;">Nombre de red</h2>
-                <p style="margin:0 0 12px 0">${ssid.trim()}</p>
-                <img src="${ssidQr}" alt="QR SSID" style="width:230px;height:230px" />
-              </div>
-              <div style="border:1px solid #d1d5db;border-radius:12px;padding:16px;width:280px;">
-                <h2 style="margin-bottom:8px;">Contraseña</h2>
-                <p style="margin:0 0 12px 0">${password.trim()}</p>
-                <img src="${passwordQr}" alt="QR Password" style="width:230px;height:230px" />
-              </div>
-            </div>
+            <h1>QR de WiFi</h1>
+            <p style="margin:4px 0;font-size:18px;">SSID: ${cleanSsid}</p>
+            <p style="margin:4px 0;font-size:18px;">Contraseña: ${cleanPassword}</p>
+            <p style="margin:4px 0;font-size:16px;">Seguridad: ${WIFI_SECURITY} · Oculta: ${WIFI_HIDDEN}</p>
+            <img src="${qrUrl}" alt="QR WiFi" style="width:320px;height:320px;margin-top:16px" />
           </div>
         `;
         const ventana = window.open("", "_blank", "width=900,height=600");
         if (!ventana) throw new Error("No se pudo abrir la ventana para imprimir");
         ventana.document.write(html);
-        ventana.document.title = `Credenciales WiFi ${ssid.trim()}`;
+        ventana.document.title = `Credenciales WiFi ${cleanSsid}`;
         ventana.focus();
         ventana.print();
         ventana.close();
@@ -107,10 +90,10 @@ export default function WifiQrGenerator() {
   return (
     <div className="border rounded-xl p-6 shadow-sm bg-white space-y-4">
       <div>
-        <h3 className="text-xl font-semibold text-gray-800">Credenciales para tolva</h3>
+        <h3 className="text-xl font-semibold text-gray-800">QR de red WiFi</h3>
         <p className="text-sm text-gray-600">
-          Ingresa el usuario (SSID) y la contraseña de la red WiFi. Podrás descargar o imprimir un archivo que contiene los
-          dos códigos QR identificados.
+          Ingresa el usuario (SSID) y la contraseña. Se generará un único QR con la sintaxis estándar WIFI:... usando seguridad
+          WPA y con la red marcada como visible (H:false).
         </p>
       </div>
       <div className="grid md:grid-cols-2 gap-4">
