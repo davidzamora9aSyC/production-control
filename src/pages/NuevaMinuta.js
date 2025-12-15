@@ -1079,6 +1079,21 @@ export default function NuevaMinuta() {
   }, [accionCard, puedeAsignarPaso]);
 
   useEffect(() => {
+    if (accionCard === ACCION_FINALIZAR_PASO) {
+      if (asignacionActivaLocal?.id) {
+        setAsignacionPasoFinalizarId(asignacionActivaLocal.id);
+      } else if (asignacionPasoFinalizarId) {
+        setAsignacionPasoFinalizarId("");
+      }
+    }
+  }, [
+    accionCard,
+    asignacionActivaLocal?.id,
+    asignacionActivaLocal,
+    asignacionPasoFinalizarId,
+  ]);
+
+  useEffect(() => {
     if (!asignacionesSesion.length) {
       setAsignacionPasoFinalizarId("");
       return;
