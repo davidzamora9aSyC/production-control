@@ -275,7 +275,7 @@ export default function NuevaMinuta() {
     }
   };
 
-  const establecerSesionActiva = (sesion) => {
+  const establecerSesionActiva = useCallback((sesion) => {
     const sesionFinal = normalizarSesion(sesion);
     if (!obtenerSesionId(sesionFinal)) return null;
     setSesionDetalle(null);
@@ -283,7 +283,22 @@ export default function NuevaMinuta() {
     setTrabajadorAsignacion(sesionFinal.trabajador || null);
     setSesionAsignacionesVersion((prev) => prev + 1);
     return sesionFinal;
-  };
+  }, []);
+
+  const refrescarSesionActiva = useCallback(async () => {
+    const sesionId = obtenerSesionId(sesionActivaAsignacion);
+    if (!sesionId) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/sesiones-trabajo/${sesionId}`);
+      if (!res.ok) return;
+      const data = await res.json().catch(() => null);
+      if (data) {
+        establecerSesionActiva(data);
+      }
+    } catch {
+      // ignore
+    }
+  }, [sesionActivaAsignacion, establecerSesionActiva]);
 
   const handleAccionCardSeleccion = (valor) => {
     setAccionCard(valor);
@@ -851,6 +866,7 @@ export default function NuevaMinuta() {
       setAsignacionPasoFinalizarId("");
       setMostrarModal(true);
       setSesionAsignacionesVersion((prev) => prev + 1);
+      await refrescarSesionActiva();
     } catch (err) {
       setModalMensaje(
         err?.message || "Error al finalizar el trabajo del paso.",
