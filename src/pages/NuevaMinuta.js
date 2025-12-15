@@ -396,6 +396,7 @@ export default function NuevaMinuta() {
       setModalMensaje("Paso asignado a la sesión activa correctamente.");
       setPasoManualSeleccionado(null);
       setSesionAsignacionesVersion((prev) => prev + 1);
+      await refrescarSesionActiva();
     } else {
       const detalle = resultado.error ? `: ${resultado.error}` : ".";
       setModalMensaje(`No se pudo asignar el paso${detalle}`);
