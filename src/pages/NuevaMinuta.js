@@ -320,6 +320,9 @@ export default function NuevaMinuta() {
         const res = await fetch(`${API_BASE_URL}/sesiones-trabajo/${sesionId}`);
         if (res.ok) {
           sesionNueva = await res.json().catch(() => null);
+          if (sesionNueva) {
+            sesionNueva = { ...sesionNueva, id: sesionId };
+          }
         }
       } catch {
         // ignore
