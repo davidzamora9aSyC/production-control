@@ -6,7 +6,10 @@ function extractOrdenId(text = "") {
   if (!text) return "";
   try {
     const url = new URL(text);
-    const fromQuery = url.searchParams.get("ordenId") || url.searchParams.get("orden") || url.searchParams.get("order");
+    const fromQuery =
+      url.searchParams.get("ordenId") ||
+      url.searchParams.get("orden") ||
+      url.searchParams.get("order");
     if (fromQuery) return fromQuery;
     const parts = url.pathname.split("/").filter(Boolean);
     if (parts.length) return parts[parts.length - 1];
@@ -16,7 +19,11 @@ function extractOrdenId(text = "") {
   return text.trim();
 }
 
-export default function PasoOrdenSelectorModal({ open, onClose = () => {}, onSelected = () => {} }) {
+export default function PasoOrdenSelectorModal({
+  open,
+  onClose = () => {},
+  onSelected = () => {},
+}) {
   const [ordenId, setOrdenId] = useState("");
   const [pasos, setPasos] = useState([]);
   const [selectedPasoId, setSelectedPasoId] = useState("");
@@ -28,8 +35,12 @@ export default function PasoOrdenSelectorModal({ open, onClose = () => {}, onSel
   const videoRef = useRef(null);
   const readerRef = useRef(null);
   const controlsRef = useRef(null);
+  const solicitandoPermisoRef = useRef(false);
 
-  const hasSelection = useMemo(() => ordenId && selectedPasoId, [ordenId, selectedPasoId]);
+  const hasSelection = useMemo(
+    () => ordenId && selectedPasoId,
+    [ordenId, selectedPasoId],
+  );
 
   useEffect(() => {
     if (!open) {
@@ -74,22 +85,49 @@ export default function PasoOrdenSelectorModal({ open, onClose = () => {}, onSel
       }
       const reader = readerRef.current;
       setCameraActive(true);
-      controlsRef.current = await reader.decodeFromVideoDevice(null, videoRef.current, (result, err) => {
-        if (result) {
-          const text = result.getText();
-          stopScanner();
-          const id = extractOrdenId(text);
-          setOrdenId(id);
-          setScanMessage(`QR leído: ${text}`);
-          setScanError("");
-        } else if (err && !err.message?.includes("NotFoundException")) {
-          setScanError("Error al leer el código. Intenta de nuevo.");
-        }
-      });
+      controlsRef.current = await reader.decodeFromVideoDevice(
+        null,
+        videoRef.current,
+        (result, err) => {
+          if (result) {
+            const text = result.getText();
+            stopScanner();
+            const id = extractOrdenId(text);
+            setOrdenId(id);
+            setScanMessage(`QR leído: ${text}`);
+            setScanError("");
+          } else if (err && !err.message?.includes("NotFoundException")) {
+            setScanError("Error al leer el código. Intenta de nuevo.");
+          }
+        },
+      );
     } catch (err) {
-      setScanError("No se pudo acceder a la cámara. Verifica permisos.");
+      if (!solicitandoPermisoRef.current) {
+        solicitandoPermisoRef.current = true;
+        try {
+          await solicitarPermisoCamara();
+          solicitandoPermisoRef.current = false;
+          return startScanner();
+        } catch {
+          solicitandoPermisoRef.current = false;
+        }
+      }
+      setScanError(
+        "No se pudo acceder a la cámara. Autoriza el acceso e intenta de nuevo.",
+      );
       stopScanner();
     }
+  };
+
+  const solicitarPermisoCamara = async () => {
+    if (
+      typeof navigator === "undefined" ||
+      !navigator.mediaDevices?.getUserMedia
+    ) {
+      throw new Error("El navegador no soporta acceso a la cámara.");
+    }
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    stream.getTracks().forEach((track) => track.stop());
   };
 
   const fetchPasos = async () => {
@@ -129,13 +167,17 @@ export default function PasoOrdenSelectorModal({ open, onClose = () => {}, onSel
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
       <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 relative">
-        <button className="absolute top-3 right-3 text-gray-500 hover:text-gray-700" onClick={onClose}>
+        <button
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+          onClick={onClose}
+        >
           ✕
         </button>
         <div>
           <h2 className="text-xl font-semibold">Seleccionar paso de orden</h2>
           <p className="text-sm text-gray-600">
-            Escanea el código QR de la orden o ingresa el ID manualmente para elegir el paso que vas a trabajar.
+            Escanea el código QR de la orden o ingresa el ID manualmente para
+            elegir el paso que vas a trabajar.
           </p>
         </div>
         <div className="space-y-2">
@@ -157,7 +199,9 @@ export default function PasoOrdenSelectorModal({ open, onClose = () => {}, onSel
               Buscar pasos
             </button>
           </div>
-          {scanMessage && <p className="text-xs text-green-600">{scanMessage}</p>}
+          {scanMessage && (
+            <p className="text-xs text-green-600">{scanMessage}</p>
+          )}
           {scanError && <p className="text-xs text-red-600">{scanError}</p>}
         </div>
         <div className="space-y-2">
@@ -172,18 +216,27 @@ export default function PasoOrdenSelectorModal({ open, onClose = () => {}, onSel
             </button>
           </div>
           <div className="border rounded-lg overflow-hidden bg-black/70">
-            <video ref={videoRef} className="w-full h-48 object-cover" muted playsInline />
+            <video
+              ref={videoRef}
+              className="w-full h-48 object-cover"
+              muted
+              playsInline
+            />
           </div>
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium">Pasos disponibles</label>
-            {loadingPasos && <span className="text-xs text-gray-500">Cargando…</span>}
+            {loadingPasos && (
+              <span className="text-xs text-gray-500">Cargando…</span>
+            )}
           </div>
           {pasosError && <p className="text-sm text-red-600">{pasosError}</p>}
           <div className="max-h-48 overflow-auto border rounded-lg">
             {pasos.length === 0 && !loadingPasos ? (
-              <div className="p-4 text-sm text-gray-600">Consulta los pasos para mostrarlos aquí.</div>
+              <div className="p-4 text-sm text-gray-600">
+                Consulta los pasos para mostrarlos aquí.
+              </div>
             ) : (
               <ul>
                 {pasos.map((paso) => (
@@ -198,7 +251,9 @@ export default function PasoOrdenSelectorModal({ open, onClose = () => {}, onSel
                       />
                       <div>
                         <div className="font-medium">{paso.nombre}</div>
-                        <div className="text-xs text-gray-600">Paso #{paso.numeroPaso ?? "-"}</div>
+                        <div className="text-xs text-gray-600">
+                          Paso #{paso.numeroPaso ?? "-"}
+                        </div>
                       </div>
                     </label>
                   </li>

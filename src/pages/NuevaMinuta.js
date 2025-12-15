@@ -1015,9 +1015,13 @@ export default function NuevaMinuta() {
   const asignacionActivaLocal =
     obtenerAsignacionActivaLocal(asignacionesSesion);
   const puedeAsignarPaso = !asignacionActivaLocal;
+  const puedeFinalizarPaso = Boolean(asignacionActivaLocal);
   const accionesFiltradasPorAsignacion = accionesFiltradas.filter((opt) => {
     if (opt.value === "asignar-paso") {
       return puedeAsignarPaso;
+    }
+    if (opt.value === ACCION_FINALIZAR_PASO) {
+      return puedeFinalizarPaso;
     }
     return true;
   });
@@ -1120,6 +1124,14 @@ export default function NuevaMinuta() {
       setAccion("");
     }
   }, [accionCard, puedeAsignarPaso]);
+
+  useEffect(() => {
+    if (accionCard === ACCION_FINALIZAR_PASO && !puedeFinalizarPaso) {
+      setAccionCard("");
+      setAccion("");
+      setAsignacionPasoFinalizarId("");
+    }
+  }, [accionCard, puedeFinalizarPaso]);
 
   useEffect(() => {
     if (accionCard === ACCION_FINALIZAR_PASO) {

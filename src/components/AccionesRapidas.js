@@ -74,6 +74,9 @@ export default function AccionesRapidas({
   const piezasOnChange = handleNonNegativeChange(setPiezas);
   const piezasDefectuosasOnChange =
     handleNonNegativeChange(setPiezasDefectuosas);
+  const botonPasoLabel = pasoManualSeleccionado
+    ? "Cambiar paso"
+    : "Seleccionar paso";
 
   return (
     <div className="space-y-4">
@@ -136,7 +139,7 @@ export default function AccionesRapidas({
               disabled={!trabajadorAsignacion}
               className="px-3 py-1.5 rounded-full border bg-white text-sm hover:bg-gray-100 disabled:opacity-50"
             >
-              Seleccionar paso
+              {botonPasoLabel}
             </button>
             <button
               type="button"
