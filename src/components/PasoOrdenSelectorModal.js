@@ -36,6 +36,7 @@ export default function PasoOrdenSelectorModal({
   const readerRef = useRef(null);
   const controlsRef = useRef(null);
   const solicitandoPermisoRef = useRef(false);
+  const permisoReintentadoRef = useRef(false);
 
   const hasSelection = useMemo(
     () => ordenId && selectedPasoId,
@@ -72,11 +73,16 @@ export default function PasoOrdenSelectorModal({
       }
     }
     setCameraActive(false);
+    solicitandoPermisoRef.current = false;
+    permisoReintentadoRef.current = false;
   };
 
-  const startScanner = async () => {
+  const startScanner = async (esReintento = false) => {
     setScanError("");
     setScanMessage("");
+    if (!esReintento) {
+      permisoReintentadoRef.current = false;
+    }
     try {
       if (!readerRef.current) {
         readerRef.current = new BrowserMultiFormatReader();
@@ -102,16 +108,18 @@ export default function PasoOrdenSelectorModal({
         },
       );
     } catch (err) {
-      if (!solicitandoPermisoRef.current) {
+      if (!permisoReintentadoRef.current && !solicitandoPermisoRef.current) {
         solicitandoPermisoRef.current = true;
         try {
           await solicitarPermisoCamara();
           solicitandoPermisoRef.current = false;
-          return startScanner();
+          permisoReintentadoRef.current = true;
+          return startScanner(true);
         } catch {
           solicitandoPermisoRef.current = false;
         }
       }
+      permisoReintentadoRef.current = true;
       setScanError(
         "No se pudo acceder a la cámara. Autoriza el acceso e intenta de nuevo.",
       );

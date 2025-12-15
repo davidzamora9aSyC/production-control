@@ -37,6 +37,7 @@ export default function TrabajadorQrSelector({
   const controlsRef = useRef(null);
   const lecturaEnCursoRef = useRef(false);
   const solicitandoPermisoRef = useRef(false);
+  const permisoReintentadoRef = useRef(false);
 
   const stopScanner = () => {
     if (controlsRef.current && typeof controlsRef.current.stop === "function") {
@@ -51,6 +52,8 @@ export default function TrabajadorQrSelector({
       }
     }
     setCameraActive(false);
+    solicitandoPermisoRef.current = false;
+    permisoReintentadoRef.current = false;
   };
 
   useEffect(() => {
@@ -76,8 +79,11 @@ export default function TrabajadorQrSelector({
     stream.getTracks().forEach((track) => track.stop());
   };
 
-  const startScanner = async () => {
+  const startScanner = async (esReintento = false) => {
     if (disabled) return;
+    if (!esReintento) {
+      permisoReintentadoRef.current = false;
+    }
     setScanError("");
     setScanMessage("");
     try {
@@ -112,16 +118,18 @@ export default function TrabajadorQrSelector({
         },
       );
     } catch (err) {
-      if (!solicitandoPermisoRef.current) {
+      if (!permisoReintentadoRef.current && !solicitandoPermisoRef.current) {
         solicitandoPermisoRef.current = true;
         try {
           await solicitarPermisoCamara();
           solicitandoPermisoRef.current = false;
-          return startScanner();
+          permisoReintentadoRef.current = true;
+          return startScanner(true);
         } catch {
           solicitandoPermisoRef.current = false;
         }
       }
+      permisoReintentadoRef.current = true;
       setScanError(
         'No se pudo acceder a la cámara. Autoriza el uso y vuelve a presionar "Escanear QR".',
       );
@@ -155,6 +163,7 @@ export default function TrabajadorQrSelector({
     if (disabled) return;
     stopScanner();
     lecturaEnCursoRef.current = false;
+    permisoReintentadoRef.current = false;
     setScanMessage("");
     setScanError("");
     setFetchError("");
