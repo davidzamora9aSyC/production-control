@@ -111,6 +111,22 @@ export default function NuevaMinuta() {
   const [sesionDetalle, setSesionDetalle] = useState(null);
   const navigate = useNavigate();
 
+  const obtenerAsignacionActivaLocal = (lista = []) => {
+    if (!Array.isArray(lista) || !lista.length) return null;
+    return (
+      lista.find((item) => {
+        const estado = (
+          item.estado ||
+          item.estadoSesionPaso ||
+          item.estadoSesion ||
+          ""
+        ).toLowerCase();
+        const sinFin = item.fechaFin == null && item.fin == null;
+        return sinFin || estado === "activo";
+      }) || null
+    );
+  };
+
   const openPasoModal = (context) => {
     setPasoModalContext(context);
     setPasoModalOpen(true);
@@ -343,6 +359,12 @@ export default function NuevaMinuta() {
       setModalMensaje(`No se pudo asignar el paso${detalle}`);
     }
     setMostrarModal(true);
+  };
+
+  const handleAsignacionesChange = (lista = []) => {
+    setAsignacionesSesion(lista);
+    const activa = obtenerAsignacionActivaLocal(lista);
+    setAsignacionPasoFinalizarId(activa?.id || "");
   };
 
   const handleSeleccionarSesionDesdeMaquina = async () => {
@@ -947,6 +969,15 @@ export default function NuevaMinuta() {
   const { permitidas: accionesPermitidasEstado, opciones: accionesFiltradas } =
     obtenerAccionesDisponiblesPorEstado(estadoSesionActual);
   const accionesPermitidasKey = accionesPermitidasEstado.join("|");
+  const asignacionActivaLocal =
+    obtenerAsignacionActivaLocal(asignacionesSesion);
+  const puedeAsignarPaso = !asignacionActivaLocal;
+  const accionesFiltradasPorAsignacion = accionesFiltradas.filter((opt) => {
+    if (opt.value === "asignar-paso") {
+      return puedeAsignarPaso;
+    }
+    return true;
+  });
 
   useEffect(() => {
     const trabajadorId =
@@ -1041,13 +1072,20 @@ export default function NuevaMinuta() {
   }, [accionCard, accionesPermitidasKey]);
 
   useEffect(() => {
-    if (!asignacionPasoFinalizarId) return;
-    if (
-      !asignacionesSesion.some((item) => item.id === asignacionPasoFinalizarId)
-    ) {
-      setAsignacionPasoFinalizarId("");
+    if (accionCard === "asignar-paso" && !puedeAsignarPaso) {
+      setAccionCard("");
+      setAccion("");
     }
-  }, [asignacionesSesion, asignacionPasoFinalizarId]);
+  }, [accionCard, puedeAsignarPaso]);
+
+  useEffect(() => {
+    if (!asignacionesSesion.length) {
+      setAsignacionPasoFinalizarId("");
+      return;
+    }
+    const activa = obtenerAsignacionActivaLocal(asignacionesSesion);
+    setAsignacionPasoFinalizarId(activa?.id || "");
+  }, [asignacionesSesion]);
 
   return (
     <div className="p-6 max-w-4xl mx-auto text-sm sm:text-base">
@@ -1100,10 +1138,10 @@ export default function NuevaMinuta() {
           onSeleccionarOtra={limpiarSesionSeleccionada}
           refreshKey={sesionAsignacionesVersion}
           onSesionDetalleChange={setSesionDetalle}
-          onAsignacionesChange={setAsignacionesSesion}
+          onAsignacionesChange={handleAsignacionesChange}
         >
           <AccionesRapidas
-            accionesDisponibles={accionesFiltradas}
+            accionesDisponibles={accionesFiltradasPorAsignacion}
             accionCard={accionCard}
             accion={accion}
             accionFinalizarPasoLabel={ACCION_FINALIZAR_PASO}
@@ -1117,7 +1155,6 @@ export default function NuevaMinuta() {
             trabajadorAsignacion={trabajadorAsignacion}
             asignacionesSesion={asignacionesSesion}
             asignacionPasoFinalizarId={asignacionPasoFinalizarId}
-            setAsignacionPasoFinalizarId={setAsignacionPasoFinalizarId}
             piezas={piezas}
             setPiezas={setPiezas}
             piezasDefectuosas={piezasDefectuosas}
