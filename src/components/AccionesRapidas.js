@@ -1,3 +1,24 @@
+const esAsignacionFinalizada = (item = {}) => {
+  const finalizadoVal = item?.finalizado;
+  const finalizadoBool =
+    finalizadoVal === true ||
+    finalizadoVal === 1 ||
+    (typeof finalizadoVal === "string" &&
+      ["true", "1"].includes(finalizadoVal.toLowerCase?.() || ""));
+  const estado = (
+    item?.estado ||
+    item?.estadoSesionPaso ||
+    item?.estadoSesion ||
+    ""
+  ).toLowerCase();
+  return (
+    finalizadoBool ||
+    estado === "finalizada" ||
+    estado === "finalizado" ||
+    estado === "terminada"
+  );
+};
+
 export default function AccionesRapidas({
   accionesDisponibles = [],
   accionCard,
@@ -28,10 +49,14 @@ export default function AccionesRapidas({
   ].includes(accion);
   const asignacionActiva =
     asignacionesSesion.find((item) => {
-      if (item.finalizado) return false;
+      if (esAsignacionFinalizada(item)) return false;
       const estado = (item.estado || item.estadoSesionPaso || "").toLowerCase();
       const sinFin = item.fechaFin == null && item.fin == null;
-      return !item.finalizado && (sinFin || estado === "activo");
+      const estadoActivo =
+        estado === "activo" ||
+        estado === "en_produccion" ||
+        estado === "en producción";
+      return !esAsignacionFinalizada(item) && (sinFin || estadoActivo);
     }) || null;
   const disableSubmit =
     !accion ||

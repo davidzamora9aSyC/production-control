@@ -1,6 +1,27 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../api";
 
+const esAsignacionFinalizada = (item = {}) => {
+  const finalizadoVal = item?.finalizado;
+  const finalizadoBool =
+    finalizadoVal === true ||
+    finalizadoVal === 1 ||
+    (typeof finalizadoVal === "string" &&
+      ["true", "1"].includes(finalizadoVal.toLowerCase?.() || ""));
+  const estado = (
+    item?.estado ||
+    item?.estadoSesionPaso ||
+    item?.estadoSesion ||
+    ""
+  ).toLowerCase();
+  return (
+    finalizadoBool ||
+    estado === "finalizada" ||
+    estado === "finalizado" ||
+    estado === "terminada"
+  );
+};
+
 const getSesionId = (sesion) => {
   if (!sesion) return null;
   if (typeof sesion.sesionTrabajo === "object" && sesion.sesionTrabajo?.id) {
@@ -59,7 +80,10 @@ export default function SesionSeleccionadaPanel({
     setErrorDetalle("");
     fetch(`${API_BASE_URL}/sesiones-trabajo/${sesionId}`)
       .then((res) => {
-        if (!res.ok) throw new Error("No se pudo obtener la información detallada de la sesión.");
+        if (!res.ok)
+          throw new Error(
+            "No se pudo obtener la información detallada de la sesión.",
+          );
         return res.json();
       })
       .then((data) => {
@@ -72,7 +96,9 @@ export default function SesionSeleccionadaPanel({
       .catch((err) => {
         if (cancelado) return;
         setDetalleSesion(null);
-        setErrorDetalle(err?.message || "Error al obtener el detalle de la sesión.");
+        setErrorDetalle(
+          err?.message || "Error al obtener el detalle de la sesión.",
+        );
         if (typeof onSesionDetalleChange === "function") {
           onSesionDetalleChange(null);
         }
@@ -98,7 +124,8 @@ export default function SesionSeleccionadaPanel({
     setErrorPasos("");
     fetch(`${API_BASE_URL}/sesion-trabajo-pasos/por-sesion/${sesionId}`)
       .then((res) => {
-        if (!res.ok) throw new Error("No se pudieron obtener las asignaciones activas.");
+        if (!res.ok)
+          throw new Error("No se pudieron obtener las asignaciones activas.");
         return res.json();
       })
       .then((data) => {
@@ -127,11 +154,19 @@ export default function SesionSeleccionadaPanel({
 
   if (!sesion || !sesionId) return null;
 
-  const trabajador = detalleSesion?.trabajador || getTrabajadorSesion(sesion) || {};
+  const trabajador =
+    detalleSesion?.trabajador || getTrabajadorSesion(sesion) || {};
   const maquina = detalleSesion?.maquina || getMaquinaSesion(sesion) || {};
-  const estadoActual = detalleSesion?.estadoSesion || sesion.estadoSesion || "Sin estado";
+  const estadoActual =
+    detalleSesion?.estadoSesion || sesion.estadoSesion || "Sin estado";
   const estadoMaquinaBase = maquina?.estado ?? maquina?.estadoActual ?? "-";
-  const estadoMaquinaVisible = estadoActual?.toLowerCase() === "mantenimiento" ? "mantenimiento" : estadoMaquinaBase;
+  const estadoMaquinaVisible =
+    estadoActual?.toLowerCase() === "mantenimiento"
+      ? "mantenimiento"
+      : estadoMaquinaBase;
+  const asignacionesActivas = pasosAsignados.filter(
+    (item) => !esAsignacionFinalizada(item),
+  );
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6 space-y-5">
@@ -151,7 +186,9 @@ export default function SesionSeleccionadaPanel({
       <div className="grid gap-4 sm:grid-cols-3 text-sm text-gray-800">
         <div className="bg-gray-50 rounded p-3 space-y-1">
           <div className="text-xs font-medium text-gray-500">Trabajador</div>
-          <div className="font-semibold">{trabajador.nombre ?? "Sin nombre"}</div>
+          <div className="font-semibold">
+            {trabajador.nombre ?? "Sin nombre"}
+          </div>
           <div>Identificación: {trabajador.identificacion ?? "-"}</div>
           <div>Grupo: {trabajador.grupo ?? "-"}</div>
           <div>Turno: {trabajador.turno ?? "-"}</div>
@@ -164,7 +201,9 @@ export default function SesionSeleccionadaPanel({
           <div>Estado: {estadoMaquinaVisible}</div>
         </div>
         <div className="bg-gray-50 rounded p-3 space-y-1">
-          <div className="text-xs font-medium text-gray-500">Estado de la sesión</div>
+          <div className="text-xs font-medium text-gray-500">
+            Estado de la sesión
+          </div>
           {cargandoDetalle ? (
             <div className="text-gray-600">Cargando…</div>
           ) : errorDetalle ? (
@@ -183,16 +222,20 @@ export default function SesionSeleccionadaPanel({
             </p>
           </div>
         </div>
-        {cargandoPasos && <p className="text-sm text-gray-600">Cargando asignaciones…</p>}
+        {cargandoPasos && (
+          <p className="text-sm text-gray-600">Cargando asignaciones…</p>
+        )}
         {errorPasos && !cargandoPasos && (
           <p className="text-sm text-red-600">{errorPasos}</p>
         )}
-        {!cargandoPasos && !errorPasos && pasosAsignados.length === 0 && (
-          <p className="text-sm text-gray-700">La sesión no tiene asignaciones activas.</p>
+        {!cargandoPasos && !errorPasos && asignacionesActivas.length === 0 && (
+          <p className="text-sm text-gray-700">
+            La sesión no tiene asignaciones activas.
+          </p>
         )}
-        {!cargandoPasos && !errorPasos && pasosAsignados.length > 0 && (
+        {!cargandoPasos && !errorPasos && asignacionesActivas.length > 0 && (
           <ul className="space-y-2 text-sm">
-            {pasosAsignados.map((item) => (
+            {asignacionesActivas.map((item) => (
               <li
                 key={item.id}
                 className="bg-white rounded border px-3 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
@@ -202,7 +245,10 @@ export default function SesionSeleccionadaPanel({
                     {item.pasoOrden?.nombre ?? "Paso sin nombre"}
                   </div>
                   <div className="text-xs text-gray-600">
-                    Orden: {item.pasoOrden?.orden?.codigo ?? item.pasoOrden?.orden?.id ?? "-"}
+                    Orden:{" "}
+                    {item.pasoOrden?.orden?.codigo ??
+                      item.pasoOrden?.orden?.id ??
+                      "-"}
                   </div>
                 </div>
                 <div className="text-xs text-gray-600">

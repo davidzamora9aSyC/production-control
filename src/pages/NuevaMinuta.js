@@ -52,6 +52,27 @@ const obtenerSesionId = (sesion) => {
   return null;
 };
 
+const esAsignacionFinalizada = (item = {}) => {
+  const finalizadoVal = item?.finalizado;
+  const finalizadoBool =
+    finalizadoVal === true ||
+    finalizadoVal === 1 ||
+    (typeof finalizadoVal === "string" &&
+      ["true", "1"].includes(finalizadoVal.toLowerCase?.() || ""));
+  const estado = (
+    item?.estado ||
+    item?.estadoSesionPaso ||
+    item?.estadoSesion ||
+    ""
+  ).toLowerCase();
+  return (
+    finalizadoBool ||
+    estado === "finalizada" ||
+    estado === "finalizado" ||
+    estado === "terminada"
+  );
+};
+
 const normalizarSesion = (sesion) => {
   if (!sesion) return null;
   const sesionObjeto =
@@ -115,7 +136,7 @@ export default function NuevaMinuta() {
     if (!Array.isArray(lista) || !lista.length) return null;
     return (
       lista.find((item) => {
-        if (item.finalizado) return false;
+        if (esAsignacionFinalizada(item)) return false;
         const estado = (
           item.estado ||
           item.estadoSesionPaso ||
@@ -125,8 +146,10 @@ export default function NuevaMinuta() {
         const sinFin = item.fechaFin == null && item.fin == null;
         const estadoActivo =
           estado === "activo" ||
+          estado === "en_produccion" ||
+          estado === "en producción" ||
           (item.estadoSesionPaso || "").toLowerCase() === "activo";
-        return !item.finalizado && (estadoActivo || sinFin);
+        return !esAsignacionFinalizada(item) && (estadoActivo || sinFin);
       }) || null
     );
   };
