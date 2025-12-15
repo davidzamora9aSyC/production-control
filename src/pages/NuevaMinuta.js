@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../api";
 import PasoOrdenSelectorModal from "../components/PasoOrdenSelectorModal";
@@ -361,11 +361,11 @@ export default function NuevaMinuta() {
     setMostrarModal(true);
   };
 
-  const handleAsignacionesChange = (lista = []) => {
+  const handleAsignacionesChange = useCallback((lista = []) => {
     setAsignacionesSesion(lista);
     const activa = obtenerAsignacionActivaLocal(lista);
     setAsignacionPasoFinalizarId(activa?.id || "");
-  };
+  }, []);
 
   const handleSeleccionarSesionDesdeMaquina = async () => {
     if (!sesionActivaMaquina || !obtenerSesionId(sesionActivaMaquina)) {
