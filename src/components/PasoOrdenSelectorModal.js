@@ -59,6 +59,17 @@ export default function PasoOrdenSelectorModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return undefined;
+    if (typeof document === "undefined") return undefined;
+    const { body } = document;
+    const previous = body.style.overflow;
+    body.style.overflow = "hidden";
+    return () => {
+      body.style.overflow = previous;
+    };
+  }, [open]);
+
   const stopScanner = () => {
     if (controlsRef.current && typeof controlsRef.current.stop === "function") {
       controlsRef.current.stop();
@@ -174,7 +185,7 @@ export default function PasoOrdenSelectorModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 relative">
+      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4 relative">
         <button
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
           onClick={onClose}

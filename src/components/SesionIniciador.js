@@ -40,12 +40,13 @@ export default function SesionIniciador({
   const trabajadorDisponible = Boolean(
     trabajadorSeleccionado?.id || trabajadorSeleccionado?.trabajador?.id,
   );
-  const maquinaDisponible = Boolean(
+  const maquinaSeleccionadaId =
     maquinaData?.id ||
     maquinaSeleccionada?.id ||
+    maquinaSeleccionada?.maquina?.id ||
     maquinaSeleccionada?.codigo ||
-    maquinaSeleccionada?.maquinaId,
-  );
+    maquinaSeleccionada?.maquinaId;
+  const maquinaDisponible = Boolean(maquinaSeleccionadaId);
   const botonInicioDeshabilitado =
     !trabajadorDisponible ||
     !maquinaDisponible ||
