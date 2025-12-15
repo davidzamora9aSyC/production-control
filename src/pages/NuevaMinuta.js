@@ -212,7 +212,7 @@ export default function NuevaMinuta() {
     setSesionesTrabajadorVersion((prev) => prev + 1);
   };
 
-  const consultarSesionActivaPorMaquina = async (maquinaId) => {
+  const consultarSesionActivaPorMaquina = useCallback(async (maquinaId) => {
     if (!maquinaId) {
       setSesionActivaMaquina(null);
       setSesionMaquinaError("");
@@ -244,7 +244,7 @@ export default function NuevaMinuta() {
     } finally {
       setBuscandoSesionMaquina(false);
     }
-  };
+  }, []);
 
   const handleFetchMaquina = (overrideId) => {
     const target = (overrideId ?? "").toString().trim();
@@ -314,18 +314,52 @@ export default function NuevaMinuta() {
 
   const refrescarSesionActiva = useCallback(async () => {
     const sesionId = obtenerSesionId(sesionActivaAsignacion);
-    if (!sesionId) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/sesiones-trabajo/${sesionId}`);
-      if (!res.ok) return;
-      const data = await res.json().catch(() => null);
-      if (data) {
-        establecerSesionActiva(data);
+    let sesionNueva = null;
+    if (sesionId) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/sesiones-trabajo/${sesionId}`);
+        if (res.ok) {
+          sesionNueva = await res.json().catch(() => null);
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
     }
-  }, [sesionActivaAsignacion, establecerSesionActiva]);
+    if (!sesionNueva) {
+      const candidatos = [
+        sesionActivaAsignacion?.maquina,
+        sesionDetalle?.maquina,
+        sesionActivaMaquina?.maquina,
+      ];
+      let maquinaId = null;
+      for (const candidato of candidatos) {
+        if (!candidato) continue;
+        if (typeof candidato === "string") {
+          maquinaId = candidato;
+          break;
+        }
+        if (typeof candidato?.id === "string") {
+          maquinaId = candidato.id;
+          break;
+        }
+      }
+      if (maquinaId) {
+        const refreshed = await consultarSesionActivaPorMaquina(maquinaId);
+        if (refreshed) {
+          sesionNueva = refreshed;
+        }
+      }
+    }
+    if (sesionNueva) {
+      establecerSesionActiva(sesionNueva);
+    }
+  }, [
+    sesionActivaAsignacion,
+    sesionDetalle,
+    sesionActivaMaquina,
+    establecerSesionActiva,
+    consultarSesionActivaPorMaquina,
+  ]);
 
   const handleAccionCardSeleccion = (valor) => {
     setAccionCard(valor);
