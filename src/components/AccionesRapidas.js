@@ -28,9 +28,10 @@ export default function AccionesRapidas({
   ].includes(accion);
   const asignacionActiva =
     asignacionesSesion.find((item) => {
+      if (item.finalizado) return false;
       const estado = (item.estado || item.estadoSesionPaso || "").toLowerCase();
       const sinFin = item.fechaFin == null && item.fin == null;
-      return sinFin || estado === "activo";
+      return !item.finalizado && (sinFin || estado === "activo");
     }) || null;
   const disableSubmit =
     !accion ||

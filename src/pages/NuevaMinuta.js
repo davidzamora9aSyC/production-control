@@ -115,6 +115,7 @@ export default function NuevaMinuta() {
     if (!Array.isArray(lista) || !lista.length) return null;
     return (
       lista.find((item) => {
+        if (item.finalizado) return false;
         const estado = (
           item.estado ||
           item.estadoSesionPaso ||
@@ -122,7 +123,10 @@ export default function NuevaMinuta() {
           ""
         ).toLowerCase();
         const sinFin = item.fechaFin == null && item.fin == null;
-        return sinFin || estado === "activo";
+        const estadoActivo =
+          estado === "activo" ||
+          (item.estadoSesionPaso || "").toLowerCase() === "activo";
+        return !item.finalizado && (estadoActivo || sinFin);
       }) || null
     );
   };
