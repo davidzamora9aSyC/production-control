@@ -36,6 +36,7 @@ export default function TrabajadorQrSelector({
   const readerRef = useRef(null);
   const controlsRef = useRef(null);
   const lecturaEnCursoRef = useRef(false);
+  const solicitandoPermisoRef = useRef(false);
 
   const stopScanner = () => {
     if (controlsRef.current && typeof controlsRef.current.stop === "function") {
@@ -63,6 +64,17 @@ export default function TrabajadorQrSelector({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [disabled]);
+
+  const solicitarPermisoCamara = async () => {
+    if (
+      typeof navigator === "undefined" ||
+      !navigator.mediaDevices?.getUserMedia
+    ) {
+      throw new Error("El navegador no soporta acceso a la cámara.");
+    }
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    stream.getTracks().forEach((track) => track.stop());
+  };
 
   const startScanner = async () => {
     if (disabled) return;
@@ -100,7 +112,19 @@ export default function TrabajadorQrSelector({
         },
       );
     } catch (err) {
-      setScanError("No se pudo acceder a la cámara. Verifica permisos.");
+      if (!solicitandoPermisoRef.current) {
+        solicitandoPermisoRef.current = true;
+        try {
+          await solicitarPermisoCamara();
+          solicitandoPermisoRef.current = false;
+          return startScanner();
+        } catch {
+          solicitandoPermisoRef.current = false;
+        }
+      }
+      setScanError(
+        'No se pudo acceder a la cámara. Autoriza el uso y vuelve a presionar "Escanear QR".',
+      );
       stopScanner();
     }
   };
