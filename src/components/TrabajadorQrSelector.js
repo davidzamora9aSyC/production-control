@@ -35,6 +35,7 @@ export default function TrabajadorQrSelector({
   const videoRef = useRef(null);
   const readerRef = useRef(null);
   const controlsRef = useRef(null);
+  const lecturaEnCursoRef = useRef(false);
 
   const stopScanner = () => {
     if (controlsRef.current && typeof controlsRef.current.stop === "function") {
@@ -75,18 +76,29 @@ export default function TrabajadorQrSelector({
       }
       const reader = readerRef.current;
       setCameraActive(true);
-      controlsRef.current = await reader.decodeFromVideoDevice(null, videoRef.current, (result, err) => {
-        if (result) {
-          const text = result.getText();
-          stopScanner();
-          const id = extractTrabajadorId(text);
-          setScanMessage(`QR leído: ${text}`);
-          setScanError("");
-          fetchTrabajador(id);
-        } else if (err && !err.message?.includes("NotFoundException")) {
-          setScanError("Error al leer el código. Intenta de nuevo.");
-        }
-      });
+      lecturaEnCursoRef.current = false;
+      controlsRef.current = await reader.decodeFromVideoDevice(
+        null,
+        videoRef.current,
+        (result, err) => {
+          if (result) {
+            if (lecturaEnCursoRef.current) return;
+            lecturaEnCursoRef.current = true;
+            const text = result.getText();
+            stopScanner();
+            const id = extractTrabajadorId(text);
+            setScanMessage(`QR leído: ${text}`);
+            setScanError("");
+            fetchTrabajador(id);
+          } else if (
+            err &&
+            !lecturaEnCursoRef.current &&
+            !err.message?.includes("NotFoundException")
+          ) {
+            setScanError("Error al leer el código. Intenta de nuevo.");
+          }
+        },
+      );
     } catch (err) {
       setScanError("No se pudo acceder a la cámara. Verifica permisos.");
       stopScanner();
@@ -107,7 +119,9 @@ export default function TrabajadorQrSelector({
       onSelect(data);
     } catch (err) {
       onSelect(null);
-      setFetchError(err?.message || "No se pudo obtener la información del trabajador");
+      setFetchError(
+        err?.message || "No se pudo obtener la información del trabajador",
+      );
     } finally {
       setLoading(false);
     }
@@ -116,6 +130,7 @@ export default function TrabajadorQrSelector({
   const clearSelection = () => {
     if (disabled) return;
     stopScanner();
+    lecturaEnCursoRef.current = false;
     setScanMessage("");
     setScanError("");
     setFetchError("");
@@ -127,7 +142,9 @@ export default function TrabajadorQrSelector({
       <div className="flex items-center justify-between">
         <div>
           <label className="block font-medium">{title}</label>
-          <p className="text-xs text-gray-500">Escanea el QR del trabajador para continuar.</p>
+          <p className="text-xs text-gray-500">
+            Escanea el QR del trabajador para continuar.
+          </p>
         </div>
         <div className="flex gap-2">
           <button
@@ -153,10 +170,19 @@ export default function TrabajadorQrSelector({
         </div>
       </div>
       {disabled && (
-        <p className="text-xs text-yellow-700">{disabledMessage || "La búsqueda está bloqueada temporalmente."}</p>
+        <p className="text-xs text-yellow-700">
+          {disabledMessage || "La búsqueda está bloqueada temporalmente."}
+        </p>
       )}
-      <div className={`border rounded-lg overflow-hidden bg-black/70 ${disabled ? "opacity-40" : ""}`}>
-        <video ref={videoRef} className="w-full h-48 object-cover" muted playsInline />
+      <div
+        className={`border rounded-lg overflow-hidden bg-black/70 ${disabled ? "opacity-40" : ""}`}
+      >
+        <video
+          ref={videoRef}
+          className="w-full h-48 object-cover"
+          muted
+          playsInline
+        />
       </div>
       {scanMessage && <p className="text-xs text-green-600">{scanMessage}</p>}
       {scanError && <p className="text-xs text-red-600">{scanError}</p>}
@@ -164,11 +190,21 @@ export default function TrabajadorQrSelector({
       {fetchError && <p className="text-sm text-red-600">{fetchError}</p>}
       {selected && (
         <div className="bg-gray-50 border rounded p-3 text-sm space-y-1">
-          <div><strong>Nombre:</strong> {selected.nombre}</div>
-          <div><strong>Identificación:</strong> {selected.identificacion ?? "-"}</div>
-          <div><strong>Grupo:</strong> {selected.grupo ?? "-"}</div>
-          <div><strong>Turno:</strong> {selected.turno ?? "-"}</div>
-          <div><strong>Estado:</strong> {selected.estado ?? "-"}</div>
+          <div>
+            <strong>Nombre:</strong> {selected.nombre}
+          </div>
+          <div>
+            <strong>Identificación:</strong> {selected.identificacion ?? "-"}
+          </div>
+          <div>
+            <strong>Grupo:</strong> {selected.grupo ?? "-"}
+          </div>
+          <div>
+            <strong>Turno:</strong> {selected.turno ?? "-"}
+          </div>
+          <div>
+            <strong>Estado:</strong> {selected.estado ?? "-"}
+          </div>
         </div>
       )}
     </div>

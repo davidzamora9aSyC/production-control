@@ -129,6 +129,11 @@ export default function SesionIniciador({
                         pasoInfo?.paso?.nombre ?? "Sin paso asignado";
                       const ordenCodigo =
                         pasoInfo?.orden?.codigo || pasoInfo?.orden?.id;
+                      const estadoSesionRaw =
+                        sesion.estadoSesion || sesion.estado || "";
+                      const estadoSesionVisible = estadoSesionRaw
+                        ? estadoSesionRaw.toLowerCase()
+                        : "sin estado";
                       return (
                         <li
                           key={sesion.id || sesionId}
@@ -142,8 +147,7 @@ export default function SesionIniciador({
                               {sesion.maquina?.codigo
                                 ? `Código: ${sesion.maquina.codigo}`
                                 : "Sin código"}{" "}
-                              · Estado:{" "}
-                              {(sesion.estadoSesion || "-").toLowerCase()}
+                              · Estado: {estadoSesionVisible}
                             </div>
                             <div className="text-xs text-gray-600">
                               Paso: {pasoNombre}
