@@ -79,8 +79,8 @@ export default function Navbar() {
                     <ul className="absolute bg-white shadow-lg rounded mt-2 w-52 z-50">
                       {[
                         { path: "/sesiones", label: "Sesiones actuales" },
-                        { path: "/sesiones/personas", label: "Personas" },
-                        { path: "/sesiones/equipos", label: "Equipos" },
+                        { path: "/personas", label: "Personas" },
+                        { path: "/maquinas", label: "Máquinas" },
                       ].map(sub => (
                         <li key={sub.path} className="border-b last:border-none">
                           <span
@@ -150,8 +150,8 @@ export default function Navbar() {
                     <div className="mt-2 flex flex-col gap-2">
                       {[
                         { path: "/sesiones", label: "Sesiones actuales" },
-                        { path: "/sesiones/personas", label: "Personas" },
-                        { path: "/sesiones/equipos", label: "Equipos" },
+                        { path: "/personas", label: "Personas" },
+                        { path: "/maquinas", label: "Máquinas" },
                       ].map(sub => (
                         <button
                           key={sub.path}

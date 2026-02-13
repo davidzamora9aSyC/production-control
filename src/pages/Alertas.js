@@ -32,7 +32,7 @@ function Alertas() {
     const navigate = useNavigate();
     const { token } = useAuth();
     const [fecha, setFecha] = useState(hoyISO());
-    const [identificacion, setIdentificacion] = useState("");
+    const [trabajadorSeleccionado, setTrabajadorSeleccionado] = useState(null);
     const [alertas, setAlertas] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -47,6 +47,7 @@ function Alertas() {
                 setError("");
                 const params = new URLSearchParams();
                 if (fecha) params.set("fecha", fecha);
+                const identificacion = trabajadorSeleccionado?.identificacion || "";
                 if (identificacion) params.set("identificacion", identificacion);
                 const url = `/alertas${params.toString() ? `?${params.toString()}` : ""}`;
                 const data = await fetchJsonCached(
@@ -63,7 +64,7 @@ function Alertas() {
         };
         load();
         return () => { cancelled = true; };
-    }, [fecha, identificacion, token, reloadKey]);
+    }, [fecha, trabajadorSeleccionado, token, reloadKey]);
 
     const tipos = useMemo(() => {
         const set = new Set(alertas.map(a => a?.tipo?.nombre || a?.tipo?.codigo || ""));
@@ -125,7 +126,7 @@ function Alertas() {
                         <span>Fecha</span>
                         <input type="date" className="border px-2 py-1 rounded" value={fecha} onChange={(e) => setFecha(e.target.value)} />
                         <span>Trabajador</span>
-                        <TrabajadorSelector value={identificacion} onChange={setIdentificacion} />
+                        <TrabajadorSelector selected={trabajadorSeleccionado} onSelect={setTrabajadorSeleccionado} />
                         <button
                           onClick={() => setShowUmbrales(true)}
                           className="bg-gray-100 border px-3 py-1 rounded hover:bg-gray-200"

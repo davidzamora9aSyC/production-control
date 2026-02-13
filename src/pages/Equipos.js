@@ -122,7 +122,7 @@ export default function Equipos() {
     };
 
     return (
-        <div className="bg-white h-screen overflow-hidden animate-slideLeft">
+        <div className="bg-white min-h-[calc(100vh-5rem)] overflow-y-auto animate-slideLeft">
             <div className="px-20 pt-10">
                 <button
                     onClick={() => navigate("/dashboard")}
@@ -228,6 +228,7 @@ export default function Equipos() {
                     <span className="px-3 py-1">{pagina} / {totalPaginas}</span>
                     <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} className="px-3 py-1 border rounded">Siguiente</button>
                 </div>
+                <div className="h-8" />
             </div>
 
             {mostrarCargarCSV && (

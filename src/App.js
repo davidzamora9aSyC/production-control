@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./components/Login";
 import NuevaMinuta from "./pages/NuevaMinuta";
 import DashboardLegacy from "./pages/Dashboard";
@@ -94,7 +94,7 @@ function App() {
               }
             />
             <Route
-              path="/sesiones/personas"
+              path="/personas"
               element={
                 <RequireAuth>
                   <ProtectedLayout><Personas/></ProtectedLayout>
@@ -102,13 +102,15 @@ function App() {
               }
             />
             <Route
-              path="/sesiones/equipos"
+              path="/maquinas"
               element={
                 <RequireAuth>
                   <ProtectedLayout><Equipos/></ProtectedLayout>
                 </RequireAuth>
               }
             />
+            <Route path="/sesiones/personas" element={<Navigate to="/personas" replace />} />
+            <Route path="/sesiones/equipos" element={<Navigate to="/maquinas" replace />} />
             <Route
               path="/funciones/wifi-qr"
               element={

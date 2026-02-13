@@ -26,11 +26,11 @@ const INDICADOR_DESCRIPTIONS = {
   porcentajePausa:
     "Para cada dia se calcula como minutos en pausa diarios dividido entre los minutos totales diarios, multiplicado por 100.",
   avgSpeed:
-    "Para cada dia se calcula la velocidad efectiva dividiendo las piezas buenas diarias entre los minutos productivos diarios (minutos totales menos NPT) y escalando a piezas por hora.",
+    "Para cada dia se calcula la velocidad efectiva dividiendo las piezas buenas diarias entre los minutos productivos diarios (minutos totales menos tiempo no productivo) y escalando a piezas por hora.",
   avgSpeedSesion:
     "Para cada dia se calcula la velocidad promedio dividiendo las piezas buenas diarias entre los minutos totales diarios y multiplicando por 60 para obtener piezas por hora.",
   velocidadActual:
-    "Velocidad de la ventana de 10 minutos, calculada como piezas contadas en los ultimos 10 minutos menos sus NPT dividido entre los minutos productivos de esa ventana y escalado a piezas por hora.",
+    "Velocidad de la ventana de 10 minutos, calculada como piezas contadas en los ultimos 10 minutos menos su tiempo no productivo dividido entre los minutos productivos de esa ventana y escalado a piezas por hora.",
 };
 
 export default INDICADOR_DESCRIPTIONS;

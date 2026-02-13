@@ -114,6 +114,10 @@ export default function NuevaMinuta() {
   const [trabajadorAsignacion, setTrabajadorAsignacion] = useState(null);
   const [sesionActivaAsignacion, setSesionActivaAsignacion] = useState(null);
   const [sesionAsignacionesVersion, setSesionAsignacionesVersion] = useState(0);
+  const [sesionesAbiertas, setSesionesAbiertas] = useState([]);
+  const [sesionesAbiertasLoading, setSesionesAbiertasLoading] = useState(false);
+  const [sesionesAbiertasError, setSesionesAbiertasError] = useState("");
+  const [sesionesAbiertasVersion, setSesionesAbiertasVersion] = useState(0);
   const [sesionesTrabajador, setSesionesTrabajador] = useState([]);
   const [sesionesTrabajadorLoading, setSesionesTrabajadorLoading] =
     useState(false);
@@ -197,6 +201,32 @@ export default function NuevaMinuta() {
 
   const cumplimiento = meta ? ((piezas / meta) * 100).toFixed(1) : "";
   const nptPorcentaje = npt ? ((npt / 480) * 100).toFixed(1) : "";
+
+  const refrescarSesionesAbiertas = useCallback(async () => {
+    setSesionesAbiertasLoading(true);
+    setSesionesAbiertasError("");
+    try {
+      const res = await fetch(`${API_BASE_URL}/sesiones-trabajo/activas`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        const msg =
+          data?.message || data?.error || "No se pudieron obtener las sesiones activas.";
+        throw new Error(msg);
+      }
+      const data = await res.json().catch(() => []);
+      const lista = (Array.isArray(data) ? data : [])
+        .map((s) => normalizarSesion(s))
+        .filter((s) => Boolean(obtenerSesionId(s)));
+      setSesionesAbiertas(lista);
+    } catch (err) {
+      setSesionesAbiertas([]);
+      setSesionesAbiertasError(
+        err?.message || "Error al cargar sesiones activas.",
+      );
+    } finally {
+      setSesionesAbiertasLoading(false);
+    }
+  }, []);
 
   const handleTrabajadorSeleccion = (trabajador) => {
     if (!trabajador) {
@@ -489,6 +519,17 @@ export default function NuevaMinuta() {
     }
   };
 
+  const handleSeleccionarSesionLateral = async (sesion) => {
+    if (!sesion || !obtenerSesionId(sesion)) return;
+    const sesionActiva = await establecerSesionActiva(sesion);
+    if (sesionActiva?.trabajador) {
+      setTrabajadorSeleccionado(sesionActiva.trabajador);
+      setTrabajadorData(sesionActiva.trabajador);
+      setSesionesTrabajadorVersion((prev) => prev + 1);
+    }
+    resetCamposTrasSeleccionSesion();
+  };
+
   const handleIniciarSesion = (e) => {
     e.preventDefault();
     if (sesionActivaMaquina) {
@@ -582,6 +623,7 @@ export default function NuevaMinuta() {
         setModalMensaje(mensaje);
         setMostrarModal(true);
         setSesionesTrabajadorVersion((prev) => prev + 1);
+        setSesionesAbiertasVersion((prev) => prev + 1);
       })
       .catch((err) => {
         setModalMensaje(err?.message || "Error al iniciar sesión");
@@ -631,6 +673,7 @@ export default function NuevaMinuta() {
       setMostrarModal(true);
       setSesionAsignacionesVersion(0);
       setSesionesTrabajadorVersion((prev) => prev + 1);
+      setSesionesAbiertasVersion((prev) => prev + 1);
     } catch (err) {
       setModalMensaje(err?.message || "No se pudo finalizar la sesión.");
       setMostrarModal(true);
@@ -1152,6 +1195,23 @@ export default function NuevaMinuta() {
   }, [trabajadorSeleccionado?.id, sesionesTrabajadorVersion]);
 
   useEffect(() => {
+    let cancelado = false;
+    const load = async () => {
+      await refrescarSesionesAbiertas();
+    };
+    load();
+    const intervalId = setInterval(() => {
+      if (!cancelado) {
+        refrescarSesionesAbiertas();
+      }
+    }, 20000);
+    return () => {
+      cancelado = true;
+      clearInterval(intervalId);
+    };
+  }, [refrescarSesionesAbiertas, sesionesAbiertasVersion]);
+
+  useEffect(() => {
     if (!accionCard) return;
     if (!accionesPermitidasEstado.includes(accionCard)) {
       setAccionCard("");
@@ -1207,81 +1267,139 @@ export default function NuevaMinuta() {
   }, [asignacionesSesion]);
 
   return (
-    <div className="p-6 max-w-4xl mx-auto text-sm sm:text-base">
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => navigate("/login")}
-          className="text-blue-600 font-medium hover:underline"
-        >
-          Administración
-        </button>
-      </div>
-      {!sesionActivaAsignacion && (
-        <>
-          <SesionIniciador
-            fechaHora={fechaHora}
-            maquinaSeleccionada={maquinaSeleccionada}
-            onMaquinaSelect={handleMaquinaSeleccion}
-            maquinaData={maquinaData}
-            maquinaError={maquinaError}
-            buscandoSesionMaquina={buscandoSesionMaquina}
-            sesionMaquinaError={sesionMaquinaError}
-            sesionActivaMaquina={sesionActivaMaquina}
-            mostrarDatosSesionTrabajador={mostrarDatosSesionTrabajador}
-            trabajadorSeleccionado={trabajadorSeleccionado}
-            onTrabajadorSelect={handleTrabajadorSeleccion}
-            sesionesTrabajador={sesionesTrabajador}
-            sesionesTrabajadorLoading={sesionesTrabajadorLoading}
-            sesionesTrabajadorError={sesionesTrabajadorError}
-            pasosSesionesTrabajador={pasosSesionesTrabajador}
-            onSeleccionSesionTrabajador={handleSeleccionarSesionTrabajador}
-            pasoOrdenSeleccionado={pasoOrdenSeleccionado}
-            onPasoOrdenClear={() => setPasoOrdenSeleccionado(null)}
-            onOpenPasoModal={openPasoModal}
-            onSeleccionarSesionActiva={handleSeleccionarSesionDesdeMaquina}
-            onIniciarSesion={handleIniciarSesion}
-            requierePasoOrden
-          />
-          <div className="bg-white rounded-xl shadow-md p-6 mt-6 text-sm text-gray-700">
-            <h2 className="text-xl font-semibold mb-2">Sesiones activas</h2>
-            <p>
-              Inicia o selecciona una sesión para acceder a las acciones
-              rápidas.
-            </p>
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto text-sm sm:text-base">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_18rem] gap-6 items-start">
+        <div>
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={() => navigate("/login")}
+              className="text-blue-600 font-medium hover:underline"
+            >
+              Administración
+            </button>
           </div>
-        </>
-      )}
-      {sesionActivaAsignacion && (
-        <SesionSeleccionadaPanel
-          sesion={sesionActivaAsignacion}
-          onSeleccionarOtra={limpiarSesionSeleccionada}
-          refreshKey={sesionAsignacionesVersion}
-          onSesionDetalleChange={setSesionDetalle}
-          onAsignacionesChange={handleAsignacionesChange}
-        >
-          <AccionesRapidas
-            accionesDisponibles={accionesFiltradasPorAsignacion}
-            accionCard={accionCard}
-            accion={accion}
-            accionFinalizarPasoLabel={ACCION_FINALIZAR_PASO}
-            onAccionCardSeleccion={handleAccionCardSeleccion}
-            pasoManualSeleccionado={pasoManualSeleccionado}
-            onOpenPasoModal={openPasoModal}
-            onAsignarPasoManual={handleAsignarPasoManual}
-            asignandoPasoManual={asignandoPasoManual}
-            sesionActiva={sesionActivaAsignacion}
-            sesionActivaId={sesionActivaId}
-            trabajadorAsignacion={trabajadorAsignacion}
-            asignacionesSesion={asignacionesSesion}
-            asignacionPasoFinalizarId={asignacionPasoFinalizarId}
-            piezas={piezas}
-            setPiezas={setPiezas}
-            piezasDefectuosas={piezasDefectuosas}
-            setPiezasDefectuosas={setPiezasDefectuosas}
-            onOperacionSubmit={handleOperacionSubmit}
-          />
-        </SesionSeleccionadaPanel>
-      )}
+          {!sesionActivaAsignacion && (
+            <>
+              <SesionIniciador
+                fechaHora={fechaHora}
+                maquinaSeleccionada={maquinaSeleccionada}
+                onMaquinaSelect={handleMaquinaSeleccion}
+                maquinaData={maquinaData}
+                maquinaError={maquinaError}
+                buscandoSesionMaquina={buscandoSesionMaquina}
+                sesionMaquinaError={sesionMaquinaError}
+                sesionActivaMaquina={sesionActivaMaquina}
+                mostrarDatosSesionTrabajador={mostrarDatosSesionTrabajador}
+                trabajadorSeleccionado={trabajadorSeleccionado}
+                onTrabajadorSelect={handleTrabajadorSeleccion}
+                sesionesTrabajador={sesionesTrabajador}
+                sesionesTrabajadorLoading={sesionesTrabajadorLoading}
+                sesionesTrabajadorError={sesionesTrabajadorError}
+                pasosSesionesTrabajador={pasosSesionesTrabajador}
+                onSeleccionSesionTrabajador={handleSeleccionarSesionTrabajador}
+                pasoOrdenSeleccionado={pasoOrdenSeleccionado}
+                onPasoOrdenClear={() => setPasoOrdenSeleccionado(null)}
+                onOpenPasoModal={openPasoModal}
+                onSeleccionarSesionActiva={handleSeleccionarSesionDesdeMaquina}
+                onIniciarSesion={handleIniciarSesion}
+                requierePasoOrden
+              />
+              <div className="bg-white rounded-xl shadow-md p-6 mt-6 text-sm text-gray-700">
+                <h2 className="text-xl font-semibold mb-2">Sesiones activas</h2>
+                <p>
+                  Inicia o selecciona una sesión para acceder a las acciones
+                  rápidas.
+                </p>
+              </div>
+            </>
+          )}
+          {sesionActivaAsignacion && (
+            <SesionSeleccionadaPanel
+              sesion={sesionActivaAsignacion}
+              onSeleccionarOtra={limpiarSesionSeleccionada}
+              refreshKey={sesionAsignacionesVersion}
+              onSesionDetalleChange={setSesionDetalle}
+              onAsignacionesChange={handleAsignacionesChange}
+            >
+              <AccionesRapidas
+                accionesDisponibles={accionesFiltradasPorAsignacion}
+                accionCard={accionCard}
+                accion={accion}
+                accionFinalizarPasoLabel={ACCION_FINALIZAR_PASO}
+                onAccionCardSeleccion={handleAccionCardSeleccion}
+                pasoManualSeleccionado={pasoManualSeleccionado}
+                onOpenPasoModal={openPasoModal}
+                onAsignarPasoManual={handleAsignarPasoManual}
+                asignandoPasoManual={asignandoPasoManual}
+                sesionActiva={sesionActivaAsignacion}
+                sesionActivaId={sesionActivaId}
+                trabajadorAsignacion={trabajadorAsignacion}
+                asignacionesSesion={asignacionesSesion}
+                asignacionPasoFinalizarId={asignacionPasoFinalizarId}
+                piezas={piezas}
+                setPiezas={setPiezas}
+                piezasDefectuosas={piezasDefectuosas}
+                setPiezasDefectuosas={setPiezasDefectuosas}
+                onOperacionSubmit={handleOperacionSubmit}
+              />
+            </SesionSeleccionadaPanel>
+          )}
+        </div>
+        <aside className="lg:sticky lg:top-24">
+          <div className="bg-white rounded-xl shadow-md p-3 border">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-sm">Sesiones iniciadas</h3>
+              <button
+                type="button"
+                onClick={() => setSesionesAbiertasVersion((prev) => prev + 1)}
+                className="text-xs text-blue-600 hover:underline"
+              >
+                Actualizar
+              </button>
+            </div>
+            <div className="max-h-[calc(100vh-10rem)] overflow-y-auto space-y-2 pr-1">
+              {sesionesAbiertasLoading && (
+                <p className="text-xs text-gray-500">Cargando sesiones…</p>
+              )}
+              {!sesionesAbiertasLoading && sesionesAbiertasError && (
+                <p className="text-xs text-red-600">{sesionesAbiertasError}</p>
+              )}
+              {!sesionesAbiertasLoading &&
+                !sesionesAbiertasError &&
+                sesionesAbiertas.length === 0 && (
+                  <p className="text-xs text-gray-500">No hay sesiones activas.</p>
+                )}
+              {sesionesAbiertas.map((sesion) => {
+                const id = obtenerSesionId(sesion);
+                const trabajadorNombre =
+                  sesion?.trabajador?.nombre || "Sin trabajador";
+                const maquinaNombre = sesion?.maquina?.nombre || "Sin máquina";
+                const estado = (sesion?.estadoSesion || "").toLowerCase();
+                const activa = id && id === sesionActivaId;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => handleSeleccionarSesionLateral(sesion)}
+                    className={`w-full text-left border rounded-lg p-2 transition-colors ${
+                      activa
+                        ? "bg-blue-50 border-blue-500"
+                        : "hover:bg-gray-50 border-gray-200"
+                    }`}
+                  >
+                    <div className="text-xs font-medium truncate">
+                      {trabajadorNombre} - {maquinaNombre}
+                    </div>
+                    <div className="text-[11px] text-gray-500 mt-1 capitalize">
+                      {estado || "sin estado"}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </aside>
+      </div>
       {mostrarModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
           <div className="bg-white p-6 rounded shadow-lg">

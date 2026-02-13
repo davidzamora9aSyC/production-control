@@ -9,7 +9,7 @@ export default function AlertasEntidadTabla({ tipo = "trabajador" }) {
   const { token } = useAuth();
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
-  const [identificacion, setIdentificacion] = useState(""); // trabajador
+  const [trabajadorSeleccionado, setTrabajadorSeleccionado] = useState(null); // trabajador
   const [maquinaClave, setMaquinaClave] = useState(""); // máquina (id/nombre/código según selector)
   const [maquinaValorKey, setMaquinaValorKey] = useState("id"); // "id" | "nombre" | "codigo"
   const [loading, setLoading] = useState(false);
@@ -96,6 +96,7 @@ export default function AlertasEntidadTabla({ tipo = "trabajador" }) {
       let url = "";
       if (tipo === "trabajador") {
         const params = new URLSearchParams();
+        const identificacion = trabajadorSeleccionado?.identificacion || "";
         if (identificacion) params.set("identificacion", identificacion);
         if (desde) params.set("desde", desde);
         if (hasta) params.set("hasta", hasta);
@@ -148,7 +149,7 @@ export default function AlertasEntidadTabla({ tipo = "trabajador" }) {
         {tipo === "trabajador" ? (
           <div className="flex items-center gap-2">
             <label className="text-sm">Trabajador</label>
-            <TrabajadorSelector value={identificacion} onChange={setIdentificacion} className="border rounded px-2 py-1 text-sm min-w-[16rem]" />
+            <TrabajadorSelector selected={trabajadorSeleccionado} onSelect={setTrabajadorSeleccionado} className="border rounded px-2 py-1 text-sm min-w-[16rem]" />
           </div>
         ) : (
           <>

@@ -8,17 +8,17 @@ import { API_BASE_URL } from "../api";
 
 // Métricas disponibles en la serie diaria por trabajador/máquina
 const METRIC_DEFS = [
-  { key: "avgSpeed", label: "Vel. efectiva (sin NPT)", color: "#10b981" },
-  { key: "avgSpeedSesion", label: "Vel. sesión (con todo)", color: "#8b5cf6" },
+  { key: "avgSpeed", label: "Velocidad productiva (sin tiempos muertos)", color: "#10b981" },
+  { key: "avgSpeedSesion", label: "Velocidad global (con tiempos muertos)", color: "#8b5cf6" },
   { key: "produccionTotal", label: "Producción total", color: "#f59e0b" },
   { key: "defectos", label: "Defectos", color: "#ef4444" },
   { key: "porcentajeDefectos", label: "% Defectos", color: "#06b6d4" },
-  { key: "nptMin", label: "NPT (min)", color: "#f97316" },
-  { key: "nptPorInactividad", label: "NPT por inactividad (min)", color: "#22c55e" },
-  { key: "porcentajeNPT", label: "% NPT", color: "#e11d48" },
-  { key: "pausasMin", label: "Pausas (min)", color: "#84cc16" },
-  { key: "porcentajePausa", label: "% Pausa", color: "#0ea5e9" },
-  { key: "duracionTotalMin", label: "Duración total (min)", color: "#64748b" },
+  { key: "nptMin", label: "Tiempos muertos en minutos", color: "#f97316" },
+  { key: "nptPorInactividad", label: "Tiempos muertos por inactividad", color: "#22c55e" },
+  { key: "porcentajeNPT", label: "% Tiempos muertos", color: "#e11d48" },
+  { key: "pausasMin", label: "Tiempo en pausas en minutos", color: "#84cc16" },
+  { key: "porcentajePausa", label: "% Tiempo en pausas", color: "#0ea5e9" },
+  { key: "duracionTotalMin", label: "Duración total en minutos", color: "#64748b" },
   { key: "sesionesCerradas", label: "Sesiones cerradas", color: "#3b82f6" },
 ];
 

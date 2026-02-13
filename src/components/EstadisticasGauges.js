@@ -3,29 +3,44 @@ import { useAreas } from "../context/AreasContext";
 
 const API_BASE = "https://smartindustries.org";
 
-function Gauge({ percent, label, valueText }) {
-  const clamped = Math.max(0, Math.min(100, Number(percent) || 0));
-  const angle = -90 + (clamped / 100) * 180;
-
+function StatCard({ label, valueText }) {
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative w-28 h-16">
-        <svg viewBox="0 0 100 50" className="w-full h-full">
-          <defs>
-            <linearGradient id="gaugeGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#4ade80" />
-              <stop offset="50%" stopColor="#facc15" />
-              <stop offset="100%" stopColor="#f87171" />
-            </linearGradient>
-          </defs>
-          <path d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="url(#gaugeGradient2)" strokeWidth="20" />
-          <line x1="50" y1="50" x2="50" y2="10" stroke="black" strokeWidth="3" strokeLinecap="round" transform={`rotate(${angle}, 50, 50)`} />
-        </svg>
-      </div>
-      <div className="text-sm text-center mt-1">{label}</div>
-      <div className="text-base font-semibold">{valueText}</div>
+    <div className="border rounded-xl p-4 bg-white shadow-sm">
+      <div className="text-sm text-gray-600">{label}</div>
+      <div className="text-2xl font-semibold mt-1">{valueText}</div>
     </div>
   );
+}
+
+function formatMetricValue(value, unit = "") {
+  const num = Number(value) || 0;
+  if (unit === "%") return `${num.toFixed(2)}%`;
+  if (unit === "u") return `${Math.round(num)}`;
+  if (unit === "minutos") return `${Math.round(num)} minutos`;
+  if (unit === "pzas/h") return `${num.toFixed(1)} pzas/h`;
+  return `${num}`;
+}
+
+function buildCards(data, periodLabel) {
+  if (!data) return [];
+  return [
+    {
+      label: `Producción ${periodLabel.toLowerCase()}`,
+      valueText: formatMetricValue(data.produccionTotal, "u"),
+    },
+    {
+      label: `Velocidad promedio (${periodLabel.toLowerCase()})`,
+      valueText: formatMetricValue(data.avgSpeed, "pzas/h"),
+    },
+    {
+      label: `% no conformes (${periodLabel.toLowerCase()})`,
+      valueText: formatMetricValue(data.porcentajeDefectos, "%"),
+    },
+    {
+      label: `Tiempos muertos (${periodLabel.toLowerCase()})`,
+      valueText: formatMetricValue(data.nptMin, "minutos"),
+    },
+  ];
 }
 
 export default function EstadisticasGauges() {
@@ -85,34 +100,8 @@ export default function EstadisticasGauges() {
     load();
   }, [areaId, hoy]);
 
-  // Helpers to build gauges with display text and a naive percent mapping
-  const buildGauge = (label, value, unit, maxForGauge = 100) => {
-    const num = Number(value) || 0;
-    const percent = maxForGauge ? Math.min(100, (num / maxForGauge) * 100) : 0;
-    const valueText = unit === "%" ? `${num}%` : unit ? `${num} ${unit}` : `${num}`;
-    return { label, percent, valueText };
-  };
-
-  // Daily gauges
-  const dailyGauges = useMemo(() => {
-    if (!dayData) return [];
-    return [
-      buildGauge("Producción diaria", dayData.produccionTotal, "u", 1000),
-      buildGauge("Velocidad promedio (día)", dayData.avgSpeed, "", 200),
-      buildGauge("% no conformes (día)", dayData.porcentajeDefectos, "%", 100),
-      buildGauge("NPT (min, día)", dayData.nptMin, "min", 480),
-    ];
-  }, [dayData]);
-
-  const monthlyGauges = useMemo(() => {
-    if (!monthData) return [];
-    return [
-      buildGauge("Producción mensual", monthData.produccionTotal, "u", 30000),
-      buildGauge("Velocidad promedio (mes)", monthData.avgSpeed, "", 200),
-      buildGauge("% no conformes (mes)", monthData.porcentajeDefectos, "%", 100),
-      buildGauge("NPT (min, mes)", monthData.nptMin, "min", 20000),
-    ];
-  }, [monthData]);
+  const dailyCards = useMemo(() => buildCards(dayData, "Diario"), [dayData]);
+  const monthlyCards = useMemo(() => buildCards(monthData, "Mensual"), [monthData]);
 
   return (
     <div className="mb-20">
@@ -133,15 +122,15 @@ export default function EstadisticasGauges() {
       <div className="border rounded-2xl shadow-md p-4">
         <div className="mb-3 text-lg font-semibold text-gray-700">Diario</div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-          {dailyGauges.map((g, i) => (
-            <Gauge key={i} percent={g.percent} label={g.label} valueText={g.valueText} />
+          {dailyCards.map((g, i) => (
+            <StatCard key={i} label={g.label} valueText={g.valueText} />
           ))}
         </div>
 
         <div className="mt-2 mb-3 text-lg font-semibold text-gray-700">Mensual</div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {monthlyGauges.map((g, i) => (
-            <Gauge key={i} percent={g.percent} label={g.label} valueText={g.valueText} />
+          {monthlyCards.map((g, i) => (
+            <StatCard key={i} label={g.label} valueText={g.valueText} />
           ))}
         </div>
       </div>

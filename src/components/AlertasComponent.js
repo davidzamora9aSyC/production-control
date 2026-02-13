@@ -57,7 +57,7 @@ function formatInfo(alerta) {
 
 export default function Alertas() {
     const [fecha, setFecha] = useState(hoyISO());
-    const [identificacion, setIdentificacion] = useState("");
+    const [trabajadorSeleccionado, setTrabajadorSeleccionado] = useState(null);
     const [alertas, setAlertas] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -75,6 +75,7 @@ export default function Alertas() {
                 setError("");
                 const params = new URLSearchParams();
                 if (fecha) params.set("fecha", fecha);
+                const identificacion = trabajadorSeleccionado?.identificacion || "";
                 if (identificacion) params.set("identificacion", identificacion);
                 const url = `/alertas${params.toString() ? `?${params.toString()}` : ""}`;
                 const data = await fetchJsonCached(
@@ -91,7 +92,7 @@ export default function Alertas() {
         };
         fetchAlertas();
         return () => { cancelled = true; };
-    }, [fecha, identificacion, token, reloadKey]);
+    }, [fecha, trabajadorSeleccionado, token, reloadKey]);
 
     return (
         <div className={expanded ? "h-full flex flex-col" : ""}>
@@ -100,7 +101,7 @@ export default function Alertas() {
                 <div className="flex gap-4 text-base items-center">
                     <label>Fecha <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} className="ml-1 border px-2 py-1 rounded" /></label>
                     <label className="flex items-center gap-2">Trabajador
-                        <TrabajadorSelector value={identificacion} onChange={setIdentificacion} className="ml-1 border px-2 py-1 rounded" />
+                        <TrabajadorSelector selected={trabajadorSeleccionado} onSelect={setTrabajadorSeleccionado} className="ml-1 border px-2 py-1 rounded" />
                     </label>
                     <button
                       onClick={() => setShowUmbrales(true)}
