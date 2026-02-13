@@ -680,31 +680,6 @@ export default function NuevaMinuta() {
     }
   };
 
-  const obtenerAsignacionActivaDeSesion = async (sesionId) => {
-    if (!sesionId) return null;
-    const res = await fetch(
-      `${API_BASE_URL}/sesion-trabajo-pasos/por-sesion/${sesionId}`,
-    );
-    const data = await res.json().catch(() => []);
-    if (!res.ok) {
-      const msg =
-        data?.message ||
-        data?.error ||
-        "No se pudieron obtener las asignaciones.";
-      throw new Error(msg);
-    }
-    const lista = Array.isArray(data) ? data : [];
-    if (!lista.length) return null;
-    const activa = lista.find(
-      (item) =>
-        item.fechaFin == null ||
-        item.fin == null ||
-        item.estado === "ACTIVO" ||
-        item.estadoSesionPaso === "ACTIVO",
-    );
-    return activa || lista[0];
-  };
-
   const actualizarProduccionEnAsignacion = async (
     asignacionId,
     piezasBuenas,
@@ -734,23 +709,6 @@ export default function NuevaMinuta() {
     await resPaso.json().catch(() => null);
   };
 
-  const actualizarProduccionAntesDePausar = async (
-    sesionId,
-    piezasBuenas,
-    pedaleos,
-    contextoError,
-  ) => {
-    if (!sesionId) return;
-    const asignacion = await obtenerAsignacionActivaDeSesion(sesionId);
-    if (!asignacion?.id) return;
-    await actualizarProduccionEnAsignacion(
-      asignacion.id,
-      piezasBuenas,
-      pedaleos,
-      contextoError,
-    );
-  };
-
   const obtenerMaquinaIdDeSesionActiva = () => {
     const candidatos = [
       sesionActivaAsignacion?.maquina,
@@ -775,16 +733,7 @@ export default function NuevaMinuta() {
       setMostrarModal(true);
       return;
     }
-    const piezasBuenas = Number(piezas) || 0;
-    const piezasMalas = Number(piezasDefectuosas) || 0;
-    const pedaleos = piezasBuenas + piezasMalas;
     try {
-      await actualizarProduccionAntesDePausar(
-        sesionId,
-        piezasBuenas,
-        pedaleos,
-        "salir a descanso",
-      );
       const resDescanso = await fetch(`${API_BASE_URL}/estados-trabajador`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -862,16 +811,7 @@ export default function NuevaMinuta() {
       setMostrarModal(true);
       return;
     }
-    const piezasBuenas = Number(piezas) || 0;
-    const piezasMalas = Number(piezasDefectuosas) || 0;
-    const pedaleos = piezasBuenas + piezasMalas;
     try {
-      await actualizarProduccionAntesDePausar(
-        sesionId,
-        piezasBuenas,
-        pedaleos,
-        "iniciar el mantenimiento",
-      );
       const res = await fetch(`${API_BASE_URL}/estados-maquina`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

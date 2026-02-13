@@ -39,9 +39,23 @@ export default function TrabajadorQrSelector({
   const solicitandoPermisoRef = useRef(false);
   const permisoReintentadoRef = useRef(false);
 
-  const stopScanner = () => {
+  const releaseVideoStream = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const stream = video.srcObject;
+    if (stream && typeof stream.getTracks === "function") {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+    video.srcObject = null;
+  };
+
+  const stopScanner = async () => {
     if (controlsRef.current && typeof controlsRef.current.stop === "function") {
-      controlsRef.current.stop();
+      try {
+        await controlsRef.current.stop();
+      } catch (err) {
+        console.warn("No se pudo detener el stream de cámara", err);
+      }
       controlsRef.current = null;
     }
     if (readerRef.current && typeof readerRef.current.reset === "function") {
@@ -51,19 +65,22 @@ export default function TrabajadorQrSelector({
         console.warn("No se pudo resetear el lector", err);
       }
     }
+    releaseVideoStream();
     setCameraActive(false);
     solicitandoPermisoRef.current = false;
     permisoReintentadoRef.current = false;
   };
 
   useEffect(() => {
-    return () => stopScanner();
+    return () => {
+      void stopScanner();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (disabled) {
-      stopScanner();
+      void stopScanner();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [disabled]);
@@ -87,6 +104,7 @@ export default function TrabajadorQrSelector({
     setScanError("");
     setScanMessage("");
     try {
+      await stopScanner();
       if (!readerRef.current) {
         readerRef.current = new BrowserMultiFormatReader();
       } else {
@@ -103,7 +121,7 @@ export default function TrabajadorQrSelector({
             if (lecturaEnCursoRef.current) return;
             lecturaEnCursoRef.current = true;
             const text = result.getText();
-            stopScanner();
+            void stopScanner();
             const id = extractTrabajadorId(text);
             setScanMessage(`QR leído: ${text}`);
             setScanError("");
@@ -161,7 +179,7 @@ export default function TrabajadorQrSelector({
 
   const clearSelection = () => {
     if (disabled) return;
-    stopScanner();
+    void stopScanner();
     lecturaEnCursoRef.current = false;
     permisoReintentadoRef.current = false;
     setScanMessage("");
@@ -182,7 +200,10 @@ export default function TrabajadorQrSelector({
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={cameraActive ? stopScanner : startScanner}
+            onClick={() => {
+              if (cameraActive) void stopScanner();
+              else void startScanner();
+            }}
             disabled={disabled}
             className={`px-3 py-1.5 rounded-full border text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed ${
               disabled ? "cursor-not-allowed" : ""

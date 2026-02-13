@@ -173,7 +173,6 @@ export default function SesionSeleccionadaPanel({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-2xl font-semibold">Sesión seleccionada</h2>
-          <p className="text-sm text-gray-600 break-all">ID: {sesionId}</p>
         </div>
         <button
           type="button"
@@ -185,17 +184,23 @@ export default function SesionSeleccionadaPanel({
       </div>
       <div className="grid gap-4 sm:grid-cols-3 text-sm text-gray-800">
         <div className="bg-gray-50 rounded p-3 space-y-1">
-          <div className="text-xs font-medium text-gray-500">Trabajador</div>
-          <div className="font-semibold">
-            {trabajador.nombre ?? "Sin nombre"}
+          <div className="text-xs font-bold text-gray-500">Trabajador</div>
+          <div className="font-semibold text-lg">
+            <span className="inline-flex items-center justify-center px-3 py-1 rounded-full border-2 border-green-600">
+              {trabajador.nombre ?? "Sin nombre"}
+            </span>
           </div>
           <div>Identificación: {trabajador.identificacion ?? "-"}</div>
           <div>Grupo: {trabajador.grupo ?? "-"}</div>
           <div>Turno: {trabajador.turno ?? "-"}</div>
         </div>
         <div className="bg-gray-50 rounded p-3 space-y-1">
-          <div className="text-xs font-medium text-gray-500">Máquina</div>
-          <div className="font-semibold">{maquina.nombre ?? "Sin nombre"}</div>
+          <div className="text-xs font-bold text-gray-500">Máquina</div>
+          <div className="font-semibold text-lg">
+            <span className="inline-flex items-center justify-center px-3 py-1 rounded-full border-2 border-green-600">
+              {maquina.nombre ?? "Sin nombre"}
+            </span>
+          </div>
           <div>Código: {maquina.codigo ?? "-"}</div>
           <div>Área: {maquina.area?.nombre ?? "-"}</div>
           <div>Estado: {estadoMaquinaVisible}</div>

@@ -43,9 +43,19 @@ export default function PasoOrdenSelectorModal({
     [ordenId, selectedPasoId],
   );
 
+  const releaseVideoStream = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const stream = video.srcObject;
+    if (stream && typeof stream.getTracks === "function") {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+    video.srcObject = null;
+  };
+
   useEffect(() => {
     if (!open) {
-      stopScanner();
+      void stopScanner();
       setOrdenId("");
       setPasos([]);
       setSelectedPasoId("");
@@ -54,7 +64,7 @@ export default function PasoOrdenSelectorModal({
       setScanMessage("");
     }
     return () => {
-      stopScanner();
+      void stopScanner();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -70,9 +80,13 @@ export default function PasoOrdenSelectorModal({
     };
   }, [open]);
 
-  const stopScanner = () => {
+  const stopScanner = async () => {
     if (controlsRef.current && typeof controlsRef.current.stop === "function") {
-      controlsRef.current.stop();
+      try {
+        await controlsRef.current.stop();
+      } catch (err) {
+        console.warn("No se pudo detener el stream de cámara", err);
+      }
       controlsRef.current = null;
     }
     if (readerRef.current && typeof readerRef.current.reset === "function") {
@@ -83,6 +97,7 @@ export default function PasoOrdenSelectorModal({
         console.warn("No se pudo resetear el lector", err);
       }
     }
+    releaseVideoStream();
     setCameraActive(false);
     solicitandoPermisoRef.current = false;
     permisoReintentadoRef.current = false;
@@ -95,6 +110,7 @@ export default function PasoOrdenSelectorModal({
       permisoReintentadoRef.current = false;
     }
     try {
+      await stopScanner();
       if (!readerRef.current) {
         readerRef.current = new BrowserMultiFormatReader();
       } else {
@@ -108,7 +124,7 @@ export default function PasoOrdenSelectorModal({
         (result, err) => {
           if (result) {
             const text = result.getText();
-            stopScanner();
+            void stopScanner();
             const id = extractOrdenId(text);
             setOrdenId(id);
             setScanMessage(`QR leído: ${text}`);
@@ -228,7 +244,10 @@ export default function PasoOrdenSelectorModal({
             <label className="text-sm font-medium">Escanear QR</label>
             <button
               type="button"
-              onClick={cameraActive ? stopScanner : startScanner}
+              onClick={() => {
+                if (cameraActive) void stopScanner();
+                else void startScanner();
+              }}
               className="px-3 py-1 text-sm rounded-full border bg-white hover:bg-gray-50"
             >
               {cameraActive ? "Detener cámara" : "Activar cámara"}
@@ -285,7 +304,7 @@ export default function PasoOrdenSelectorModal({
           <button
             type="button"
             onClick={() => {
-              stopScanner();
+              void stopScanner();
               onClose();
             }}
             className="px-4 py-2 rounded-full border"

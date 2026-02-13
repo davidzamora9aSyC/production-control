@@ -42,11 +42,7 @@ export default function AccionesRapidas({
 }) {
   const hayAcciones = accionesDisponibles.length > 0;
   const requiereAsignacion = accion === accionFinalizarPasoLabel;
-  const requiereReporteProduccion = [
-    "Salir a descanso",
-    "Inicio de mantenimiento",
-    accionFinalizarPasoLabel,
-  ].includes(accion);
+  const requiereReporteProduccion = accion === accionFinalizarPasoLabel;
   const asignacionActiva =
     asignacionesSesion.find((item) => {
       if (esAsignacionFinalizada(item)) return false;
