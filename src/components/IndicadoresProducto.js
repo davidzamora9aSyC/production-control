@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { API_BASE_URL } from "../api";
+import { API_BASE_URL, apiFetch } from "../api";
 import { useAuth } from "../context/AuthContext";
 
 const PERIODOS = [
@@ -245,7 +245,7 @@ export default function IndicadoresProducto() {
       if (targetCumplimiento) params.append("targetCumplimiento", targetCumplimiento);
 
       const url = `${API_BASE_URL}/indicadores/producto?${params.toString()}`;
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!res.ok) {

@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../api";
+import { API_BASE_URL, apiFetch } from "../api";
 import PasoOrdenSelectorModal from "../components/PasoOrdenSelectorModal";
 import SesionSeleccionadaPanel from "../components/SesionSeleccionadaPanel";
 import SesionIniciador from "../components/SesionIniciador";
 import AccionesRapidas from "../components/AccionesRapidas";
 import BackendStatusIndicator from "../components/BackendStatusIndicator";
-import { apiFetch } from "../api";
 
 const ACCION_FINALIZAR_PASO = "Finalizar trabajo de paso de producción";
 
@@ -254,7 +253,7 @@ export default function NuevaMinuta() {
     setBuscandoSesionMaquina(true);
     setSesionMaquinaError("");
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `${API_BASE_URL}/sesiones-trabajo/maquina/${maquinaId}/activa`,
       );
       if (res.status === 404) {
@@ -642,7 +641,7 @@ export default function NuevaMinuta() {
     }
     const maquinaSesionId = sesionActivaAsignacion.maquina?.id;
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `${API_BASE_URL}/sesiones-trabajo/${sesionId}/finalizar`,
         {
           method: "POST",
@@ -689,7 +688,7 @@ export default function NuevaMinuta() {
     contextoError,
   ) => {
     if (!asignacionId) return;
-    const resPaso = await fetch(
+    const resPaso = await apiFetch(
       `${API_BASE_URL}/sesion-trabajo-pasos/${asignacionId}`,
       {
         method: "PUT",
@@ -774,7 +773,7 @@ export default function NuevaMinuta() {
       return;
     }
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `${API_BASE_URL}/estados-trabajador/trabajador/${trabajadorId}/finalizar-descanso`,
         {
           method: "POST",
@@ -853,7 +852,7 @@ export default function NuevaMinuta() {
       return;
     }
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `${API_BASE_URL}/estados-maquina/maquina/${maquinaId}/finalizar-mantenimiento`,
         { method: "POST" },
       );
@@ -896,7 +895,7 @@ export default function NuevaMinuta() {
         pedaleos,
         "finalizar el trabajo del paso",
       );
-      const res = await fetch(
+      const res = await apiFetch(
         `${API_BASE_URL}/sesion-trabajo-pasos/${asignacionPasoFinalizarId}/finalizar`,
         { method: "POST" },
       );
@@ -1068,7 +1067,7 @@ export default function NuevaMinuta() {
     setSesionesTrabajadorLoading(true);
     setSesionesTrabajadorError("");
     setPasosSesionesTrabajador({});
-    fetch(
+    apiFetch(
       `${API_BASE_URL}/sesiones-trabajo/activas?trabajador=${encodeURIComponent(trabajadorId)}`,
       {
         signal: controller.signal,
@@ -1097,7 +1096,7 @@ export default function NuevaMinuta() {
             const sesionId = obtenerSesionId(sesion);
             if (!sesionId) return;
             try {
-              const resPaso = await fetch(
+              const resPaso = await apiFetch(
                 `${API_BASE_URL}/sesiones-trabajo/${sesionId}/orden-produccion`,
               );
               if (!resPaso.ok)

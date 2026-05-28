@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
-import { API_BASE_URL } from "../api";
+import { API_BASE_URL, apiFetch } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useAreas } from "../context/AreasContext";
 
@@ -23,7 +23,7 @@ export default function AreaRealtimeSpeed() {
       const params = new URLSearchParams();
       if (areaId) params.append("areaId", areaId);
       const url = `${API_BASE_URL}/indicadores/realtime/area-velocidad${params.toString() ? `?${params.toString()}` : ""}`;
-      const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const res = await apiFetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       if (!res.ok) throw new Error("No se pudo cargar la velocidad en tiempo real");
       const json = await res.json();
 

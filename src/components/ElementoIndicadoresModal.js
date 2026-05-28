@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { FaInfoCircle } from "react-icons/fa";
 import INDICADOR_DESCRIPTIONS from "../utils/indicadorDescriptions";
 import Tooltip from "./Tooltip";
-import { API_BASE_URL } from "../api";
+import { API_BASE_URL, apiFetch } from "../api";
 
 // Métricas disponibles en la serie diaria por trabajador/máquina
 const METRIC_DEFS = [
@@ -59,7 +59,7 @@ export default function ElementoIndicadoresModal({ tipo, id, nombre, onClose }) 
       }
       const base = `${API_BASE_URL}/indicadores/${tipo}/${encodeURIComponent(id)}/diaria`;
       const url = `${base}${params.toString() ? `?${params.toString()}` : ""}`;
-      const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const res = await apiFetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       if (!res.ok) throw new Error("No se pudo cargar la serie");
       const json = await res.json();
       setSerie(Array.isArray(json) ? json : []);

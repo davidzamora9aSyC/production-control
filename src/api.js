@@ -1,11 +1,16 @@
+const PUBLIC_API_BASE_URL = "https://subterraneously-proannexation-vasiliki.ngrok-free.dev/api";
+
 const defaultBaseUrl = (() => {
-  if (typeof window === "undefined") return "https://smartindustries.org";
+  if (typeof window === "undefined") return PUBLIC_API_BASE_URL;
 
   const host = window.location.hostname;
   const protocol = window.location.protocol || "http:";
 
-  // Keep the public production domain intact.
-  if (host.endsWith("smartindustries.org")) return "https://smartindustries.org";
+  // Public deployments must call the backend host directly. Vercel only serves
+  // the React app, so /api there falls back to index.html instead of Nest.
+  if (host === "production-control.vercel.app") {
+    return PUBLIC_API_BASE_URL;
+  }
 
   // For local/LAN/ngrok, route through the gateway at the same origin.
   return `${protocol}//${host}/api`;
@@ -15,10 +20,14 @@ export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || defaultBaseUrl
 
 
 const TOKEN_KEY = "auth:token";
+const NGROK_SKIP_WARNING_HEADER = "ngrok-skip-browser-warning";
 
 export async function apiFetch(pathOrUrl, init = {}) {
   const url = resolveUrl(pathOrUrl);
   const headers = new Headers(init.headers || {});
+  if (!headers.has(NGROK_SKIP_WARNING_HEADER)) {
+    headers.set(NGROK_SKIP_WARNING_HEADER, "true");
+  }
   try {
     const token = typeof window !== "undefined" ? window.localStorage.getItem(TOKEN_KEY) : null;
     if (token && !headers.has("Authorization")) {

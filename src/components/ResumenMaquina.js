@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { API_BASE_URL } from "../api";
+import { API_BASE_URL, apiFetch } from "../api";
 import { useAuth } from "../context/AuthContext";
 import Tooltip from "./Tooltip";
-import { apiFetch } from "../api";
 
 function Stat({ label, value, suffix = "", desc, extra = null, tooltip = "" }) {
   return (
@@ -65,7 +64,7 @@ export default function ResumenMaquina() {
       params.append("fin", new Date(fin).toISOString());
       if (includeVentana) params.append("includeVentana", "true");
       const url = `${API_BASE_URL}/indicadores/maquinas/${encodeURIComponent(id)}/resumen?${params.toString()}`;
-      const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const res = await apiFetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       if (!res.ok) throw new Error("No se pudo cargar el resumen");
       const json = await res.json();
       setData(json);

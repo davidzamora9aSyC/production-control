@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { API_BASE_URL } from "../api";
+import { API_BASE_URL, apiFetch } from "../api";
 import ElementoIndicadoresModal from "./ElementoIndicadoresModal";
 import { useAreas } from "../context/AreasContext";
 
@@ -34,7 +34,7 @@ export default function IndicadoresSearchBar({ tipo = "trabajadores" }) {
           if (isMaquinas && areaId) params.append("areaId", areaId);
           params.append("limit", "20");
           const url = `${API_BASE_URL}${endpoint}${params.toString() ? `?${params.toString()}` : ""}`;
-          const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+          const res = await apiFetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
           if (!res.ok) throw new Error("No se pudo buscar");
           const arr = await res.json();
           setResults(Array.isArray(arr) ? arr : []);

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { API_BASE_URL } from "../api";
+import { API_BASE_URL, apiFetch } from "../api";
 import { useAuth } from "../context/AuthContext";
 import ElementoIndicadoresModal from "./ElementoIndicadoresModal";
 import { FaInfoCircle } from "react-icons/fa";
@@ -205,7 +205,7 @@ export default function IndicadoresLista({ tipo = "trabajadores" }) {
 
       const queryString = params.toString();
       const url = `${API_BASE_URL}/indicadores/${tipo}${queryString ? `?${queryString}` : ""}`;
-      const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const res = await apiFetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       if (!res.ok) throw new Error("No se pudo cargar");
       const json = await res.json();
       if (json && !Array.isArray(json)) {

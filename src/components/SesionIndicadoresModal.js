@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { FaInfoCircle } from "react-icons/fa";
 import INDICADOR_DESCRIPTIONS from "../utils/indicadorDescriptions";
 import Tooltip from "./Tooltip";
-import { API_BASE_URL } from "../api";
+import { API_BASE_URL, apiFetch } from "../api";
 
 const METRIC_DEFS = [
   { key: "velocidadActual", label: "Velocidad 10min", color: "#3b82f6" },
@@ -43,7 +43,7 @@ export default function SesionIndicadoresModal({ sesionId, onClose }) {
         if (inicio) params.append("inicio", new Date(inicio).toISOString());
         if (fin) params.append("fin", new Date(fin).toISOString());
         const url = `${API_BASE_URL}/sesiones-trabajo/${encodeURIComponent(sesionId)}/serie-minuto${params.toString() ? `?${params.toString()}` : ""}`;
-        const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+        const res = await apiFetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
         if (!res.ok) throw new Error("No se pudo cargar la serie");
         const json = await res.json();
         setSerie(Array.isArray(json) ? json : []);
@@ -99,7 +99,7 @@ export default function SesionIndicadoresModal({ sesionId, onClose }) {
       if (inicio) params.append("inicio", new Date(inicio).toISOString());
       if (fin) params.append("fin", new Date(fin).toISOString());
       const url = `${API_BASE_URL}/sesiones-trabajo/${encodeURIComponent(sesionId)}/serie-minuto${params.toString() ? `?${params.toString()}` : ""}`;
-      const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const res = await apiFetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       if (!res.ok) throw new Error("No se pudo cargar la serie");
       const json = await res.json();
       setSerie(Array.isArray(json) ? json : []);

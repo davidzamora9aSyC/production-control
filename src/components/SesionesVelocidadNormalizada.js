@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
-import { API_BASE_URL } from "../api";
+import { API_BASE_URL, apiFetch } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useAreas } from "../context/AreasContext";
 
@@ -75,7 +75,7 @@ export default function SesionesVelocidadNormalizada() {
       if (areaId) params.append("areaId", areaId);
       if (points) params.append("points", String(points));
       const url = `${API_BASE_URL}/indicadores/sesiones/velocidad-normalizada?${params.toString()}`;
-      const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const res = await apiFetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       if (!res.ok) throw new Error("No se pudo cargar la curva normalizada");
       const json = await res.json();
       const mean = Array.isArray(json?.mean) ? json.mean : [];
