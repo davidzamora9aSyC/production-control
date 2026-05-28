@@ -1134,7 +1134,11 @@ export default function NuevaMinuta() {
       cancelado = true;
       controller.abort();
     };
-  }, [trabajadorSeleccionado?.id, sesionesTrabajadorVersion]);
+  }, [
+    trabajadorSeleccionado?.id,
+    trabajadorSeleccionado?.trabajador?.id,
+    sesionesTrabajadorVersion,
+  ]);
 
   useEffect(() => {
     let cancelado = false;
