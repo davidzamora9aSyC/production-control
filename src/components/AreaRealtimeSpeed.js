@@ -94,8 +94,8 @@ export default function AreaRealtimeSpeed() {
     setData((prev) => prev.map((r) => ({ ...r, name: mapName(r.areaId) })));
   }, [areas, data.length]);
 
-  const description = useMemo(() => (
-    "Serie por minuto de la velocidad de ventana normalizada (10 min) por área del día de hoy. Cada sesión se normaliza por su propio promedio diario, de modo que todas las máquinas pesen igual; el valor es adimensional (≈1.0 equivale al promedio de su sesión)."
+  const readableDescription = useMemo(() => (
+    "Muestra minuto a minuto si las máquinas activas del área van por encima o por debajo de su ritmo promedio de hoy. 1.0 es ritmo normal; 1.2 es 20% más rápido y 0.8 es 20% más lento."
   ), []);
 
   const hasData = useMemo(() => {
@@ -108,7 +108,7 @@ export default function AreaRealtimeSpeed() {
       <div className="flex items-end justify-between mb-3">
         <div>
           <div className="font-semibold text-2xl">Velocidad por área (tiempo real)</div>
-          <div className="text-xs text-gray-600">{description}</div>
+          <div className="text-xs text-gray-600">{readableDescription}</div>
         </div>
         <div className="flex items-center gap-3">
           <label className="text-sm">Área</label>
