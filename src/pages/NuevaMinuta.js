@@ -7,7 +7,7 @@ import SesionIniciador from "../components/SesionIniciador";
 import AccionesRapidas from "../components/AccionesRapidas";
 import BackendStatusIndicator from "../components/BackendStatusIndicator";
 
-const ACCION_FINALIZAR_PASO = "Finalizar trabajo de paso de producción";
+const ACCION_FINALIZAR_PASO = "Terminar paso de orden";
 
 const OPERACIONES_SESION = [
   "Finalizar sesión",
