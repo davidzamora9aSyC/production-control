@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import BuscadorSesion from "./BuscadorSesion";
+import { API_BASE_URL } from "../api";
+import { apiFetch } from "../api";
 
 export default function EditarAsignacion({ paso, asignacionesIniciales = [], onClose, onSave }) {
   const [filas, setFilas] = useState([]);
@@ -34,7 +36,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
       setCargando(true);
       setError("");
       try {
-        const res = await fetch(`https://smartindustries.org/sesion-trabajo-pasos/por-paso/${paso.id}`);
+        const res = await apiFetch(`${API_BASE_URL}/sesion-trabajo-pasos/por-paso/${paso.id}`);
         if (!res.ok) throw new Error("No se pudieron cargar las asignaciones");
         const data = await res.json();
         setFilas(mapear(Array.isArray(data) ? data : []));
@@ -108,7 +110,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
       // eliminar
       await Promise.all(
         eliminados.map((id) =>
-          fetch(`https://smartindustries.org/sesion-trabajo-pasos/${id}`, { method: "DELETE" })
+          apiFetch(`${API_BASE_URL}/sesion-trabajo-pasos/${id}`, { method: "DELETE" })
         )
       );
 
@@ -117,7 +119,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
         filas
           .filter((f) => f.id && Number(f.cantidadAsignada || 0) >= Number(f.cantidadProducida || 0))
           .map((f) =>
-            fetch(`https://smartindustries.org/sesion-trabajo-pasos/${f.id}`, {
+            apiFetch(`${API_BASE_URL}/sesion-trabajo-pasos/${f.id}`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ cantidadAsignada: Number(f.cantidadAsignada || 0) }),
@@ -130,7 +132,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
         filas
           .filter((f) => !f.id)
           .map((f) =>
-            fetch("https://smartindustries.org/sesion-trabajo-pasos", {
+            apiFetch(`${API_BASE_URL}/sesion-trabajo-pasos`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -143,7 +145,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
           )
       );
 
-      const recargar = await fetch(`https://smartindustries.org/sesion-trabajo-pasos/por-paso/${paso.id}`);
+      const recargar = await apiFetch(`${API_BASE_URL}/sesion-trabajo-pasos/por-paso/${paso.id}`);
       const data = recargar.ok ? await recargar.json() : [];
       onSave && onSave(Array.isArray(data) ? data : []);
       window.location.reload();
@@ -237,7 +239,7 @@ export default function EditarAsignacion({ paso, asignacionesIniciales = [], onC
       </div>
       {indiceSesion !== null && (
         <BuscadorSesion
-          endpoint="https://smartindustries.org/sesiones-trabajo/activas"
+          endpoint={`${API_BASE_URL}/sesiones-trabajo/activas`}
           idsSesionesActuales={filas.map(f => f.sesionTrabajo)}
           onSelect={(s) => {
             actualizar(indiceSesion, "maquina", s.maquina);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { API_BASE_URL } from "../api";
+import { API_BASE_URL, apiFetch } from "../api";
 import { useAreas } from "../context/AreasContext";
 
 export default function MaquinaForm({ onSave, onClose, equipo, modo, onError }) {
@@ -57,7 +57,7 @@ export default function MaquinaForm({ onSave, onClose, equipo, modo, onError }) 
 
     console.log("Enviando datos:", formLimpio);
 
-    fetch(url, {
+    apiFetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formLimpio)

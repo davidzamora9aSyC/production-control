@@ -2,10 +2,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useState, useEffect, useMemo, useContext } from "react";
 import { ExpandButton, ExpandContext } from "./ExpandableCard";
 import { useAreas } from "../context/AreasContext";
-import { fetchJsonCached } from "../api";
-
-
-const API_BASE = "https://smartindustries.org";
+import { fetchJsonCached, API_BASE_URL } from "../api";
 
 export default function ProduccionChart() {
     const [proceso, setProceso] = useState("");
@@ -37,7 +34,7 @@ export default function ProduccionChart() {
         const load = async () => {
             setLoading(true);
             try {
-                const url = proceso ? `${API_BASE}${endpoint}?areaId=${encodeURIComponent(proceso)}` : `${API_BASE}${endpoint}`;
+                const url = proceso ? `${API_BASE_URL}${endpoint}?areaId=${encodeURIComponent(proceso)}` : `${API_BASE_URL}${endpoint}`;
                 const json = await fetchJsonCached(url, {}, { ttlMs: 15000 });
                 setRaw(Array.isArray(json) ? json : []);
             } catch (e) {

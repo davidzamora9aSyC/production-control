@@ -5,6 +5,8 @@ import PasoOrdenSelectorModal from "../components/PasoOrdenSelectorModal";
 import SesionSeleccionadaPanel from "../components/SesionSeleccionadaPanel";
 import SesionIniciador from "../components/SesionIniciador";
 import AccionesRapidas from "../components/AccionesRapidas";
+import BackendStatusIndicator from "../components/BackendStatusIndicator";
+import { apiFetch } from "../api";
 
 const ACCION_FINALIZAR_PASO = "Finalizar trabajo de paso de producción";
 
@@ -206,7 +208,7 @@ export default function NuevaMinuta() {
     setSesionesAbiertasLoading(true);
     setSesionesAbiertasError("");
     try {
-      const res = await fetch(`${API_BASE_URL}/sesiones-trabajo/activas`);
+      const res = await apiFetch(`${API_BASE_URL}/sesiones-trabajo/activas`);
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         const msg =
@@ -286,7 +288,7 @@ export default function NuevaMinuta() {
     setMaquinaData(null);
     setSesionActivaMaquina(null);
     setSesionMaquinaError("");
-    fetch(`${API_BASE_URL}/maquinas/${target}`)
+    apiFetch(`${API_BASE_URL}/maquinas/${target}`)
       .then((res) => {
         if (!res.ok) throw new Error("Máquina no encontrada");
         return res.json();
@@ -347,7 +349,7 @@ export default function NuevaMinuta() {
     let sesionNueva = null;
     if (sesionId) {
       try {
-        const res = await fetch(`${API_BASE_URL}/sesiones-trabajo/${sesionId}`);
+        const res = await apiFetch(`${API_BASE_URL}/sesiones-trabajo/${sesionId}`);
         if (res.ok) {
           sesionNueva = await res.json().catch(() => null);
           if (sesionNueva) {
@@ -558,7 +560,7 @@ export default function NuevaMinuta() {
       maquina: maquinaData?.id,
       desdeTablet: true,
     };
-    fetch(`${API_BASE_URL}/sesiones-trabajo`, {
+    apiFetch(`${API_BASE_URL}/sesiones-trabajo`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(sesion),
@@ -734,7 +736,7 @@ export default function NuevaMinuta() {
       return;
     }
     try {
-      const resDescanso = await fetch(`${API_BASE_URL}/estados-trabajador`, {
+      const resDescanso = await apiFetch(`${API_BASE_URL}/estados-trabajador`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -812,7 +814,7 @@ export default function NuevaMinuta() {
       return;
     }
     try {
-      const res = await fetch(`${API_BASE_URL}/estados-maquina`, {
+      const res = await apiFetch(`${API_BASE_URL}/estados-maquina`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -972,7 +974,7 @@ export default function NuevaMinuta() {
       codigoOrden,
       proceso,
     };
-    fetch(`${API_BASE_URL}/minutas`, {
+    apiFetch(`${API_BASE_URL}/minutas`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(minuta),
@@ -1000,7 +1002,7 @@ export default function NuevaMinuta() {
 
   const asignarPasoASesion = async (sesionId, pasoId) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/sesion-trabajo-pasos`, {
+      const res = await apiFetch(`${API_BASE_URL}/sesion-trabajo-pasos`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1209,8 +1211,9 @@ export default function NuevaMinuta() {
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto text-sm sm:text-base">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_18rem] gap-6 items-start">
-        <div>
-          <div className="flex justify-end mb-4">
+        <div className="order-2 lg:order-1">
+          <div className="flex items-center justify-between mb-4">
+            <BackendStatusIndicator />
             <button
               onClick={() => navigate("/login")}
               className="text-blue-600 font-medium hover:underline"
@@ -1285,7 +1288,7 @@ export default function NuevaMinuta() {
             </SesionSeleccionadaPanel>
           )}
         </div>
-        <aside className="lg:sticky lg:top-24">
+        <aside className="order-1 lg:order-2 lg:sticky lg:top-24">
           <div className="bg-white rounded-xl shadow-md p-3 border">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-semibold text-sm">Sesiones iniciadas</h3>

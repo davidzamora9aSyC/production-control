@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 import { API_BASE_URL } from "../api";
+import { apiFetch } from "../api";
 
 function extractOrdenId(text = "") {
   if (!text) return "";
@@ -175,7 +176,7 @@ export default function PasoOrdenSelectorModal({
     setPasos([]);
     setSelectedPasoId("");
     try {
-      const res = await fetch(`${API_BASE_URL}/ordenes/${ordenId}/pasos-mini`);
+      const res = await apiFetch(`${API_BASE_URL}/ordenes/${ordenId}/pasos-mini`);
       if (!res.ok) throw new Error("No se pudieron obtener los pasos.");
       const data = await res.json();
       setPasos(Array.isArray(data) ? data : []);

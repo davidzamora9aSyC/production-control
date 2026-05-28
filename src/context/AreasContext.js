@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
 import { API_BASE_URL } from "../api";
 import { useAuth } from "./AuthContext";
+import { apiFetch } from "../api";
 
 const AreasContext = createContext(null);
 
@@ -14,7 +15,7 @@ export function AreasProvider({ children }) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE_URL}/areas`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const res = await apiFetch(`${API_BASE_URL}/areas`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       if (!res.ok) throw new Error("No se pudieron cargar las áreas");
       const data = await res.json();
       setAreas(Array.isArray(data) ? data : []);

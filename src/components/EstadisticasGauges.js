@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAreas } from "../context/AreasContext";
-
-const API_BASE = "https://smartindustries.org";
+import { API_BASE_URL } from "../api";
+import { apiFetch } from "../api";
 
 function StatCard({ label, valueText }) {
   return (
@@ -56,8 +56,8 @@ export default function EstadisticasGauges() {
     const load = async () => {
       try {
         const [diaRes, mesRes] = await Promise.all([
-          fetch(`${API_BASE}/indicadores/resumen/dia?fecha=${hoy}`),
-          fetch(`${API_BASE}/indicadores/resumen/mes-actual`),
+          apiFetch(`${API_BASE_URL}/indicadores/resumen/dia?fecha=${hoy}`),
+          apiFetch(`${API_BASE_URL}/indicadores/resumen/mes-actual`),
         ]);
         const diaAll = await diaRes.json();
         const mesAll = await mesRes.json();

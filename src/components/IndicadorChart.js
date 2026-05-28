@@ -2,9 +2,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useState, useEffect, useMemo, useContext } from "react";
 import { ExpandButton, ExpandContext } from "./ExpandableCard";
 import { useAreas } from "../context/AreasContext";
-import { fetchJsonCached } from "../api";
-
-const API_BASE = "https://smartindustries.org";
+import { fetchJsonCached, API_BASE_URL } from "../api";
 
 export default function IndicadorChart({ metricKey, title, isPercent = true }) {
   const [proceso, setProceso] = useState("");
@@ -35,8 +33,8 @@ export default function IndicadorChart({ metricKey, title, isPercent = true }) {
       try {
         const needsAreaParam = endpoint.endsWith("ano-actual") || endpoint.endsWith("mes-actual");
         const url = needsAreaParam && proceso
-          ? `${API_BASE}${endpoint}?areaId=${encodeURIComponent(proceso)}`
-          : `${API_BASE}${endpoint}`;
+          ? `${API_BASE_URL}${endpoint}?areaId=${encodeURIComponent(proceso)}`
+          : `${API_BASE_URL}${endpoint}`;
         const json = await fetchJsonCached(url, {}, { ttlMs: 15000 });
         const arr = Array.isArray(json) ? json : [];
         // Si el endpoint trae varias áreas (ultimos-XX), filtrar solo si hay un área seleccionada.

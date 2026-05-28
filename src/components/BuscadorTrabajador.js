@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../api";
+import { apiFetch } from "../api";
 
 export default function BuscadorTrabajador({ onSelect, onClose }) {
   const [trabajadores, setTrabajadores] = useState([]);
   const [seleccion, setSeleccion] = useState(null);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/trabajadores`)
+    apiFetch(`${API_BASE_URL}/trabajadores`)
       .then(res => res.json())
       .then(setTrabajadores)
       .catch(err => console.error("Error al obtener trabajadores:", err));
@@ -44,4 +45,3 @@ export default function BuscadorTrabajador({ onSelect, onClose }) {
     </div>
   );
 }
-

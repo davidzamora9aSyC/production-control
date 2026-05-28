@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../api";
+import { apiFetch } from "../api";
 
 const esAsignacionFinalizada = (item = {}) => {
   const finalizadoVal = item?.finalizado;
@@ -78,7 +79,7 @@ export default function SesionSeleccionadaPanel({
     }
     setCargandoDetalle(true);
     setErrorDetalle("");
-    fetch(`${API_BASE_URL}/sesiones-trabajo/${sesionId}`)
+    apiFetch(`${API_BASE_URL}/sesiones-trabajo/${sesionId}`)
       .then((res) => {
         if (!res.ok)
           throw new Error(
@@ -122,7 +123,7 @@ export default function SesionSeleccionadaPanel({
     }
     setCargandoPasos(true);
     setErrorPasos("");
-    fetch(`${API_BASE_URL}/sesion-trabajo-pasos/por-sesion/${sesionId}`)
+    apiFetch(`${API_BASE_URL}/sesion-trabajo-pasos/por-sesion/${sesionId}`)
       .then((res) => {
         if (!res.ok)
           throw new Error("No se pudieron obtener las asignaciones activas.");

@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import EditarAsignacion from "../components/EditarAsignacion";
 import ErrorPopup from "../components/ErrorPopup";
 import QRCode from "qrcode";
+import { API_BASE_URL } from "../api";
+import { apiFetch } from "../api";
 
 const ESTADO_COLORES = {
   pendiente: "bg-gray-400",
@@ -35,7 +37,7 @@ export default function DetalleOrden() {
   const { id } = useParams();
 
   useEffect(() => {
-    fetch(`https://smartindustries.org/ordenes/${id}/detalle`)
+    apiFetch(`${API_BASE_URL}/ordenes/${id}/detalle`)
       .then(res => res.json())
       .then(data => {
         setOrden(data);
@@ -66,7 +68,7 @@ export default function DetalleOrden() {
   const handleEliminar = async () => {
     if (!window.confirm("¿Seguro que deseas eliminar esta orden?")) return;
     try {
-      const res = await fetch(`https://smartindustries.org/ordenes/${id}`, {
+      const res = await apiFetch(`${API_BASE_URL}/ordenes/${id}`, {
         method: "DELETE",
       });
       if (res.ok) navigate("/ordenes");

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../api";
+import { apiFetch } from "../api";
 
 export default function BuscadorSesion({ onSelect, onClose, idsSesionesActuales = [] }) {
   const [sesiones, setSesiones] = useState([]);
   const [filtro, setFiltro] = useState("");
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/sesiones-trabajo/activas`)
+    apiFetch(`${API_BASE_URL}/sesiones-trabajo/activas`)
       .then(res => res.json())
       .then(setSesiones)
       .catch(err => console.error("Error al obtener sesiones:", err));

@@ -1,4 +1,34 @@
-export const API_BASE_URL = 'https://smartindustries.org';
+const defaultBaseUrl = (() => {
+  if (typeof window === "undefined") return "https://smartindustries.org";
+
+  const host = window.location.hostname;
+  const protocol = window.location.protocol || "http:";
+
+  // Keep the public production domain intact.
+  if (host.endsWith("smartindustries.org")) return "https://smartindustries.org";
+
+  // For local/LAN/ngrok, route through the gateway at the same origin.
+  return `${protocol}//${host}/api`;
+})();
+
+export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || defaultBaseUrl;
+
+
+const TOKEN_KEY = "auth:token";
+
+export async function apiFetch(pathOrUrl, init = {}) {
+  const url = resolveUrl(pathOrUrl);
+  const headers = new Headers(init.headers || {});
+  try {
+    const token = typeof window !== "undefined" ? window.localStorage.getItem(TOKEN_KEY) : null;
+    if (token && !headers.has("Authorization")) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return fetch(url, { ...init, headers });
+}
 
 // Lightweight cache with in-flight request deduplication for GET JSON endpoints
 // Keyed by method+URL+Authorization header. Intended to reduce burst calls.
@@ -34,7 +64,7 @@ export async function fetchJsonCached(pathOrUrl, init = {}, opts = {}) {
 
   // Only cache GET
   if (method !== 'GET') {
-    const res = await fetch(url, init);
+    const res = await apiFetch(url, init);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   }
@@ -49,7 +79,7 @@ export async function fetchJsonCached(pathOrUrl, init = {}, opts = {}) {
   }
 
   const p = (async () => {
-    const res = await fetch(url, init);
+    const res = await apiFetch(url, init);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     __cache.set(key, { ts: Date.now(), data });

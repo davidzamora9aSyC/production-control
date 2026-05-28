@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { API_BASE_URL } from "../api";
 import { useAreas } from "../context/AreasContext";
 import { useAuth } from "../context/AuthContext";
+import { apiFetch } from "../api";
 
 /**
  * Selector para buscar máquinas por nombre y opcionalmente filtrar por área.
@@ -32,7 +33,7 @@ export default function MaquinaSelector({ selected, onSelect = () => {}, classNa
       if (query.trim()) params.set("q", query.trim());
       if (areaId) params.set("areaId", areaId);
       params.set("limit", "12");
-      fetch(`${API_BASE_URL}/maquinas/buscar?${params.toString()}`, {
+      apiFetch(`${API_BASE_URL}/maquinas/buscar?${params.toString()}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         signal: controller.signal,
       })

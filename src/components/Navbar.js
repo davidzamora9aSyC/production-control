@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import logoNavbar from "../assets/logoNavbar.png";
 import { useAuth } from "../context/AuthContext";
+import BackendStatusIndicator from "./BackendStatusIndicator";
 
 
 export default function Navbar() {
@@ -131,9 +132,11 @@ export default function Navbar() {
             >
               Cerrar sesión
             </button>
+            <BackendStatusIndicator className="hidden md:inline-flex ml-4" />
             {menuMovilAbierto && (
               <div className="md:hidden fixed top-20 left-0 right-0 bg-white border-t shadow-lg z-40">
                 <div className="px-6 py-4 space-y-4">
+                  <BackendStatusIndicator />
                   <div className="flex flex-col gap-3">
                     {links.map(link => (
                       <button

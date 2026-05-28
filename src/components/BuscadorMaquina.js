@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../api";
+import { apiFetch } from "../api";
 
 export default function BuscadorMaquina({ onSelect, onClose }) {
   const [maquinas, setMaquinas] = useState([]);
   const [filtro, setFiltro] = useState("");
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/maquinas`)
+    apiFetch(`${API_BASE_URL}/maquinas`)
       .then(res => res.json())
       .then(setMaquinas)
       .catch(err => console.error("Error al obtener máquinas:", err));
@@ -47,4 +48,3 @@ export default function BuscadorMaquina({ onSelect, onClose }) {
     </div>
   );
 }
-

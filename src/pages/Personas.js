@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver";
 import { API_BASE_URL } from "../api";
 import QRCode from "qrcode";
+import { apiFetch } from "../api";
 
 const ITEMS_POR_PAGINA = 8;
 
@@ -23,7 +24,7 @@ export default function Personas() {
     const menuRef = useRef();
 
     useEffect(() => {
-        fetch(`${API_BASE_URL}/trabajadores`)
+        apiFetch(`${API_BASE_URL}/trabajadores`)
             .then(res => res.json())
             .then(setTrabajadores)
             .catch(err => console.error("Error al obtener trabajadores:", err));
@@ -63,7 +64,7 @@ export default function Personas() {
     // Borrar trabajador con confirmación
     const borrar = (id) => {
         if (!window.confirm("¿Seguro que quieres borrar este trabajador?")) return;
-        fetch(`${API_BASE_URL}/trabajadores/${id}`, { method: 'DELETE' })
+        apiFetch(`${API_BASE_URL}/trabajadores/${id}`, { method: 'DELETE' })
           .then(res => {
               if (!res.ok) throw new Error("Error al borrar trabajador");
               setTrabajadores(prevs => prevs.filter(t => t.id !== id));
@@ -223,7 +224,7 @@ export default function Personas() {
                     mostrarLabels={true}
                     onCancel={() => setMostrarFormulario(false)}
                     onSubmit={(data) => {
-                        fetch(`${API_BASE_URL}/trabajadores`, {
+                        apiFetch(`${API_BASE_URL}/trabajadores`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(data)
@@ -233,7 +234,7 @@ export default function Personas() {
                             return res.json();
                         })
                         .then(() => {
-                            fetch(`${API_BASE_URL}/trabajadores`)
+                            apiFetch(`${API_BASE_URL}/trabajadores`)
                                 .then(res => res.json())
                                 .then(setTrabajadores)
                                 .catch(err => console.error("Error al actualizar lista de trabajadores:", err));
@@ -278,7 +279,7 @@ export default function Personas() {
                                 delete limpio.id;
                                 delete limpio.estado;
            
-                                fetch(`${API_BASE_URL}/trabajadores/${editar.id}`, {
+                                apiFetch(`${API_BASE_URL}/trabajadores/${editar.id}`, {
                                     method: 'PUT',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify(limpio)

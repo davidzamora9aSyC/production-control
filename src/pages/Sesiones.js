@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../api";
 import { FaInfoCircle } from "react-icons/fa";
 import SesionIndicadoresModal from "../components/SesionIndicadoresModal";
+import { apiFetch } from "../api";
 
 const ITEMS_POR_PAGINA = 8;
 
@@ -14,7 +15,7 @@ export default function Sesiones() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetch(`${API_BASE_URL}/sesiones-trabajo/actuales`)
+        apiFetch(`${API_BASE_URL}/sesiones-trabajo/actuales`)
             .then(res => res.json())
             .then(data => {
                 console.log("Datos recibidos:", data);

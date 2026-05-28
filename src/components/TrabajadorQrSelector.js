@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 import { API_BASE_URL } from "../api";
+import { apiFetch } from "../api";
 
 function extractTrabajadorId(text = "") {
   if (!text) return "";
@@ -163,7 +164,7 @@ export default function TrabajadorQrSelector({
     setLoading(true);
     setFetchError("");
     try {
-      const res = await fetch(`${API_BASE_URL}/trabajadores/${id}`);
+      const res = await apiFetch(`${API_BASE_URL}/trabajadores/${id}`);
       if (!res.ok) throw new Error("Trabajador no encontrado");
       const data = await res.json();
       onSelect(data);

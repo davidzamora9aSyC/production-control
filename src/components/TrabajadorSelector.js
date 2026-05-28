@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../api";
 import { useAuth } from "../context/AuthContext";
+import { apiFetch } from "../api";
 
 /**
  * Selector liviano para buscar trabajadores por nombre o identificación.
@@ -26,7 +27,7 @@ export default function TrabajadorSelector({ selected, onSelect = () => {}, clas
       const params = new URLSearchParams();
       params.set("q", query.trim());
       params.set("limit", "15");
-      fetch(`${API_BASE_URL}/trabajadores/buscar?${params.toString()}`, {
+      apiFetch(`${API_BASE_URL}/trabajadores/buscar?${params.toString()}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         signal: controller.signal,
       })

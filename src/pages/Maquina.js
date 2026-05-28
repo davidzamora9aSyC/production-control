@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useParams } from "react-router-dom";
+import { API_BASE_URL } from "../api";
+import { apiFetch } from "../api";
 export default function Maquina() {
     const [fechaHora, setFechaHora] = useState(new Date());
     const [data, setData] = useState([]);
@@ -17,14 +19,14 @@ export default function Maquina() {
     }, []);
 
     useEffect(() => {
-        fetch(`https://smartindustries.org/sesiones-trabajo/${id}`)
+        apiFetch(`${API_BASE_URL}/sesiones-trabajo/${id}`)
             .then(res => res.json())
             .then(data => {
                 setSesion(data);
                 setMaquina(data.maquina);
                 // Nueva lógica para obtener orden-produccion y manejar error 404
                 // Se debe usar el id de la URL (useParams), no el id del payload
-                fetch(`https://smartindustries.org/sesiones-trabajo/${id}/orden-produccion`)
+                apiFetch(`${API_BASE_URL}/sesiones-trabajo/${id}/orden-produccion`)
                   .then(async res => {
                     const payload = await res.json().catch(() => ({}));
                     if (!res.ok) {
@@ -51,7 +53,7 @@ export default function Maquina() {
                 const inicioUTC = inicio.toISOString();
                 const finUTC = fin.toISOString();
                 // Fetch de mantenimientos
-                fetch(`https://smartindustries.org/estados-maquina/maquina/${data.maquina?.id}?inicio=${inicioUTC}&fin=${finUTC}`)
+                apiFetch(`${API_BASE_URL}/estados-maquina/maquina/${data.maquina?.id}?inicio=${inicioUTC}&fin=${finUTC}`)
                     .then(res => res.json())
                     .then(mantenimientosRaw => {
                         // Los mantenimientos ya vienen en UTC; convertimos sus fechas a hora Colombia
@@ -65,7 +67,7 @@ export default function Maquina() {
                         // Obtener descansos del trabajador
                         const trabajadorId = data.trabajador?.id;
                         if (trabajadorId) {
-                            fetch(`https://smartindustries.org/estados-trabajador/trabajador/${trabajadorId}?inicio=${inicioUTC}&fin=${finUTC}`)
+                            apiFetch(`${API_BASE_URL}/estados-trabajador/trabajador/${trabajadorId}?inicio=${inicioUTC}&fin=${finUTC}`)
                                 .then(res => res.json())
                                 .then(descansosRaw => {
                                     // Convertimos a intervalos en Colombia y ajustamos inicio y fin
@@ -78,7 +80,7 @@ export default function Maquina() {
                                     });
 
                                     // Continúa con el fetch de registro-minuto usando el id de la URL
-                                    fetch(`https://smartindustries.org/registro-minuto/sesion/${id}/ultimos`)
+                                    apiFetch(`${API_BASE_URL}/registro-minuto/sesion/${id}/ultimos`)
                                         .then(res => res.json())
                                         .then(registros => {
                                             const dataTransformada = registros.map(r => {
@@ -123,7 +125,7 @@ export default function Maquina() {
                         } else {
                             // Si no hay trabajador, seguimos con el fetch de registro-minuto como antes, sin descansos
                             // Usar el id de la URL
-                            fetch(`https://smartindustries.org/registro-minuto/sesion/${id}/ultimos`)
+                            apiFetch(`${API_BASE_URL}/registro-minuto/sesion/${id}/ultimos`)
                                 .then(res => res.json())
                                 .then(registros => {
                                     const dataTransformada = registros.map(r => {

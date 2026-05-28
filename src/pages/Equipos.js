@@ -5,6 +5,7 @@ import MaquinaForm from "../components/MaquinaForm";
 import ErrorPopup from "../components/ErrorPopup";
 import { API_BASE_URL } from "../api";
 import QRCode from "qrcode";
+import { apiFetch } from "../api";
 
 const ITEMS_POR_PAGINA = 8;
 
@@ -22,7 +23,7 @@ export default function Equipos() {
     const menuRef = useRef();
 
     const cargarEquipos = () => {
-        fetch(`${API_BASE_URL}/maquinas`)
+        apiFetch(`${API_BASE_URL}/maquinas`)
             .then(res => res.json())
             .then(setEquipos)
             .catch(err => console.error("Error al obtener máquinas:", err));
@@ -47,7 +48,7 @@ export default function Equipos() {
     const borrarMaquina = (id, e) => {
         e.stopPropagation();
         if (!window.confirm("¿Seguro que deseas borrar esta máquina?")) return;
-        fetch(`${API_BASE_URL}/maquinas/${id}`, { method: "DELETE" })
+        apiFetch(`${API_BASE_URL}/maquinas/${id}`, { method: "DELETE" })
           .then(res => {
             if (!res.ok) throw new Error("Error al borrar máquina");
             setEquipos(prev => prev.filter(eq => eq.id !== id));

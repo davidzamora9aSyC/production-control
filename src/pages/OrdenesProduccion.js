@@ -4,6 +4,8 @@ import * as XLSX from "xlsx";
 import ModalCargarCSV from "../components/ModalCargarCSV";
 import { API_BASE_URL } from "../api";
 import parseOrdenProduccionTxt from "../utils/parseOrdenProduccionTxt";
+import { useAuth } from "../context/AuthContext";
+import { apiFetch } from "../api";
 
 const ITEMS_POR_PAGINA = 8;
 
@@ -14,13 +16,17 @@ export default function OrdenesProduccion() {
   const [ordenes, setOrdenes] = useState([]);
   const [respuestaCarga, setRespuestaCarga] = useState(null);
   const navigate = useNavigate();
+  const { token } = useAuth();
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/ordenes`)
+    if (!token) return;
+    apiFetch(`${API_BASE_URL}/ordenes`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
       .then(res => res.json())
       .then(setOrdenes)
-      .catch(err => console.error("Error al obtener órdenes:", err));
-  }, []);
+      .catch(err => console.error("Error al obtener ?rdenes:", err));
+  }, [token]);
 
   const totalPaginas = Math.ceil(ordenes.length / ITEMS_POR_PAGINA);
   const mostrar = ordenes.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
@@ -201,7 +207,11 @@ export default function OrdenesProduccion() {
       }
 
       for (const orden of ordenes) {
-        const res = await fetch(`${API_BASE_URL}/ordenes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(orden) });
+        const headers = {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+        const res = await apiFetch(`${API_BASE_URL}/ordenes`, { method: "POST", headers, body: JSON.stringify(orden) });
         const text = await res.text();
         if (!res.ok) throw new Error(`${res.status} ${text}`);
       }

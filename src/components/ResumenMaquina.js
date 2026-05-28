@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../api";
 import { useAuth } from "../context/AuthContext";
 import Tooltip from "./Tooltip";
+import { apiFetch } from "../api";
 
 function Stat({ label, value, suffix = "", desc, extra = null, tooltip = "" }) {
   return (
@@ -48,7 +49,7 @@ export default function ResumenMaquina() {
   }, []);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/maquinas`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+    apiFetch(`${API_BASE_URL}/maquinas`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
       .then((r) => r.json())
       .then((arr) => setMaquinas(Array.isArray(arr) ? arr : []))
       .catch(() => setMaquinas([]));

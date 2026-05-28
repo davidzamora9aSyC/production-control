@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAreas } from "../context/AreasContext";
+import { API_BASE_URL } from "../api";
+import { apiFetch } from "../api";
 
 export default function EstadisticasPanel() {
     const [proceso, setProceso] = useState("8f56484e-8717-43f1-ae33-4ddf1bc7ac35");
@@ -14,13 +16,12 @@ export default function EstadisticasPanel() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const API_BASE = "https://smartindustries.org";
                 const hoy = new Date().toISOString().split("T")[0];
 
                 const [ult30Res, resumenDiaRes, resumenMesRes] = await Promise.all([
-                    fetch(`${API_BASE}/indicadores/diaria/ultimos-30-dias`),
-                    fetch(`${API_BASE}/indicadores/resumen/dia?fecha=${hoy}`),
-                    fetch(`${API_BASE}/indicadores/resumen/mes-actual`),
+                    apiFetch(`${API_BASE_URL}/indicadores/diaria/ultimos-30-dias`),
+                    apiFetch(`${API_BASE_URL}/indicadores/resumen/dia?fecha=${hoy}`),
+                    apiFetch(`${API_BASE_URL}/indicadores/resumen/mes-actual`),
                 ]);
 
                 const ult30All = await ult30Res.json();

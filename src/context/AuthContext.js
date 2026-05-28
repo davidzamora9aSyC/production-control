@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
+import { API_BASE_URL } from "../api";
+import { apiFetch } from "../api";
 
-const API_BASE = "https://smartindustries.org";
 const TOKEN_KEY = "auth:token";
 
 const AuthContext = createContext(null);
@@ -12,7 +13,7 @@ export function AuthProvider({ children }) {
 
   const validateToken = useCallback(async (tkn) => {
     try {
-      const res = await fetch(`${API_BASE}/auth/validate`, {
+      const res = await apiFetch(`${API_BASE_URL}/auth/validate`, {
         method: "GET",
         headers: { Authorization: `Bearer ${tkn}` },
       });
@@ -46,7 +47,7 @@ export function AuthProvider({ children }) {
   }, [validateToken]);
 
   const login = useCallback(async (username, password) => {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    const res = await apiFetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
