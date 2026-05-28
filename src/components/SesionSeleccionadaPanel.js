@@ -173,7 +173,7 @@ export default function SesionSeleccionadaPanel({
     <div className="bg-white rounded-xl shadow-md p-6 space-y-5">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Sesión seleccionada</h2>
+          <h2 className="text-2xl font-semibold">Sesión seleccionada</h2> 
         </div>
         <button
           type="button"
