@@ -175,7 +175,7 @@ export default function SesionSeleccionadaPanel({
         <div>
           <h2 className="text-2xl font-semibold">Sesión seleccionada</h2> 
         </div>
-        <button
+        <button 
           type="button"
           onClick={onSeleccionarOtra}
           className="self-start px-3 py-1.5 rounded-full border text-sm hover:bg-gray-50"
