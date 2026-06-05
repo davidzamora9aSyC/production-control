@@ -2,16 +2,30 @@ import { useState, useEffect } from "react";
 import { API_BASE_URL, apiFetch } from "../api";
 import { useAreas } from "../context/AreasContext";
 
+const TIPOS_MAQUINA_FALLBACK = [
+  { value: "troqueladora", label: "Troqueladora" },
+  { value: "taladro", label: "Taladro" },
+  { value: "horno", label: "Horno" },
+  { value: "vulcanizadora", label: "Vulcanizadora" },
+  { value: "soldadura", label: "Soldadura" },
+  { value: "prensa_hidraulica", label: "Prensa Hidráulica" },
+  { value: "soldadura_mig", label: "Soldadura MIG" },
+  { value: "soldadura_punto", label: "Soldadura punto" },
+  { value: "selladora", label: "Selladora" },
+  { value: "avellanadora", label: "Avellanadora" },
+];
+
 export default function MaquinaForm({ onSave, onClose, equipo, modo, onError }) {
   const [form, setForm] = useState({
     codigo: equipo?.codigo || "",
     nombre: equipo?.nombre || "",
-    tipo: equipo?.tipo || "troqueladora",
+    tipo: equipo?.tipo || TIPOS_MAQUINA_FALLBACK[0].value,
     ubicacion: equipo?.ubicacion || "",
     fechaInstalacion: equipo?.fechaInstalacion || "",
     observaciones: equipo?.observaciones || "",
     areaId: equipo?.areaId || equipo?.area?.id || ""
   });
+  const [tiposMaquina, setTiposMaquina] = useState(TIPOS_MAQUINA_FALLBACK);
 
   const { areas, error: areasError } = useAreas();
 
@@ -24,6 +38,32 @@ export default function MaquinaForm({ onSave, onClose, equipo, modo, onError }) 
       setAreasNotified(true);
     }
   }, [areasError, areasNotified, onError]);
+
+  useEffect(() => {
+    let cancelado = false;
+
+    apiFetch(`${API_BASE_URL}/maquinas/tipos`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error("No se pudieron cargar los tipos de máquina");
+        return res.json();
+      })
+      .then((tipos) => {
+        if (!cancelado && Array.isArray(tipos) && tipos.length > 0) {
+          setTiposMaquina(tipos);
+          setForm((prev) => {
+            if (prev.tipo) return prev;
+            return { ...prev, tipo: tipos[0].value };
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error al cargar tipos de máquina:", err);
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -88,7 +128,7 @@ export default function MaquinaForm({ onSave, onClose, equipo, modo, onError }) 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+      <div className="bg-white p-6 rounded-lg w-full max-w-md max-h-[80vh] overflow-y-auto shadow-lg">
         <h2 className="text-xl font-semibold mb-4">{modo === 'editar' ? "Editar máquina" : "Registrar máquina"}</h2>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <label>Código</label>
@@ -97,10 +137,9 @@ export default function MaquinaForm({ onSave, onClose, equipo, modo, onError }) 
           <input name="nombre" placeholder="Nombre de la máquina" value={form.nombre} onChange={handleChange} className="border px-3 py-2 rounded" required />
           <label>Tipo</label>
           <select name="tipo" value={form.tipo} onChange={handleChange} className="border px-3 py-2 rounded" required>
-            <option value="troqueladora">Troqueladora</option>
-            <option value="taladro">Taladro</option>
-            <option value="horno">Horno</option>
-            <option value="vulcanizadora">Vulcanizadora</option>
+            {tiposMaquina.map((tipo) => (
+              <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+            ))}
           </select>
           <label>Área</label>
           <select name="areaId" value={form.areaId} onChange={handleChange} className="border px-3 py-2 rounded" required>

@@ -4,16 +4,15 @@ const defaultBaseUrl = (() => {
   if (typeof window === "undefined") return PUBLIC_API_BASE_URL;
 
   const host = window.location.hostname;
-  const protocol = window.location.protocol || "http:";
 
   // Public deployments must call the backend host directly. Vercel only serves
   // the React app, so /api there falls back to index.html instead of Nest.
-  if (host === "production-control.vercel.app") {
+  if (host === "production-control.vercel.app" || host.endsWith(".vercel.app")) {
     return PUBLIC_API_BASE_URL;
   }
 
   // For local/LAN/ngrok, route through the gateway at the same origin.
-  return `${protocol}//${host}/api`;
+  return `${window.location.origin}/api`;
 })();
 
 export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || defaultBaseUrl;
