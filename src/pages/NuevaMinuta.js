@@ -134,6 +134,7 @@ export default function NuevaMinuta() {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [accionCard, setAccionCard] = useState("");
   const [piezasDefectuosas, setPiezasDefectuosas] = useState("");
+  const [comentarioDefectuosas, setComentarioDefectuosas] = useState("");
   const [sesionDetalle, setSesionDetalle] = useState(null);
   const navigate = useNavigate();
 
@@ -405,6 +406,7 @@ export default function NuevaMinuta() {
     setNpt("");
     setAsignacionPasoFinalizarId("");
     setPiezasDefectuosas("");
+    setComentarioDefectuosas("");
     if (valor === "asignar-paso") {
       setAccion("");
     } else {
@@ -421,6 +423,7 @@ export default function NuevaMinuta() {
     setMeta("");
     setNpt("");
     setPiezasDefectuosas("");
+    setComentarioDefectuosas("");
     setAccion("");
     setAccionCard("");
     setAsignacionPasoFinalizarId("");
@@ -438,6 +441,7 @@ export default function NuevaMinuta() {
     setMeta("");
     setNpt("");
     setPiezasDefectuosas("");
+    setComentarioDefectuosas("");
     setAccion("");
     setAccionCard("");
     setAsignacionPasoFinalizarId("");
@@ -621,6 +625,7 @@ export default function NuevaMinuta() {
         setAsignacionesSesion([]);
         setAsignacionPasoFinalizarId("");
         setPiezasDefectuosas("");
+        setComentarioDefectuosas("");
         setModalMensaje(mensaje);
         setMostrarModal(true);
         setSesionesTrabajadorVersion((prev) => prev + 1);
@@ -685,6 +690,7 @@ export default function NuevaMinuta() {
     asignacionId,
     piezasBuenas,
     pedaleos,
+    comentarioDefectuosasValor,
     contextoError,
   ) => {
     if (!asignacionId) return;
@@ -696,6 +702,7 @@ export default function NuevaMinuta() {
         body: JSON.stringify({
           cantidadProducida: piezasBuenas,
           cantidadPedaleos: pedaleos,
+          comentarioDefectuosas: comentarioDefectuosasValor,
         }),
       },
     );
@@ -753,6 +760,7 @@ export default function NuevaMinuta() {
       setModalMensaje("Descanso iniciado correctamente.");
       setPiezas("");
       setPiezasDefectuosas("");
+      setComentarioDefectuosas("");
       setAccion("");
       setAccionCard("");
       setMostrarModal(true);
@@ -794,6 +802,7 @@ export default function NuevaMinuta() {
       setAccionCard("");
       setPiezas("");
       setPiezasDefectuosas("");
+      setComentarioDefectuosas("");
       setSesionAsignacionesVersion((prev) => prev + 1);
       setMostrarModal(true);
     } catch (err) {
@@ -832,6 +841,7 @@ export default function NuevaMinuta() {
       setModalMensaje("Mantenimiento iniciado correctamente.");
       setPiezas("");
       setPiezasDefectuosas("");
+      setComentarioDefectuosas("");
       setAccion("");
       setAccionCard("");
       setMostrarModal(true);
@@ -871,6 +881,7 @@ export default function NuevaMinuta() {
       setAccionCard("");
       setPiezas("");
       setPiezasDefectuosas("");
+      setComentarioDefectuosas("");
       setMostrarModal(true);
       setSesionAsignacionesVersion((prev) => prev + 1);
     } catch (err) {
@@ -893,6 +904,7 @@ export default function NuevaMinuta() {
         asignacionPasoFinalizarId,
         piezasBuenas,
         pedaleos,
+        comentarioDefectuosas,
         "finalizar el trabajo del paso",
       );
       const res = await apiFetch(
@@ -912,6 +924,7 @@ export default function NuevaMinuta() {
       setAccionCard("");
       setPiezas("");
       setPiezasDefectuosas("");
+      setComentarioDefectuosas("");
       setAsignacionPasoFinalizarId("");
       setMostrarModal(true);
       setSesionAsignacionesVersion((prev) => prev + 1);
@@ -985,6 +998,7 @@ export default function NuevaMinuta() {
       .then(() => {
         setPiezas("");
         setPiezasDefectuosas("");
+        setComentarioDefectuosas("");
         setMeta("");
         setNpt("");
         setAccion("");
@@ -1286,6 +1300,8 @@ export default function NuevaMinuta() {
                 setPiezas={setPiezas}
                 piezasDefectuosas={piezasDefectuosas}
                 setPiezasDefectuosas={setPiezasDefectuosas}
+                comentarioDefectuosas={comentarioDefectuosas}
+                setComentarioDefectuosas={setComentarioDefectuosas}
                 onOperacionSubmit={handleOperacionSubmit}
               />
             </SesionSeleccionadaPanel>

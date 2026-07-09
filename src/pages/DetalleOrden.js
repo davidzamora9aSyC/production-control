@@ -50,6 +50,7 @@ export default function DetalleOrden() {
   const [pasoSeleccionado, setPasoSeleccionado] = useState(null);
   const [asignaciones, setAsignaciones] = useState({});
   const [errorMsg, setErrorMsg] = useState(null);
+  const [comentarioModal, setComentarioModal] = useState(null);
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -239,6 +240,7 @@ export default function DetalleOrden() {
               <th className="px-4 py-2 border-r">Cant. asignada</th>
               <th className="px-4 py-2 border-r">Creada</th>
               <th className="px-4 py-2 border-r">Terminó</th>
+              <th className="px-4 py-2 border-r">Comentario</th>
               <th className="px-4 py-2">Estado</th>
             </tr>
           </thead>
@@ -259,6 +261,19 @@ export default function DetalleOrden() {
                   </td>
                   <td className="px-4 py-2 border-r">{formatDateTime(a.createdAt)}</td>
                   <td className="px-4 py-2 border-r">{formatDateTime(a.finalizadoEn)}</td>
+                  <td className="px-4 py-2 border-r">
+                    {a.comentarioDefectuosas ? (
+                      <button
+                        type="button"
+                        className="text-blue-600 underline"
+                        onClick={() => setComentarioModal(a)}
+                      >
+                        Ver comentario
+                      </button>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
                   <td className="px-4 py-2">
                     {a.estado}
                     {(() => {
@@ -314,6 +329,7 @@ export default function DetalleOrden() {
               }</td>
               <td className="px-4 py-2 border-r"></td>
               <td className="px-4 py-2 border-r"></td>
+              <td className="px-4 py-2 border-r"></td>
               <td className="px-4 py-2"></td>
             </tr>
           </tbody>
@@ -338,6 +354,29 @@ export default function DetalleOrden() {
       )}
       {errorMsg && (
         <ErrorPopup mensaje={errorMsg} onClose={() => setErrorMsg(null)} />
+      )}
+      {comentarioModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
+          <div className="bg-white rounded-xl shadow-lg p-6 max-w-lg w-full">
+            <h3 className="text-lg font-semibold mb-3">Comentario</h3>
+            <div className="text-sm text-gray-700 space-y-1 mb-4">
+              <div><strong>Maquina:</strong> {comentarioModal.nombreMaquina}</div>
+              <div><strong>Trabajador:</strong> {comentarioModal.nombreTrabajador}</div>
+            </div>
+            <p className="whitespace-pre-wrap text-sm border rounded-lg p-3 bg-gray-50">
+              {comentarioModal.comentarioDefectuosas}
+            </p>
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                className="px-4 py-2 rounded bg-blue-600 text-white"
+                onClick={() => setComentarioModal(null)}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

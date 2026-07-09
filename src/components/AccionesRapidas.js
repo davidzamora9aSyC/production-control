@@ -38,6 +38,8 @@ export default function AccionesRapidas({
   setPiezas,
   piezasDefectuosas,
   setPiezasDefectuosas,
+  comentarioDefectuosas,
+  setComentarioDefectuosas,
   onOperacionSubmit,
 }) {
   const hayAcciones = accionesDisponibles.length > 0;
@@ -228,6 +230,17 @@ export default function AccionesRapidas({
                     e.currentTarget.blur();
                   }}
                   className="w-full border rounded-full px-4 py-2"
+                />
+              </div>
+              <div>
+                <label className="block font-medium">
+                  Motivo o comentarios de piezas defectuosas
+                </label>
+                <textarea
+                  value={comentarioDefectuosas}
+                  onChange={(e) => setComentarioDefectuosas(e.target.value)}
+                  className="w-full border rounded-xl px-4 py-2 min-h-24 resize-y"
+                  placeholder="Ej: rebaba, defecto de pintura, material incompleto..."
                 />
               </div>
             </>
