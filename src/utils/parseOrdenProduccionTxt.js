@@ -74,6 +74,22 @@ const parseCantidad = (raw) => {
   return Number.isFinite(num) ? num : null;
 };
 
+const extractCantidadStandalone = (line) => {
+  const match = (line || "").trim().match(/^\d+(?:[.,]\d+)?$/);
+  if (!match) return null;
+  return parseCantidad(match[0]);
+};
+
+const extractCantidadCercaDeEtiqueta = (lines, etiquetaIdx) => {
+  if (etiquetaIdx < 0) return null;
+  const offsets = [-1, -2, 1, 2];
+  for (const offset of offsets) {
+    const cantidad = extractCantidadStandalone(lines[etiquetaIdx + offset]);
+    if (Number.isFinite(cantidad)) return cantidad;
+  }
+  return null;
+};
+
 const extractFechasYCantidad = (lines) => {
   const result = { fechaOrden: null, fechaVencimiento: null, cantidad: null };
 
@@ -100,12 +116,17 @@ const extractFechasYCantidad = (lines) => {
   }
 
   if (!Number.isFinite(result.cantidad)) {
-    const lineaCantidad = lines.find((line) => /CANT[.\s]*(?:IDAD)?\s*(?:A\s+)?PRODUCIR/i.test(line));
+    const cantidadIdx = lines.findIndex((line) => /CANT[.\s]*(?:IDAD)?\s*(?:A\s+)?PRODUCIR/i.test(line));
+    const lineaCantidad = cantidadIdx >= 0 ? lines[cantidadIdx] : null;
     if (lineaCantidad) {
       const cantidadMatch = lineaCantidad.match(/CANT[.\s]*(?:IDAD)?\s*(?:A\s+)?PRODUCIR[^0-9]*([\d.,]+)/i);
       if (cantidadMatch) {
         const cantidad = parseCantidad(cantidadMatch[1]);
         if (Number.isFinite(cantidad)) result.cantidad = cantidad;
+      }
+      if (!Number.isFinite(result.cantidad)) {
+        const cantidadCercana = extractCantidadCercaDeEtiqueta(lines, cantidadIdx);
+        if (Number.isFinite(cantidadCercana)) result.cantidad = cantidadCercana;
       }
     }
   }
