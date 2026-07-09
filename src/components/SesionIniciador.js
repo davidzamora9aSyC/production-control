@@ -129,7 +129,7 @@ export default function SesionIniciador({
                       const pasoNombre =
                         pasoInfo?.paso?.nombre ?? "Sin paso asignado";
                       const ordenCodigo =
-                        pasoInfo?.orden?.codigo || pasoInfo?.orden?.id;
+                        pasoInfo?.orden?.numero || pasoInfo?.orden?.codigo;
                       const estadoSesionRaw =
                         sesion.estadoSesion || sesion.estado || "";
                       const estadoSesionVisible = estadoSesionRaw

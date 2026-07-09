@@ -212,9 +212,8 @@ export default function AccionesRapidas({
                 <p className="text-sm text-gray-700">
                   {asignacionActiva.pasoOrden?.nombre ?? "Paso sin nombre"} ·
                   Orden{" "}
-                  {asignacionActiva.pasoOrden?.orden?.codigo ??
-                    asignacionActiva.pasoOrden?.ordenId ??
-                    asignacionActiva.pasoOrden?.orden?.id ??
+                  {asignacionActiva.pasoOrden?.orden?.numero ??
+                    asignacionActiva.pasoOrden?.orden?.codigo ??
                     "-"}
                 </p>
               ) : (

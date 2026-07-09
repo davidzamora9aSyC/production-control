@@ -962,10 +962,10 @@ export default function NuevaMinuta() {
         pasoNombre: pasoOrden?.nombre || "Paso sin nombre",
         numeroPaso: pasoOrden?.numeroPaso,
         ordenNumero:
-          ordenPaso?.codigo ||
           ordenPaso?.numero ||
-          pasoOrden?.ordenId ||
-          ordenPaso?.id ||
+          ordenPaso?.codigo ||
+          pasoOrden?.ordenNumero ||
+          pasoOrden?.numeroOrden ||
           "-",
       });
       setModalMensaje("Trabajo del paso finalizado correctamente.");

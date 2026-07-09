@@ -252,8 +252,8 @@ export default function SesionSeleccionadaPanel({
                   </div>
                   <div className="text-xs text-gray-600">
                     Orden:{" "}
-                    {item.pasoOrden?.orden?.codigo ??
-                      item.pasoOrden?.orden?.id ??
+                    {item.pasoOrden?.orden?.numero ??
+                      item.pasoOrden?.orden?.codigo ??
                       "-"}
                   </div>
                 </div>
