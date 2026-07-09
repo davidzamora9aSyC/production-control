@@ -33,6 +33,7 @@ export default function TrabajadorQrSelector({
   const [scanError, setScanError] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState("");
+  const [startingCamera, setStartingCamera] = useState(false);
   const videoRef = useRef(null);
   const readerRef = useRef(null);
   const controlsRef = useRef(null);
@@ -65,8 +66,10 @@ export default function TrabajadorQrSelector({
         console.warn("No se pudo resetear el lector", err);
       }
     }
+    readerRef.current = null;
     releaseVideoStream();
     setCameraActive(false);
+    setStartingCamera(false);
     iniciandoCamaraRef.current = false;
   };
 
@@ -88,16 +91,13 @@ export default function TrabajadorQrSelector({
     if (disabled) return;
     if (cameraActive || iniciandoCamaraRef.current) return;
     iniciandoCamaraRef.current = true;
+    setStartingCamera(true);
     setScanError("");
     setScanMessage("");
     setFetchError("");
     try {
       releaseVideoStream();
-      if (!readerRef.current) {
-        readerRef.current = new BrowserMultiFormatReader();
-      } else {
-        readerRef.current.reset();
-      }
+      readerRef.current = new BrowserMultiFormatReader();
       const reader = readerRef.current;
       lecturaEnCursoRef.current = false;
       controlsRef.current = await reader.decodeFromVideoDevice(
@@ -124,12 +124,14 @@ export default function TrabajadorQrSelector({
       );
       setCameraActive(true);
     } catch (err) {
+      console.warn("No se pudo iniciar la camara", err);
       setScanError(
         'No se pudo acceder a la camara. Autoriza el uso y vuelve a presionar "Escanear QR".',
       );
       await stopScanner();
     } finally {
       iniciandoCamaraRef.current = false;
+      setStartingCamera(false);
     }
   };
 
@@ -181,12 +183,12 @@ export default function TrabajadorQrSelector({
               if (cameraActive) void stopScanner();
               else void startScanner();
             }}
-            disabled={disabled || iniciandoCamaraRef.current}
+            disabled={disabled || startingCamera}
             className={`px-3 py-1.5 rounded-full border text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed ${
               disabled ? "cursor-not-allowed" : ""
             }`}
           >
-            {cameraActive ? "Detener camara" : "Escanear QR"}
+            {cameraActive ? "Detener camara" : startingCamera ? "Abriendo..." : "Escanear QR"}
           </button>
           {selected && (
             <button
