@@ -135,6 +135,9 @@ export default function NuevaMinuta() {
   const [accionCard, setAccionCard] = useState("");
   const [piezasDefectuosas, setPiezasDefectuosas] = useState("");
   const [comentarioDefectuosas, setComentarioDefectuosas] = useState("");
+  const [ultimoTrabajoCerrado, setUltimoTrabajoCerrado] = useState(null);
+  const [mostrarConfirmReabrirUltimo, setMostrarConfirmReabrirUltimo] =
+    useState(false);
   const [sesionDetalle, setSesionDetalle] = useState(null);
   const navigate = useNavigate();
 
@@ -424,6 +427,8 @@ export default function NuevaMinuta() {
     setNpt("");
     setPiezasDefectuosas("");
     setComentarioDefectuosas("");
+    setUltimoTrabajoCerrado(null);
+    setMostrarConfirmReabrirUltimo(false);
     setAccion("");
     setAccionCard("");
     setAsignacionPasoFinalizarId("");
@@ -472,6 +477,31 @@ export default function NuevaMinuta() {
     } else {
       const detalle = resultado.error ? `: ${resultado.error}` : ".";
       setModalMensaje(`No se pudo asignar el paso${detalle}`);
+    }
+    setMostrarModal(true);
+  };
+
+  const handleReabrirUltimoTrabajo = async () => {
+    const sesionId = obtenerSesionId(sesionActivaAsignacion);
+    const ultimo = ultimoTrabajoCerrado;
+    setMostrarConfirmReabrirUltimo(false);
+    if (!sesionId || !ultimo?.pasoId || ultimo.sesionId !== sesionId) {
+      setModalMensaje("No hay un ultimo trabajo valido para reabrir en esta sesion.");
+      setMostrarModal(true);
+      return;
+    }
+    if (asignandoPasoManual) return;
+    setAsignandoPasoManual(true);
+    const resultado = await asignarPasoASesion(sesionId, ultimo.pasoId);
+    setAsignandoPasoManual(false);
+    if (resultado.ok) {
+      setUltimoTrabajoCerrado(null);
+      setModalMensaje("Ultimo trabajo reabierto correctamente.");
+      setSesionAsignacionesVersion((prev) => prev + 1);
+      await refrescarSesionActiva();
+    } else {
+      const detalle = resultado.error ? `: ${resultado.error}` : ".";
+      setModalMensaje(`No se pudo reabrir el ultimo trabajo${detalle}`);
     }
     setMostrarModal(true);
   };
@@ -677,6 +707,8 @@ export default function NuevaMinuta() {
       setProceso("");
       setAsignacionPasoFinalizarId("");
       setMostrarModal(true);
+      setUltimoTrabajoCerrado(null);
+      setMostrarConfirmReabrirUltimo(false);
       setSesionAsignacionesVersion(0);
       setSesionesTrabajadorVersion((prev) => prev + 1);
       setSesionesAbiertasVersion((prev) => prev + 1);
@@ -896,6 +928,9 @@ export default function NuevaMinuta() {
       setMostrarModal(true);
       return;
     }
+    const asignacionFinalizada = asignacionesSesion.find(
+      (item) => item?.id === asignacionPasoFinalizarId,
+    );
     const piezasBuenas = Number(piezas) || 0;
     const piezasMalas = Number(piezasDefectuosas) || 0;
     const pedaleos = piezasBuenas + piezasMalas;
@@ -919,6 +954,20 @@ export default function NuevaMinuta() {
           "No se pudo finalizar la asignación seleccionada.";
         throw new Error(msg);
       }
+      const pasoOrden = asignacionFinalizada?.pasoOrden || {};
+      const ordenPaso = pasoOrden?.orden || {};
+      setUltimoTrabajoCerrado({
+        sesionId: obtenerSesionId(sesionActivaAsignacion),
+        pasoId: pasoOrden?.id,
+        pasoNombre: pasoOrden?.nombre || "Paso sin nombre",
+        numeroPaso: pasoOrden?.numeroPaso,
+        ordenNumero:
+          ordenPaso?.codigo ||
+          ordenPaso?.numero ||
+          pasoOrden?.ordenId ||
+          ordenPaso?.id ||
+          "-",
+      });
       setModalMensaje("Trabajo del paso finalizado correctamente.");
       setAccion("");
       setAccionCard("");
@@ -1053,6 +1102,11 @@ export default function NuevaMinuta() {
   const puedeAsignarPaso = !asignacionActivaLocal;
   const puedeFinalizarPaso = Boolean(asignacionActivaLocal);
   const puedeFinalizarSesion = !asignacionActivaLocal;
+  const puedeReabrirUltimoTrabajo = Boolean(
+    ultimoTrabajoCerrado?.pasoId &&
+      ultimoTrabajoCerrado?.sesionId === sesionActivaId &&
+      puedeAsignarPaso,
+  );
   const accionesFiltradasPorAsignacion = accionesFiltradas.filter((opt) => {
     if (opt.value === "asignar-paso") {
       return puedeAsignarPaso;
@@ -1302,6 +1356,11 @@ export default function NuevaMinuta() {
                 setPiezasDefectuosas={setPiezasDefectuosas}
                 comentarioDefectuosas={comentarioDefectuosas}
                 setComentarioDefectuosas={setComentarioDefectuosas}
+                ultimoTrabajoCerrado={ultimoTrabajoCerrado}
+                puedeReabrirUltimoTrabajo={puedeReabrirUltimoTrabajo}
+                onReabrirUltimoTrabajo={() =>
+                  setMostrarConfirmReabrirUltimo(true)
+                }
                 onOperacionSubmit={handleOperacionSubmit}
               />
             </SesionSeleccionadaPanel>
@@ -1375,6 +1434,45 @@ export default function NuevaMinuta() {
             >
               Aceptar
             </button>
+          </div>
+        </div>
+      )}
+      {mostrarConfirmReabrirUltimo && ultimoTrabajoCerrado && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 p-4">
+          <div className="bg-white p-6 rounded shadow-lg max-w-md w-full">
+            <h3 className="font-semibold text-lg mb-3">
+              Reabrir ultimo trabajo
+            </h3>
+            <p className="text-sm text-gray-700">
+              Si quieres trabajar otro paso, este boton no te sirve. Esto solo
+              vuelve a abrir el ultimo trabajo cerrado: orden{" "}
+              <strong>{ultimoTrabajoCerrado.ordenNumero}</strong>
+              {ultimoTrabajoCerrado.numeroPaso ? (
+                <>
+                  , paso <strong>{ultimoTrabajoCerrado.numeroPaso}</strong>
+                </>
+              ) : null}
+              .
+            </p>
+            <p className="text-sm text-gray-700 mt-2">
+              {ultimoTrabajoCerrado.pasoNombre}
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="px-4 py-2 rounded border bg-white"
+                onClick={() => setMostrarConfirmReabrirUltimo(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="px-4 py-2 rounded bg-blue-600 text-white"
+                onClick={handleReabrirUltimoTrabajo}
+              >
+                Aceptar
+              </button>
+            </div>
           </div>
         </div>
       )}

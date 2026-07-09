@@ -40,6 +40,9 @@ export default function AccionesRapidas({
   setPiezasDefectuosas,
   comentarioDefectuosas,
   setComentarioDefectuosas,
+  ultimoTrabajoCerrado,
+  puedeReabrirUltimoTrabajo,
+  onReabrirUltimoTrabajo,
   onOperacionSubmit,
 }) {
   const hayAcciones = accionesDisponibles.length > 0;
@@ -78,6 +81,27 @@ export default function AccionesRapidas({
 
   return (
     <div className="space-y-4">
+      {puedeReabrirUltimoTrabajo && ultimoTrabajoCerrado && (
+        <div className="border rounded-xl p-4 bg-amber-50 border-amber-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="text-sm text-amber-900">
+            <div className="font-medium">Ultimo trabajo cerrado</div>
+            <div>
+              Orden {ultimoTrabajoCerrado.ordenNumero}
+              {ultimoTrabajoCerrado.numeroPaso
+                ? ` - Paso ${ultimoTrabajoCerrado.numeroPaso}`
+                : ""}{" "}
+              {ultimoTrabajoCerrado.pasoNombre}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onReabrirUltimoTrabajo}
+            className="px-3 py-1.5 rounded-full bg-amber-600 text-white text-sm hover:bg-amber-700"
+          >
+            Volver a abrir ultimo trabajo
+          </button>
+        </div>
+      )}
       <div>
         <label className="block font-semibold text-sm">
           ¿Qué deseas hacer?
