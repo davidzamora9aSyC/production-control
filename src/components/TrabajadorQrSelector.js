@@ -37,8 +37,7 @@ export default function TrabajadorQrSelector({
   const readerRef = useRef(null);
   const controlsRef = useRef(null);
   const lecturaEnCursoRef = useRef(false);
-  const solicitandoPermisoRef = useRef(false);
-  const permisoReintentadoRef = useRef(false);
+  const iniciandoCamaraRef = useRef(false);
 
   const releaseVideoStream = () => {
     const video = videoRef.current;
@@ -55,7 +54,7 @@ export default function TrabajadorQrSelector({
       try {
         await controlsRef.current.stop();
       } catch (err) {
-        console.warn("No se pudo detener el stream de cámara", err);
+        console.warn("No se pudo detener el stream de camara", err);
       }
       controlsRef.current = null;
     }
@@ -68,8 +67,7 @@ export default function TrabajadorQrSelector({
     }
     releaseVideoStream();
     setCameraActive(false);
-    solicitandoPermisoRef.current = false;
-    permisoReintentadoRef.current = false;
+    iniciandoCamaraRef.current = false;
   };
 
   useEffect(() => {
@@ -86,33 +84,21 @@ export default function TrabajadorQrSelector({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [disabled]);
 
-  const solicitarPermisoCamara = async () => {
-    if (
-      typeof navigator === "undefined" ||
-      !navigator.mediaDevices?.getUserMedia
-    ) {
-      throw new Error("El navegador no soporta acceso a la cámara.");
-    }
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    stream.getTracks().forEach((track) => track.stop());
-  };
-
-  const startScanner = async (esReintento = false) => {
+  const startScanner = async () => {
     if (disabled) return;
-    if (!esReintento) {
-      permisoReintentadoRef.current = false;
-    }
+    if (cameraActive || iniciandoCamaraRef.current) return;
+    iniciandoCamaraRef.current = true;
     setScanError("");
     setScanMessage("");
+    setFetchError("");
     try {
-      await stopScanner();
+      releaseVideoStream();
       if (!readerRef.current) {
         readerRef.current = new BrowserMultiFormatReader();
       } else {
         readerRef.current.reset();
       }
       const reader = readerRef.current;
-      setCameraActive(true);
       lecturaEnCursoRef.current = false;
       controlsRef.current = await reader.decodeFromVideoDevice(
         null,
@@ -124,7 +110,7 @@ export default function TrabajadorQrSelector({
             const text = result.getText();
             void stopScanner();
             const id = extractTrabajadorId(text);
-            setScanMessage(`QR leído: ${text}`);
+            setScanMessage(`QR leido: ${text}`);
             setScanError("");
             fetchTrabajador(id);
           } else if (
@@ -132,33 +118,24 @@ export default function TrabajadorQrSelector({
             !lecturaEnCursoRef.current &&
             !err.message?.includes("NotFoundException")
           ) {
-            setScanError("Error al leer el código. Intenta de nuevo.");
+            setScanError("Error al leer el codigo. Intenta de nuevo.");
           }
         },
       );
+      setCameraActive(true);
     } catch (err) {
-      if (!permisoReintentadoRef.current && !solicitandoPermisoRef.current) {
-        solicitandoPermisoRef.current = true;
-        try {
-          await solicitarPermisoCamara();
-          solicitandoPermisoRef.current = false;
-          permisoReintentadoRef.current = true;
-          return startScanner(true);
-        } catch {
-          solicitandoPermisoRef.current = false;
-        }
-      }
-      permisoReintentadoRef.current = true;
       setScanError(
-        'No se pudo acceder a la cámara. Autoriza el uso y vuelve a presionar "Escanear QR".',
+        'No se pudo acceder a la camara. Autoriza el uso y vuelve a presionar "Escanear QR".',
       );
-      stopScanner();
+      await stopScanner();
+    } finally {
+      iniciandoCamaraRef.current = false;
     }
   };
 
   const fetchTrabajador = async (id) => {
     if (!id) {
-      setFetchError("El QR no contiene un identificador válido.");
+      setFetchError("El QR no contiene un identificador valido.");
       return;
     }
     setLoading(true);
@@ -171,7 +148,7 @@ export default function TrabajadorQrSelector({
     } catch (err) {
       onSelect(null);
       setFetchError(
-        err?.message || "No se pudo obtener la información del trabajador",
+        err?.message || "No se pudo obtener la informacion del trabajador",
       );
     } finally {
       setLoading(false);
@@ -182,7 +159,6 @@ export default function TrabajadorQrSelector({
     if (disabled) return;
     void stopScanner();
     lecturaEnCursoRef.current = false;
-    permisoReintentadoRef.current = false;
     setScanMessage("");
     setScanError("");
     setFetchError("");
@@ -205,12 +181,12 @@ export default function TrabajadorQrSelector({
               if (cameraActive) void stopScanner();
               else void startScanner();
             }}
-            disabled={disabled}
+            disabled={disabled || iniciandoCamaraRef.current}
             className={`px-3 py-1.5 rounded-full border text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed ${
               disabled ? "cursor-not-allowed" : ""
             }`}
           >
-            {cameraActive ? "Detener cámara" : "Escanear QR"}
+            {cameraActive ? "Detener camara" : "Escanear QR"}
           </button>
           {selected && (
             <button
@@ -226,7 +202,7 @@ export default function TrabajadorQrSelector({
       </div>
       {disabled && (
         <p className="text-xs text-yellow-700">
-          {disabledMessage || "La búsqueda está bloqueada temporalmente."}
+          {disabledMessage || "La busqueda esta bloqueada temporalmente."}
         </p>
       )}
       <div
@@ -241,7 +217,7 @@ export default function TrabajadorQrSelector({
       </div>
       {scanMessage && <p className="text-xs text-green-600">{scanMessage}</p>}
       {scanError && <p className="text-xs text-red-600">{scanError}</p>}
-      {loading && <p className="text-sm text-gray-600">Buscando trabajador…</p>}
+      {loading && <p className="text-sm text-gray-600">Buscando trabajador...</p>}
       {fetchError && <p className="text-sm text-red-600">{fetchError}</p>}
       {selected && (
         <div className="bg-gray-50 border rounded p-3 text-sm space-y-1">
@@ -249,7 +225,7 @@ export default function TrabajadorQrSelector({
             <strong>Nombre:</strong> {selected.nombre}
           </div>
           <div>
-            <strong>Identificación:</strong> {selected.identificacion ?? "-"}
+            <strong>Identificacion:</strong> {selected.identificacion ?? "-"}
           </div>
           <div>
             <strong>Grupo:</strong> {selected.grupo ?? "-"}

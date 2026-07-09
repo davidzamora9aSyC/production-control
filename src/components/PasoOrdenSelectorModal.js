@@ -1,73 +1,30 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { BrowserMultiFormatReader } from "@zxing/browser";
+import { useEffect, useMemo, useState } from "react";
 import { API_BASE_URL } from "../api";
 import { apiFetch } from "../api";
-
-function extractOrdenId(text = "") {
-  if (!text) return "";
-  try {
-    const url = new URL(text);
-    const fromQuery =
-      url.searchParams.get("ordenId") ||
-      url.searchParams.get("orden") ||
-      url.searchParams.get("order");
-    if (fromQuery) return fromQuery;
-    const parts = url.pathname.split("/").filter(Boolean);
-    if (parts.length) return parts[parts.length - 1];
-  } catch {
-    // not a URL, fall through
-  }
-  return text.trim();
-}
 
 export default function PasoOrdenSelectorModal({
   open,
   onClose = () => {},
   onSelected = () => {},
 }) {
-  const [ordenId, setOrdenId] = useState("");
+  const [ordenRef, setOrdenRef] = useState("");
   const [pasos, setPasos] = useState([]);
   const [selectedPasoId, setSelectedPasoId] = useState("");
   const [loadingPasos, setLoadingPasos] = useState(false);
   const [pasosError, setPasosError] = useState("");
-  const [scanError, setScanError] = useState("");
-  const [cameraActive, setCameraActive] = useState(false);
-  const [scanMessage, setScanMessage] = useState("");
-  const videoRef = useRef(null);
-  const readerRef = useRef(null);
-  const controlsRef = useRef(null);
-  const solicitandoPermisoRef = useRef(false);
-  const permisoReintentadoRef = useRef(false);
 
   const hasSelection = useMemo(
-    () => ordenId && selectedPasoId,
-    [ordenId, selectedPasoId],
+    () => ordenRef.trim() && selectedPasoId,
+    [ordenRef, selectedPasoId],
   );
-
-  const releaseVideoStream = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    const stream = video.srcObject;
-    if (stream && typeof stream.getTracks === "function") {
-      stream.getTracks().forEach((track) => track.stop());
-    }
-    video.srcObject = null;
-  };
 
   useEffect(() => {
     if (!open) {
-      void stopScanner();
-      setOrdenId("");
+      setOrdenRef("");
       setPasos([]);
       setSelectedPasoId("");
       setPasosError("");
-      setScanError("");
-      setScanMessage("");
     }
-    return () => {
-      void stopScanner();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
@@ -81,94 +38,10 @@ export default function PasoOrdenSelectorModal({
     };
   }, [open]);
 
-  const stopScanner = async () => {
-    if (controlsRef.current && typeof controlsRef.current.stop === "function") {
-      try {
-        await controlsRef.current.stop();
-      } catch (err) {
-        console.warn("No se pudo detener el stream de cámara", err);
-      }
-      controlsRef.current = null;
-    }
-    if (readerRef.current && typeof readerRef.current.reset === "function") {
-      try {
-        readerRef.current.reset();
-      } catch (err) {
-        // Algunos navegadores lanzan error al resetear si no se ha inicializado completamente
-        console.warn("No se pudo resetear el lector", err);
-      }
-    }
-    releaseVideoStream();
-    setCameraActive(false);
-    solicitandoPermisoRef.current = false;
-    permisoReintentadoRef.current = false;
-  };
-
-  const startScanner = async (esReintento = false) => {
-    setScanError("");
-    setScanMessage("");
-    if (!esReintento) {
-      permisoReintentadoRef.current = false;
-    }
-    try {
-      await stopScanner();
-      if (!readerRef.current) {
-        readerRef.current = new BrowserMultiFormatReader();
-      } else {
-        readerRef.current.reset();
-      }
-      const reader = readerRef.current;
-      setCameraActive(true);
-      controlsRef.current = await reader.decodeFromVideoDevice(
-        null,
-        videoRef.current,
-        (result, err) => {
-          if (result) {
-            const text = result.getText();
-            void stopScanner();
-            const id = extractOrdenId(text);
-            setOrdenId(id);
-            setScanMessage(`QR leído: ${text}`);
-            setScanError("");
-          } else if (err && !err.message?.includes("NotFoundException")) {
-            setScanError("Error al leer el código. Intenta de nuevo.");
-          }
-        },
-      );
-    } catch (err) {
-      if (!permisoReintentadoRef.current && !solicitandoPermisoRef.current) {
-        solicitandoPermisoRef.current = true;
-        try {
-          await solicitarPermisoCamara();
-          solicitandoPermisoRef.current = false;
-          permisoReintentadoRef.current = true;
-          return startScanner(true);
-        } catch {
-          solicitandoPermisoRef.current = false;
-        }
-      }
-      permisoReintentadoRef.current = true;
-      setScanError(
-        "No se pudo acceder a la cámara. Autoriza el acceso e intenta de nuevo.",
-      );
-      stopScanner();
-    }
-  };
-
-  const solicitarPermisoCamara = async () => {
-    if (
-      typeof navigator === "undefined" ||
-      !navigator.mediaDevices?.getUserMedia
-    ) {
-      throw new Error("El navegador no soporta acceso a la cámara.");
-    }
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    stream.getTracks().forEach((track) => track.stop());
-  };
-
   const fetchPasos = async () => {
-    if (!ordenId) {
-      setPasosError("Escanea o ingresa el ID de la orden.");
+    const target = ordenRef.trim();
+    if (!target) {
+      setPasosError("Ingresa el numero de la orden.");
       return;
     }
     setLoadingPasos(true);
@@ -176,9 +49,17 @@ export default function PasoOrdenSelectorModal({
     setPasos([]);
     setSelectedPasoId("");
     try {
-      const res = await apiFetch(`${API_BASE_URL}/ordenes/${ordenId}/pasos-mini`);
-      if (!res.ok) throw new Error("No se pudieron obtener los pasos.");
-      const data = await res.json();
+      const res = await apiFetch(
+        `${API_BASE_URL}/ordenes/${encodeURIComponent(target)}/pasos-mini`,
+      );
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        const msg =
+          res.status === 404
+            ? "No se encontro una orden con ese numero."
+            : data?.message || data?.error || "No se pudieron obtener los pasos.";
+        throw new Error(msg);
+      }
       setPasos(Array.isArray(data) ? data : []);
       if (!Array.isArray(data) || data.length === 0) {
         setPasosError("La orden no tiene pasos disponibles.");
@@ -194,7 +75,7 @@ export default function PasoOrdenSelectorModal({
     if (!hasSelection) return;
     const paso = pasos.find((p) => p.id === selectedPasoId);
     if (!paso) return;
-    onSelected({ ordenId, paso });
+    onSelected({ ordenId: ordenRef.trim(), paso });
     onClose();
   };
 
@@ -207,74 +88,54 @@ export default function PasoOrdenSelectorModal({
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
           onClick={onClose}
         >
-          ✕
+          x
         </button>
         <div>
           <h2 className="text-xl font-semibold">Seleccionar paso de orden</h2>
           <p className="text-sm text-gray-600">
-            Escanea el código QR de la orden o ingresa el ID manualmente para
-            elegir el paso que vas a trabajar.
+            Ingresa el numero de la orden de produccion para elegir el paso que
+            vas a trabajar.
           </p>
         </div>
         <div className="space-y-2">
-          <label className="block text-sm font-medium">ID de la orden</label>
+          <label className="block text-sm font-medium">Numero de orden</label>
           <div className="flex gap-2">
             <input
               type="text"
-              value={ordenId}
-              onChange={(e) => setOrdenId(e.target.value)}
+              value={ordenRef}
+              onChange={(e) => setOrdenRef(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  fetchPasos();
+                }
+              }}
               className="flex-1 border rounded-full px-4 py-2"
-              placeholder="Ej: 4b159c1e-..."
+              placeholder="Ej: 184522"
+              autoFocus
             />
             <button
               type="button"
               onClick={fetchPasos}
               className="px-4 py-2 rounded-full bg-indigo-600 text-white text-sm disabled:opacity-50"
-              disabled={!ordenId || loadingPasos}
+              disabled={!ordenRef.trim() || loadingPasos}
             >
               Buscar pasos
             </button>
-          </div>
-          {scanMessage && (
-            <p className="text-xs text-green-600">{scanMessage}</p>
-          )}
-          {scanError && <p className="text-xs text-red-600">{scanError}</p>}
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">Escanear QR</label>
-            <button
-              type="button"
-              onClick={() => {
-                if (cameraActive) void stopScanner();
-                else void startScanner();
-              }}
-              className="px-3 py-1 text-sm rounded-full border bg-white hover:bg-gray-50"
-            >
-              {cameraActive ? "Detener cámara" : "Activar cámara"}
-            </button>
-          </div>
-          <div className="border rounded-lg overflow-hidden bg-black/70">
-            <video
-              ref={videoRef}
-              className="w-full h-48 object-cover"
-              muted
-              playsInline
-            />
           </div>
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium">Pasos disponibles</label>
             {loadingPasos && (
-              <span className="text-xs text-gray-500">Cargando…</span>
+              <span className="text-xs text-gray-500">Cargando...</span>
             )}
           </div>
           {pasosError && <p className="text-sm text-red-600">{pasosError}</p>}
           <div className="max-h-48 overflow-auto border rounded-lg">
             {pasos.length === 0 && !loadingPasos ? (
               <div className="p-4 text-sm text-gray-600">
-                Consulta los pasos para mostrarlos aquí.
+                Consulta los pasos para mostrarlos aqui.
               </div>
             ) : (
               <ul>
@@ -304,10 +165,7 @@ export default function PasoOrdenSelectorModal({
         <div className="flex justify-end gap-3">
           <button
             type="button"
-            onClick={() => {
-              void stopScanner();
-              onClose();
-            }}
+            onClick={onClose}
             className="px-4 py-2 rounded-full border"
           >
             Cancelar
