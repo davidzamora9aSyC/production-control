@@ -25,6 +25,23 @@ const normalizar = (str) =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 
+const DATE_TIME_FORMAT = {
+  timeZone: "America/Bogota",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+};
+
+const formatDateTime = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleString("es-CO", DATE_TIME_FORMAT);
+};
+
 export default function DetalleOrden() {
   const [pasos, setPasos] = useState([]);
   const [orden, setOrden] = useState(null);
@@ -134,7 +151,7 @@ export default function DetalleOrden() {
             }`}
           ></span>
           <span>Estado: {orden?.estado}</span>
-          <span>{orden ? new Date(orden.fechaOrden).toLocaleString() : ''}</span>
+          <span>Creada: {formatDateTime(orden?.createdAt)}</span>
         </div>
         {orden?.id && (
           <div className="ml-auto flex gap-2">
@@ -220,6 +237,8 @@ export default function DetalleOrden() {
               <th className="px-4 py-2 border-r">Cant. producida</th>
               <th className="px-4 py-2 border-r">Cant. producto no conforme</th>
               <th className="px-4 py-2 border-r">Cant. asignada</th>
+              <th className="px-4 py-2 border-r">Creada</th>
+              <th className="px-4 py-2 border-r">Terminó</th>
               <th className="px-4 py-2">Estado</th>
             </tr>
           </thead>
@@ -238,6 +257,8 @@ export default function DetalleOrden() {
                       : a.cantidadAsignada
                     }
                   </td>
+                  <td className="px-4 py-2 border-r">{formatDateTime(a.createdAt)}</td>
+                  <td className="px-4 py-2 border-r">{formatDateTime(a.finalizadoEn)}</td>
                   <td className="px-4 py-2">
                     {a.estado}
                     {(() => {
@@ -291,6 +312,8 @@ export default function DetalleOrden() {
                   }, 0)
                 , 0)
               }</td>
+              <td className="px-4 py-2 border-r"></td>
+              <td className="px-4 py-2 border-r"></td>
               <td className="px-4 py-2"></td>
             </tr>
           </tbody>

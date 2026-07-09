@@ -1,9 +1,15 @@
 const PUBLIC_API_BASE_URL = "https://subterraneously-proannexation-vasiliki.ngrok-free.dev/api";
+const USE_DEV_BACKEND = process.env.REACT_APP_USE_DEV_BACKEND === "true";
 
 const defaultBaseUrl = (() => {
   if (typeof window === "undefined") return PUBLIC_API_BASE_URL;
 
   const host = window.location.hostname;
+  const isLocalHost = host === "localhost" || host === "127.0.0.1";
+
+  if (USE_DEV_BACKEND || isLocalHost) {
+    return `${window.location.origin}/api`;
+  }
 
   // Public deployments must call the backend host directly. Vercel only serves
   // the React app, so /api there falls back to index.html instead of Nest.
@@ -11,7 +17,7 @@ const defaultBaseUrl = (() => {
     return PUBLIC_API_BASE_URL;
   }
 
-  // For local/LAN/ngrok, route through the gateway at the same origin.
+  // For LAN/ngrok gateways, route through the gateway at the same origin.
   return `${window.location.origin}/api`;
 })();
 

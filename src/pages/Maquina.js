@@ -11,10 +11,16 @@ export default function Maquina() {
     const [orden, setOrden] = useState(null);
     const [pasoActivo, setPasoActivo] = useState(null);
     const [ordenError, setOrdenError] = useState(null);
+    const [refreshTick, setRefreshTick] = useState(0);
     const { id } = useParams();
 
     useEffect(() => {
         const intervalo = setInterval(() => setFechaHora(new Date()), 1000);
+        return () => clearInterval(intervalo);
+    }, []);
+
+    useEffect(() => {
+        const intervalo = setInterval(() => setRefreshTick((tick) => tick + 1), 60000);
         return () => clearInterval(intervalo);
     }, []);
 
@@ -160,7 +166,7 @@ export default function Maquina() {
                     });
             })
             .catch(err => console.error('Error al obtener detalles de la sesión:', err));
-    }, [id]);
+    }, [id, refreshTick]);
 
     useEffect(() => {
         console.log('Sesión actual:', sesion);

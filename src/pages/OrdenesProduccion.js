@@ -8,6 +8,22 @@ import { useAuth } from "../context/AuthContext";
 import { apiFetch } from "../api";
 
 const ITEMS_POR_PAGINA = 8;
+const DATE_TIME_FORMAT = {
+  timeZone: "America/Bogota",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+};
+
+const formatDateTime = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleString("es-CO", DATE_TIME_FORMAT);
+};
 
 export default function OrdenesProduccion() {
   const [pagina, setPagina] = useState(1);
@@ -32,11 +48,12 @@ export default function OrdenesProduccion() {
   const mostrar = ordenes.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
 
   const generarCSV = () => {
-    const headers = ["Número", "Producto", "Cantidad", "Fecha Orden", "Fecha Vencimiento", "Estado"];
+    const headers = ["Número", "Producto", "Cantidad", "Creada", "Fecha Orden", "Fecha Vencimiento", "Estado"];
     const rows = mostrar.map(item => [
       item.numero,
       item.producto,
       item.cantidadAProducir,
+      item.createdAt,
       item.fechaOrden,
       item.fechaVencimiento,
       item.estado,
@@ -273,6 +290,7 @@ export default function OrdenesProduccion() {
                 <th className="px-4 py-2 border-r">Número</th>
                 <th className="px-4 py-2 border-r">Producto</th>
                 <th className="px-4 py-2 border-r">Cantidad</th>
+                <th className="px-4 py-2 border-r">Creada</th>
                 <th className="px-4 py-2 border-r">Fecha Orden</th>
                 <th className="px-4 py-2 border-r">Fecha Vencimiento</th>
                 <th className="px-4 py-2">Estado</th>
@@ -284,6 +302,7 @@ export default function OrdenesProduccion() {
                   <td className="px-4 py-2 border-r">{item.numero}</td>
                   <td className="px-4 py-2 border-r">{item.producto}</td>
                   <td className="px-4 py-2 border-r">{item.cantidadAProducir}</td>
+                  <td className="px-4 py-2 border-r">{formatDateTime(item.createdAt)}</td>
                   <td className="px-4 py-2 border-r">{new Date(item.fechaOrden).toLocaleDateString()}</td>
                   <td className="px-4 py-2 border-r">{new Date(item.fechaVencimiento).toLocaleDateString()}</td>
                   <td className="px-4 py-2">{item.estado}</td>
