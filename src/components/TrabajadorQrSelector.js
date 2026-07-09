@@ -20,6 +20,8 @@ function extractTrabajadorId(text = "") {
   return text.trim();
 }
 
+const onlyDigits = (value = "") => String(value).replace(/\D/g, "");
+
 export default function TrabajadorQrSelector({
   selected,
   onSelect = () => {},
@@ -34,6 +36,7 @@ export default function TrabajadorQrSelector({
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState("");
   const [startingCamera, setStartingCamera] = useState(false);
+  const [cedula, setCedula] = useState("");
   const videoRef = useRef(null);
   const readerRef = useRef(null);
   const controlsRef = useRef(null);
@@ -157,6 +160,42 @@ export default function TrabajadorQrSelector({
     }
   };
 
+  const fetchTrabajadorPorCedula = async () => {
+    const target = cedula.trim();
+    if (!target) {
+      setFetchError("Ingresa la cedula del trabajador.");
+      return;
+    }
+    void stopScanner();
+    setLoading(true);
+    setFetchError("");
+    setScanError("");
+    setScanMessage("");
+    try {
+      const res = await apiFetch(
+        `${API_BASE_URL}/trabajadores/buscar?identificacion=${encodeURIComponent(target)}&limit=2`,
+      );
+      if (!res.ok) throw new Error("No se pudo buscar el trabajador");
+      const data = await res.json();
+      const targetDigits = onlyDigits(target);
+      const matches = Array.isArray(data)
+        ? data.filter((item) => {
+            const identificacion = String(item.identificacion || "");
+            return identificacion === target || onlyDigits(identificacion) === targetDigits;
+          })
+        : [];
+      if (matches.length === 0) {
+        throw new Error("No se encontro un trabajador con esa cedula");
+      }
+      onSelect(matches[0]);
+    } catch (err) {
+      onSelect(null);
+      setFetchError(err?.message || "No se pudo buscar el trabajador");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const clearSelection = () => {
     if (disabled) return;
     void stopScanner();
@@ -164,6 +203,7 @@ export default function TrabajadorQrSelector({
     setScanMessage("");
     setScanError("");
     setFetchError("");
+    setCedula("");
     onSelect(null);
   };
 
@@ -207,6 +247,33 @@ export default function TrabajadorQrSelector({
           {disabledMessage || "La busqueda esta bloqueada temporalmente."}
         </p>
       )}
+      <div className="border rounded-lg p-3 bg-white space-y-2">
+        <label className="block text-sm font-medium">Buscar por cedula</label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={cedula}
+            onChange={(e) => setCedula(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                fetchTrabajadorPorCedula();
+              }
+            }}
+            disabled={disabled || loading}
+            className="flex-1 border rounded-full px-4 py-2 disabled:opacity-50"
+            placeholder="Ej: 123456789"
+          />
+          <button
+            type="button"
+            onClick={fetchTrabajadorPorCedula}
+            disabled={disabled || loading || !cedula.trim()}
+            className="px-3 py-1.5 rounded-full border text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Buscar
+          </button>
+        </div>
+      </div>
       <div
         className={`border rounded-lg overflow-hidden bg-black/70 ${disabled ? "opacity-40" : ""}`}
       >
