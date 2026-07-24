@@ -17,6 +17,7 @@ import WifiQrTool from "./pages/WifiQrTool";
 import { AuthProvider } from "./context/AuthContext";
 import { AreasProvider } from "./context/AreasContext";
 import RequireAuth from "./components/RequireAuth";
+import ScheduledBreakAutoReload from "./components/ScheduledBreakAutoReload";
 
 const ProtectedLayout = ({ children }) => (
   <>
@@ -34,6 +35,7 @@ function App() {
       <AuthProvider>
         <AreasProvider>
         <Router>
+          <ScheduledBreakAutoReload />
           <Routes>
             <Route path="/" element={<NuevaMinuta />} />
             <Route path="/login" element={<Login />} />
