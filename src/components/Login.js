@@ -47,6 +47,7 @@ export default function Login() {
                     {error && <div className="text-red-600 text-sm mb-4">{error}</div>}
                     <button onClick={handleLogin} className="w-full bg-black text-white p-4 rounded-full">Iniciar sesión</button>
                     <Link to="/" className="block mt-4 text-blue-700 text-sm text-center">Crear nueva minuta</Link>
+                    <Link to="/documentacion" className="block mt-3 text-blue-700 text-sm text-center">Manual técnico del sistema</Link>
                 </div>
             </div>
         </div>

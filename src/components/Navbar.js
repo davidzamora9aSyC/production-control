@@ -122,6 +122,19 @@ export default function Navbar() {
                           WiFi a QR
                         </span>
                       </li>
+                      <li className="border-b last:border-none">
+                        <span
+                          onClick={() => {
+                            navigate("/documentacion");
+                            setFuncionesAbierto(false);
+                          }}
+                          className={`block px-4 py-2 cursor-pointer hover:bg-gray-100 ${
+                            location.pathname.startsWith("/documentacion") ? "font-bold text-black" : "text-gray-700"
+                          }`}
+                        >
+                          Manual técnico
+                        </span>
+                      </li>
                     </ul>
                   )}
                 </li>
@@ -173,6 +186,12 @@ export default function Navbar() {
                       className={`mt-2 text-left ${location.pathname === "/funciones/wifi-qr" ? "font-bold text-black" : "text-gray-700"}`}
                     >
                       WiFi a QR
+                    </button>
+                    <button
+                      onClick={() => navigate("/documentacion")}
+                      className={`mt-2 text-left ${location.pathname.startsWith("/documentacion") ? "font-bold text-black" : "text-gray-700"}`}
+                    >
+                      Manual técnico
                     </button>
                   </div>
                   <button

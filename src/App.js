@@ -18,6 +18,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { AreasProvider } from "./context/AreasContext";
 import RequireAuth from "./components/RequireAuth";
 import ScheduledBreakAutoReload from "./components/ScheduledBreakAutoReload";
+import Documentacion from "./pages/Documentacion";
 
 const ProtectedLayout = ({ children }) => (
   <>
@@ -39,6 +40,8 @@ function App() {
           <Routes>
             <Route path="/" element={<NuevaMinuta />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/documentacion" element={<Documentacion />} />
+            <Route path="/documentacion/*" element={<Documentacion />} />
             <Route
               path="/dashboard2"
               element={
