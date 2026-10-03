@@ -174,20 +174,33 @@ function Recorrido() {
 function Frontend() {
   return <>
     <h2>6. Frontend</h2>
-    <p>El frontend es una SPA React. La ruta raiz es la captura manual; las rutas de consulta y administracion requieren inicio de sesion.</p>
+    <h3>Proposito</h3>
+    <p>El frontend es una SPA React para capturar el trabajo manual de planta y consultar sesiones, ordenes, alertas e indicadores. La ruta raiz es la captura manual; las rutas de consulta y administracion requieren inicio de sesion. El cliente presenta datos y envia acciones a la API: las reglas de sesion, los acumulados y los calculos pertenecen al backend.</p>
+    <h3>Organizacion del codigo</h3>
+    <Tabla encabezados={["Ubicacion", "Contenido"]} filas={[
+      [<span className="ruta">src/pages</span>, "Pantallas asociadas a rutas: captura, dashboard, sesiones, ordenes, catalogos, alertas y documentacion."],
+      [<span className="ruta">src/components</span>, "Controles reutilizables de formularios, tablas, modales, graficos y consultas de indicadores."],
+      [<span className="ruta">src/context</span>, "Estado compartido de autenticacion, areas y datos usados por varias pantallas."],
+      [<span className="ruta">src/api.js</span>, "Resolucion de la URL de API, cabeceras de autenticacion, cabecera de ngrok y cache breve para consultas GET."],
+      [<span className="ruta">src/utils</span>, "Funciones de presentacion, entre ellas las descripciones usadas por los indicadores."],
+    ]} />
+    <h3>Pantallas principales</h3>
     <Tabla encabezados={["Ruta", "Pantalla", "Responsabilidad"]} filas={[
       [<span className="ruta">/</span>, "Nueva minuta", "Captura manual: trabajador, maquina, paso, pausas, mantenimiento, cierre de trabajo y sesion."],
-      [<span className="ruta">/dashboard</span>, "Dashboard", "Indicadores, tendencias y consultas agregadas."],
+      [<span className="ruta">/dashboard</span>, "Dashboard", <><span>Indicadores, tendencias y consultas agregadas. Las definiciones de cada medida estan en el </span><Link to="/documentacion/glosario#indicadores">glosario de indicadores</Link><span>.</span></>],
       [<span className="ruta">/sesiones</span>, "Sesiones actuales", "Seguimiento de sesiones abiertas."],
-      [<span className="ruta">/sesion/:id</span>, "Detalle de sesion", "Datos de la sesion, paso activo, pausas y serie de minutos."],
+      [<span className="ruta">/sesion/:id</span>, "Detalle de sesion", <><span>Datos de la sesion, paso activo, pausas y serie de minutos; consulta el </span><Link to="/documentacion/glosario#indicadores">glosario de indicadores</Link><span> para interpretar las velocidades, NPT y porcentajes.</span></>],
       [<span className="ruta">/ordenes</span>, "Ordenes", "Creacion, consulta y detalle de ordenes y pasos."],
       [<span className="ruta">/personas y /maquinas</span>, "Catalogos", "Administracion de trabajadores y maquinas."],
       [<span className="ruta">/alertas</span>, "Alertas", "Consulta de alertas y sus umbrales."],
     ]} />
-    <h3>Conexion con la API</h3>
-    <p><span className="ruta">src/api.js</span> concentra la URL base y <span className="ruta">apiFetch</span>. En localhost y detras del gateway usa <span className="ruta">/api</span> del mismo origen; en despliegues Vercel usa la URL publica configurada. La funcion agrega el token disponible para rutas protegidas. Las rutas de captura del puesto que el backend marca como publicas pueden operar sin ese token.</p>
-    <h3>Regla para cambios de interfaz</h3>
-    <p>Una nueva accion de planta debe relacionarse primero con sesion, asignacion o estado antes de crear otra nocion de negocio. Si cambia un cuerpo o una ruta, se actualizan a la vez el DTO/controlador del backend, la llamada en el frontend y esta guia.</p>
+    <h3>Conexion y acceso</h3>
+    <p><span className="ruta">api.js</span> concentra <span className="ruta">API_BASE_URL</span> y <span className="ruta">apiFetch</span>. En localhost, desarrollo y acceso LAN por gateway usa <span className="ruta">/api</span> del mismo origen; en Vercel usa la URL publica de la API. <span className="ruta">REACT_APP_API_BASE_URL</span> permite sustituir ese destino al compilar. La funcion adjunta el JWT almacenado para rutas protegidas, incluye la cabecera requerida por ngrok y conserva en cache las consultas GET durante 15 segundos.</p>
+    <h3>Indicadores y fuente de datos</h3>
+    <p>El dashboard y el detalle de sesion no calculan KPI en el navegador: consumen los indicadores del backend y los formatean o grafican. Produccion total, defectos, porcentajes de calidad, velocidades y NPT se construyen desde <span className="ruta">registro_minuto</span>. La captura manual actual actualiza cantidades acumuladas al cerrar el trabajo, pero no crea registros por minuto; por ello esos KPI de produccion y ritmo representan la captura automatica de la ESP32. Duracion de sesion, pausas y cantidad de pausas si pueden reflejar datos del flujo manual. Los KPI por producto tambien excluyen de forma explicita las sesiones con fuente <span className="ruta">tablet</span>.</p>
+    <p>Las definiciones, formulas y alcance de cada medida estan en el <Link to="/documentacion/glosario#indicadores">glosario de indicadores</Link>.</p>
+    <h3>Construccion y despliegue</h3>
+    <p>El proyecto instala dependencias con <span className="ruta">npm install</span>, se ejecuta localmente con <span className="ruta">npm start</span> y genera el artefacto publicable con <span className="ruta">npm run build</span>. Vercel publica ese build; el despliegue alterno en el servidor sirve el frontend compilado por Docker detras del gateway. La topologia y las variables por entorno se detallan en <Link to="/documentacion/despliegue">Despliegue</Link> y <Link to="/documentacion/docker">Docker</Link>.</p>
     <Pie />
   </>;
 }
@@ -318,7 +331,7 @@ function Glosario() {
       ["Fuente", "Canal que originó los datos de una sesión o de sus indicadores: tablet para la captura manual o firmware para la captura desde el dispositivo. Puede faltar en registros heredados."],
       ["Minuta", "Recurso histórico de captura simple, independiente del modelo de sesiones y trabajos. No debe usarse como sinónimo de sesión, asignación ni registro por minuto."],
     ]} />
-    <h3>Indicadores mostrados por el frontend</h3>
+    <h3 id="indicadores">Indicadores mostrados por el frontend</h3>
     <p>Los indicadores generales se consultan por sesión, trabajador, máquina, área o periodo. Sus valores los calcula el backend a partir de las sesiones cerradas, sus registros por minuto y sus pausas; el frontend los presenta, agrupa y grafica.</p>
     <Tabla encabezados={["Indicador", "Que mide y como se interpreta", "Ambito de visualizacion"]} filas={[
       ["Produccion total", "Suma de las piezas buenas registradas en el alcance consultado. No incluye las piezas no conformes.", "Tarjetas diarias y mensuales; resúmenes y listados de trabajadores y máquinas."],
