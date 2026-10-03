@@ -1,0 +1,298 @@
+@startuml
+hide empty members
+hide circle
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor White
+  BorderColor #4B5563
+  HeaderBackgroundColor #E5E7EB
+  ArrowColor #4B5563
+  FontName Arial
+}
+
+class area {
+  + id : uuid <<PK>>
+  nombre : varchar
+}
+
+class Maquina {
+  + id : uuid <<PK>>
+  areaId : uuid <<FK>>
+  nombre : varchar
+  codigo : varchar
+  ubicacion : varchar?
+  fechaInstalacion : varchar?
+  tipo : enum?
+  observaciones : varchar?
+  createdAt : timestamp
+  updatedAt : timestamp
+}
+
+class trabajador {
+  + id : uuid <<PK>>
+  nombre : varchar
+  identificacion : varchar <<unique>>
+  grupo : enum
+  turno : enum
+  fechaInicio : date
+  createdAt : timestamp
+  updatedAt : timestamp
+}
+
+class OrdenProduccion {
+  + id : uuid <<PK>>
+  numero : varchar
+  producto : varchar
+  cantidadAProducir : int
+  fechaOrden : date
+  fechaVencimiento : date
+  estado : enum
+  createdAt : timestamptz?
+}
+
+class PasoProduccion {
+  + id : uuid <<PK>>
+  ordenId : uuid <<FK>>
+  nombre : varchar
+  codigoInterno : varchar
+  cantidadRequerida : int
+  cantidadProducida : int
+  cantidadPedaleos : int
+  fechaMetaAlcanzada : timestamptz?
+  estado : enum
+  numeroPaso : int
+}
+
+class material_orden {
+  + id : uuid <<PK>>
+  ordenId : uuid <<FK>>
+  codigo : varchar
+  descripcion : varchar
+  unidad : varchar
+  cantidad : int
+}
+
+class sesion_trabajo {
+  + id : uuid <<PK>>
+  trabajadorId : uuid <<FK>>
+  maquinaId : uuid <<FK>>
+  areaIdSnapshot : uuid? <<reference>>
+  fechaInicio : timestamp
+  fechaFin : timestamp?
+  cantidadProducida : int
+  cantidadPedaleos : int
+  agregadoEnProduccion : boolean
+  fuente : enum?
+}
+
+class sesion_trabajo_paso {
+  + id : uuid <<PK>>
+  sesionTrabajoId : uuid <<FK>>
+  pasoOrdenId : uuid <<FK>>
+  cantidadAsignada : int
+  cantidadProducida : int
+  cantidadPedaleos : int
+  comentarioDefectuosas : text?
+  fuente : enum?
+  finalizado : boolean
+  finalizadoEn : timestamptz?
+  createdAt : timestamptz?
+}
+
+class registro_minuto {
+  + id : uuid <<PK>>
+  sesionTrabajoId : uuid <<FK>>
+  pasoSesionTrabajoId : uuid <<FK>>
+  minutoInicio : timestamp
+  pedaleadas : int
+  piezasContadas : int
+}
+
+class pausa_paso_sesion {
+  + id : uuid <<PK>>
+  pasoSesionId : uuid <<FK>>
+  inicio : timestamp
+  fin : timestamp?
+  maquinaId : uuid? <<reference>>
+  trabajadorId : uuid? <<reference>>
+}
+
+class estado_sesion {
+  + id : uuid <<PK>>
+  sesionTrabajoId : uuid <<FK>>
+  estado : enum
+  inicio : timestamp
+  fin : timestamp?
+}
+
+class estado_trabajador {
+  + id : uuid <<PK>>
+  trabajadorId : uuid <<FK>>
+  descanso : boolean
+  origen : varchar?
+  inicio : timestamp
+  fin : timestamp?
+}
+
+class estado_maquina {
+  + id : uuid <<PK>>
+  maquinaId : uuid <<FK>>
+  mantenimiento : boolean
+  inicio : timestamp
+  fin : timestamp?
+}
+
+class indicador_sesion_minuto {
+  + id : uuid <<PK>>
+  sesionTrabajoId : uuid <<FK>>
+  minuto : timestamp
+  produccionTotal : int
+  defectos : int
+  porcentajeDefectos : float
+  avgSpeed : float
+  avgSpeedSesion : float
+  velocidadActual : float
+  nptMin : decimal
+  nptPorInactividad : decimal
+  porcentajeNPT : float
+  pausasCount : int
+  pausasMin : int
+  porcentajePausa : float
+  duracionSesionMin : int
+  actualizadoEn : timestamp
+}
+
+class indicador_sesion {
+  + id : uuid <<PK>>
+  sesionTrabajoId : uuid <<FK>>
+  areaIdSnapshot : varchar <<reference>>
+  trabajadorId : varchar <<reference>>
+  maquinaId : varchar <<reference>>
+  maquinaTipo : varchar
+  fechaInicio : timestamp
+  fechaFin : timestamp
+  fuente : enum?
+  produccionTotal : int
+  defectos : int
+  porcentajeDefectos : float
+  avgSpeed : float
+  avgSpeedSesion : float
+  velocidadMax10m : float
+  nptMin : int
+  nptPorInactividad : int
+  porcentajeNPT : float
+  pausasCount : int
+  pausasMin : int
+  porcentajePausa : float
+  duracionSesionMin : int
+  creadoEn : timestamp
+}
+
+class produccion_diaria {
+  + fecha : date <<PK>>
+  + areaId : uuid <<PK, FK>>
+  piezas : int
+  pedaleadas : int
+  sesionesCerradas : int
+}
+
+class alerta_tipo {
+  + id : uuid <<PK>>
+  codigo : enum <<unique>>
+  nombre : varchar
+  descripcion : text
+}
+
+class alerta {
+  + id : uuid <<PK>>
+  tipoId : uuid <<FK>>
+  sujetoTipo : enum
+  sujetoId : uuid <<reference>>
+  fecha : date
+  metadata : jsonb?
+  createdAt : timestamp
+}
+
+class empresa {
+  + id : uuid <<PK>>
+  nombre : varchar
+}
+
+class configuracion {
+  + id : uuid <<PK>>
+  minutosInactividadParaNPT : int
+  zonaHorariaCliente : varchar
+  maxDescansosDiariosPorTrabajador : int
+  maxDuracionPausaMinutos : int
+  maxHorasSesionAbierta : int
+}
+
+class Minuta {
+  + id : uuid <<PK>>
+  recursoId : varchar <<reference>>
+  ordenId : varchar <<reference>>
+  pasoId : varchar <<reference>>
+  cantidad : number
+  pedalazos : number
+  observaciones : varchar?
+  createdAt : timestamp
+  updatedAt : timestamp
+}
+
+class auth_user {
+  + id : uuid <<PK>>
+  username : varchar <<unique>>
+  name : varchar?
+  passwordHash : varchar
+  isActive : boolean
+  createdAt : timestamp
+  updatedAt : timestamp
+}
+
+class indicador_diario_dim {
+  + id : uuid <<PK>>
+  fecha : date
+  trabajadorId : uuid? <<reference>>
+  maquinaId : uuid? <<reference>>
+  areaId : uuid? <<reference>>
+  fuente : enum?
+  produccionTotal : int
+  defectos : int
+  porcentajeDefectos : float
+  avgSpeed : float
+  avgSpeedSesion : float
+  nptMin : int
+  nptPorInactividad : int
+  porcentajeNPT : float
+  pausasCount : int
+  pausasMin : int
+  porcentajePausa : float
+  duracionTotalMin : int
+  sesionesCerradas : int
+  updatedAt : timestamp
+}
+
+area "1" -- "0..*" Maquina : areaId
+area "1" -- "0..*" produccion_diaria : areaId
+trabajador "1" -- "0..*" sesion_trabajo : trabajadorId
+trabajador "1" -- "0..*" estado_trabajador : trabajadorId
+Maquina "1" -- "0..*" sesion_trabajo : maquinaId
+Maquina "1" -- "0..*" estado_maquina : maquinaId
+OrdenProduccion "1" -- "0..*" PasoProduccion : ordenId
+OrdenProduccion "1" -- "0..*" material_orden : ordenId
+sesion_trabajo "1" -- "0..*" sesion_trabajo_paso : sesionTrabajoId
+PasoProduccion "1" -- "0..*" sesion_trabajo_paso : pasoOrdenId
+sesion_trabajo "1" -- "0..*" registro_minuto : sesionTrabajoId
+sesion_trabajo_paso "1" -- "0..*" registro_minuto : pasoSesionTrabajoId
+sesion_trabajo_paso "1" -- "0..*" pausa_paso_sesion : pasoSesionId
+sesion_trabajo "1" -- "0..*" estado_sesion : sesionTrabajoId
+sesion_trabajo "1" -- "0..*" indicador_sesion_minuto : sesionTrabajoId
+sesion_trabajo "1" -- "0..*" indicador_sesion : sesionTrabajoId
+alerta_tipo "1" -- "0..*" alerta : tipoId
+
+note bottom
+PK: clave primaria
+FK: clave foranea declarada por TypeORM
+reference: UUID o copia de contexto sin clave foranea TypeORM
+end note
+@enduml

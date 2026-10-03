@@ -20,18 +20,31 @@ export default function DockerGuia() {
         para no tocar el entorno principal.
       </p>
 
-      <h3>Dos copias posibles</h3>
+      <h3>Identificar el entorno activo</h3>
       <p>
-        Esta copia del repositorio está en el escritorio de Distrecol, carpeta <span className="ruta">Logistics</span>.
-        La revisión del 9 de septiembre de 2026 encontró el Compose activo <span className="ruta">db-updater-ms</span> levantado desde
-        <span className="ruta"> C:\Users\pc\Documents\Back\db-updater-ms</span>, no desde la carpeta del repo.
-        El script <span className="ruta">Back/db-updater-ms/start-docker-compose.ps1</span> sigue apuntando por defecto a
-        <span className="ruta"> C:\Users\pc\Documents\Back\db-updater-ms\docker-compose.yml</span>.
+        El entorno principal usa los contenedores <span className="ruta">gateway</span>, <span className="ruta">frontend</span>,
+        <span className="ruta"> backend</span> y <span className="ruta">postgres</span>. El de desarrollo usa los mismos nombres
+        con el sufijo <span className="ruta">-dev</span>. Los siguientes comandos solo consultan el estado de Docker; no modifican
+        contenedores ni datos.
       </p>
-      <div className="nota">
-        <strong>ANTES DE TOCAR DOCKER. </strong>
-        Confirmar desde qué ruta está corriendo el proyecto. Editar archivos aquí no cambia un Compose que se levantó en la otra copia.
-      </div>
+      <table className="manual-tabla">
+        <thead>
+          <tr>
+            <th>Comando</th>
+            <th>Información que muestra</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td className="ruta">docker compose ls</td>
+            <td>Proyectos Compose activos, su estado y los archivos de configuración asociados.</td>
+          </tr>
+          <tr>
+            <td className="ruta">docker ps</td>
+            <td>Contenedores ejecutándose, imágenes, nombres y puertos publicados.</td>
+          </tr>
+        </tbody>
+      </table>
       <pre className="plano">{`docker compose ls
 docker ps`}</pre>
 
@@ -79,7 +92,7 @@ http://localhost:3000/api/auth/login
       <p>
         <span className="ruta">Back/db-updater-ms/src</span> no es una carpeta sobrante. Es el TypeScript de NestJS.
         <span className="ruta"> nest build</span> lo compila a <span className="ruta">dist</span> y el contenedor ejecuta <span className="ruta">node dist/main</span>. No se borra.
-        El detalle de la base y de la guardia JWT está en <Link to="/documentacion/despliegue">Despliegue</Link> y en <Link to="/documentacion/seguridad">Seguridad</Link>.
+        El detalle de la base está en <Link to="/documentacion/despliegue">Despliegue</Link>. Las rutas de integración y el acceso que requieren están en <Link to="/documentacion/backend">Backend y API</Link>.
       </p>
 
       <h3>Entorno principal</h3>
@@ -263,11 +276,11 @@ http://localhost:3000/api/auth/login
 
       <h3>Reglas para no mezclar entornos</h3>
       <ul>
-        <li>Antes de editar, confirmar la ruta activa con <span className="ruta">docker compose ls</span>.</li>
+        <li>Antes de editar o reiniciar, identificar el proyecto Compose y los contenedores afectados con <span className="ruta">docker compose ls</span> y <span className="ruta">docker ps</span>.</li>
         <li>Antes de cambiar contenedores, decidir si el cambio es del principal o del de desarrollo.</li>
         <li>Para pruebas, preferir <span className="ruta">gateway-dev</span>, <span className="ruta">backend-dev</span>, <span className="ruta">frontend-dev</span> y <span className="ruta">postgres-dev</span>.</li>
         <li>No borrar volúmenes sin autorización. Ahí están los datos.</li>
-        <li>No asumir que un cambio en esta copia mueve el Docker activo si Compose se levantó desde <span className="ruta">C:\Users\pc\Documents\Back\db-updater-ms</span>.</li>
+        <li>Ejecutar los comandos de Compose desde la carpeta que contiene el archivo <span className="ruta">docker-compose.yml</span> o <span className="ruta">docker-compose.dev.yml</span> correspondiente.</li>
         <li>No subir <span className="ruta">.env</span>, <span className="ruta">node_modules</span>, <span className="ruta">dist</span> ni <span className="ruta">build</span>.</li>
       </ul>
 

@@ -331,6 +331,93 @@
   color: #6b7280;
 }
 
+.manual-pdf {
+  height: min(76vh, 980px);
+  min-height: 560px;
+  border: 1px solid #d1d5db;
+  background: #f3f4f6;
+}
+
+.manual-pdf iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.manual-descarga {
+  font-weight: 700;
+}
+
+.uml-diagrama {
+  margin: 16px 0 24px;
+}
+
+.uml-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-bottom: 12px;
+  color: #4b5563;
+  font-size: 13px;
+}
+
+.uml-leyenda b {
+  color: #111827;
+}
+
+.uml-cuadricula {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.uml-caja {
+  min-width: 0;
+  border: 1px solid #9ca3af;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.uml-caja h4 {
+  margin: 0;
+  padding: 8px 10px;
+  border-bottom: 1px solid #9ca3af;
+  background: #e5e7eb;
+  color: #111827;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.uml-caja ul {
+  margin: 0;
+  padding: 8px 10px 9px 24px;
+  color: #374151;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.uml-relaciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.uml-relaciones span {
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 5px 8px;
+  color: #374151;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+}
+
+.uml-texto-respaldo {
+  display: none;
+}
+
 @media (max-width: 860px) {
   .manual-barra {
     flex-wrap: wrap;
@@ -353,6 +440,10 @@
 
   .manual-hoja {
     padding: 20px 16px 32px;
+  }
+
+  .manual-pdf {
+    min-height: 420px;
   }
 
   .manual-tabla {
@@ -409,6 +500,31 @@
 .manual.oscuro .manual-indice {
   background: #1a1a1a;
   border-color: #374151;
+}
+
+.manual.oscuro .uml-leyenda,
+.manual.oscuro .uml-caja ul,
+.manual.oscuro .uml-relaciones span {
+  color: #d1d5db;
+}
+
+.manual.oscuro .uml-leyenda b,
+.manual.oscuro .uml-caja h4 {
+  color: #f3f4f6;
+}
+
+.manual.oscuro .uml-caja,
+.manual.oscuro .uml-caja h4,
+.manual.oscuro .uml-relaciones span {
+  border-color: #4b5563;
+}
+
+.manual.oscuro .uml-caja {
+  background: #111827;
+}
+
+.manual.oscuro .uml-caja h4 {
+  background: #1f2937;
 }
 
 .manual.oscuro .manual-indice a,

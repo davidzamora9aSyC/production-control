@@ -31,10 +31,11 @@ export default function ModeloDatos() {
       <h2>Modelo de datos</h2>
       <p>
         PostgreSQL, vía TypeORM. El dibujo sigue las relaciones que declaran las entidades.
-        El detalle de cada pantalla que las usa está en <Link to="/documentacion/front">Front</Link> y el de cada módulo en <Link to="/documentacion/servicios">Servicios</Link>.
+        El detalle de cada pantalla que las usa está en <Link to="/documentacion/front">Frontend</Link> y las rutas y contratos están en <Link to="/documentacion/backend">Backend y API</Link>.
       </p>
 
-      <h3>Tres clases de dato</h3>
+      <h3>Como leer este modelo</h3>
+      <p>Estas categorias solo organizan la documentacion; no son tipos ni estados de PostgreSQL. Todas las tablas se persisten. La categoria indica el papel que juega la informacion en el sistema.</p>
       <table className="manual-tabla">
         <thead>
           <tr>
@@ -45,24 +46,24 @@ export default function ModeloDatos() {
         </thead>
         <tbody>
           <tr>
-            <td>Entrada</td>
-            <td>Lo que se da de alta y se guarda como llegó: catálogos, la orden y quien entra al tablero.</td>
+            <td>Catálogos y planificación</td>
+            <td>Información que define el contexto antes de producir: personas, máquinas, áreas, órdenes, pasos y materiales.</td>
             <td><span className="ruta">area</span>, <span className="ruta">Maquina</span>, <span className="ruta">trabajador</span>, <span className="ruta">OrdenProduccion</span>, <span className="ruta">PasoProduccion</span>, <span className="ruta">material_orden</span>, <span className="ruta">alerta_tipo</span>, <span className="ruta">auth_user</span></td>
           </tr>
           <tr>
-            <td>Guardado</td>
-            <td>El hecho de planta: la sesión abierta, el minuto, la pausa, el estado y la alerta disparada.</td>
+            <td>Registros operativos</td>
+            <td>Hechos que ocurren durante la operación: una sesión, un trabajo, un conteo, una pausa, un estado o una alerta.</td>
             <td><span className="ruta">sesion_trabajo</span>, <span className="ruta">sesion_trabajo_paso</span>, <span className="ruta">registro_minuto</span>, <span className="ruta">pausa_paso_sesion</span>, <span className="ruta">estado_sesion</span>, <span className="ruta">estado_trabajador</span>, <span className="ruta">estado_maquina</span>, <span className="ruta">alerta</span></td>
           </tr>
           <tr>
-            <td>Calculado</td>
+            <td>Indicadores calculados</td>
             <td>Indicadores que el proceso arma a partir del minuto, las pausas y la duración, y después persiste.</td>
             <td><span className="ruta">indicador_sesion_minuto</span>, <span className="ruta">indicador_sesion</span>, <span className="ruta">indicador_diario_dim</span></td>
           </tr>
         </tbody>
       </table>
       <p>
-        En el paso, en la sesión y en la asignación, <span className="ruta">cantidadProducida</span> y <span className="ruta">cantidadPedaleos</span> se reescriben al guardar el minuto. El resto de esas filas entra con el alta.
+        En el paso, en la sesión y en la asignación, <span className="ruta">cantidadProducida</span> y <span className="ruta">cantidadPedaleos</span> son acumulados. El registro por minuto los incrementa; la captura manual también los incrementa al cerrar un trabajo. No representan una orden ni reemplazan el historial de minutos.
       </p>
 
       <h3>Relaciones</h3>
@@ -85,18 +86,18 @@ auth_user              sin relación con el resto`}</pre>
       <div className="nota">
         <strong>NOMBRE DE LA CLASE. </strong>
         Cuatro tablas se llaman como la clase porque <span className="ruta">@Entity()</span> no fija otro nombre: <span className="ruta">Maquina</span>, <span className="ruta">OrdenProduccion</span>, <span className="ruta">PasoProduccion</span> y <span className="ruta">Minuta</span>.
-        Minuta es la parte de producción. Este dibujo sigue área, orden, sesión, indicadores, alerta y <span className="ruta">auth_user</span>.
+        Minuta es un recurso histórico simple, separado del flujo principal de sesión y asignación. Este dibujo sigue área, orden, sesión, indicadores, alerta y <span className="ruta">auth_user</span>.
       </div>
 
       <h3>area</h3>
-      <p>Entrada. Carpeta <span className="ruta">src/area</span>.</p>
+      <p>Catálogo. Carpeta <span className="ruta">src/area</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["nombre", "varchar", "Sí", "—"],
       ]} />
 
       <h3>Maquina</h3>
-      <p>Entrada. El nombre de la tabla es el de la clase. Carpeta <span className="ruta">src/maquina</span>.</p>
+      <p>Catálogo. El nombre de la tabla es el de la clase. Carpeta <span className="ruta">src/maquina</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["nombre", "varchar", "Sí", "—"],
@@ -111,7 +112,7 @@ auth_user              sin relación con el resto`}</pre>
       ]} />
 
       <h3>trabajador</h3>
-      <p>Entrada. Carpeta <span className="ruta">src/trabajador</span>.</p>
+      <p>Catálogo. Carpeta <span className="ruta">src/trabajador</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["nombre", "varchar", "Sí", "—"],
@@ -124,7 +125,7 @@ auth_user              sin relación con el resto`}</pre>
       ]} />
 
       <h3>OrdenProduccion</h3>
-      <p>Entrada. El nombre de la tabla es el de la clase. Carpeta <span className="ruta">src/orden-produccion</span>.</p>
+      <p>Planificación. El nombre de la tabla es el de la clase. Carpeta <span className="ruta">src/orden-produccion</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["numero", "varchar", "Sí", "—"],
@@ -137,7 +138,7 @@ auth_user              sin relación con el resto`}</pre>
       ]} />
 
       <h3>PasoProduccion</h3>
-      <p>Entrada. El nombre de la tabla es el de la clase. Borrar la orden borra sus pasos. Carpeta <span className="ruta">src/paso-produccion</span>.</p>
+      <p>Planificación. El nombre de la tabla es el de la clase. Borrar la orden borra sus pasos. Carpeta <span className="ruta">src/paso-produccion</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["nombre", "varchar", "Sí", "—"],
@@ -152,7 +153,7 @@ auth_user              sin relación con el resto`}</pre>
       ]} />
 
       <h3>material_orden</h3>
-      <p>Entrada. Carpeta <span className="ruta">src/material-orden</span>.</p>
+      <p>Planificación. Carpeta <span className="ruta">src/material-orden</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["ordenId", "uuid", "Sí", "OrdenProduccion"],
@@ -163,7 +164,7 @@ auth_user              sin relación con el resto`}</pre>
       ]} />
 
       <h3>sesion_trabajo</h3>
-      <p>Guardado. Carpeta <span className="ruta">src/sesion-trabajo</span>.</p>
+      <p>Registro operativo: la unión temporal entre trabajador y máquina. Carpeta <span className="ruta">src/sesion-trabajo</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["trabajadorId", "uuid", "Sí", "trabajador"],
@@ -178,7 +179,7 @@ auth_user              sin relación con el resto`}</pre>
       ]} />
 
       <h3>sesion_trabajo_paso</h3>
-      <p>Guardado. Une la sesión con el paso. Borrar la sesión o el paso borra la asignación. Carpeta <span className="ruta">src/sesion-trabajo-paso</span>.</p>
+      <p>Registro operativo: une la sesión con el paso y representa el trabajo realizado. Borrar la sesión o el paso borra la asignación. Carpeta <span className="ruta">src/sesion-trabajo-paso</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["sesionTrabajoId", "uuid", "Sí", "sesion_trabajo"],
@@ -194,7 +195,7 @@ auth_user              sin relación con el resto`}</pre>
       ]} />
 
       <h3>registro_minuto</h3>
-      <p>Guardado. Un minuto de pedaleadas y piezas. Borrar la sesión o la asignación borra el registro. Carpeta <span className="ruta">src/registro-minuto</span>.</p>
+      <p>Registro operativo: conteos asociados a una sesión y a su trabajo. Borrar la sesión o la asignación borra el registro. Carpeta <span className="ruta">src/registro-minuto</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["sesionTrabajoId", "uuid", "Sí", "sesion_trabajo"],
@@ -205,7 +206,7 @@ auth_user              sin relación con el resto`}</pre>
       ]} />
 
       <h3>pausa_paso_sesion</h3>
-      <p>Guardado. Una pausa abierta por asignación. <span className="ruta">maquinaId</span> y <span className="ruta">trabajadorId</span> guardan el uuid sin relación TypeORM. Carpeta <span className="ruta">src/pausa-paso-sesion</span>.</p>
+      <p>Registro operativo: intervalo de pausa de un trabajo asignado. <span className="ruta">maquinaId</span> y <span className="ruta">trabajadorId</span> guardan el uuid sin relación TypeORM. Carpeta <span className="ruta">src/pausa-paso-sesion</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["pasoSesionId", "uuid", "Sí", "sesion_trabajo_paso"],
@@ -216,7 +217,7 @@ auth_user              sin relación con el resto`}</pre>
       ]} />
 
       <h3>estado_sesion</h3>
-      <p>Guardado. Valores <span className="ruta">produccion</span>, <span className="ruta">inactivo</span>, <span className="ruta">otro</span>. Carpeta <span className="ruta">src/estado-sesion</span>.</p>
+      <p>Registro operativo: historial de estados de una sesión. Valores <span className="ruta">produccion</span>, <span className="ruta">inactivo</span>, <span className="ruta">otro</span>. Carpeta <span className="ruta">src/estado-sesion</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["sesionTrabajoId", "uuid", "Sí", "sesion_trabajo"],
@@ -226,7 +227,7 @@ auth_user              sin relación con el resto`}</pre>
       ]} />
 
       <h3>estado_trabajador</h3>
-      <p>Guardado. El descanso del trabajador. Carpeta <span className="ruta">src/estado-trabajador</span>.</p>
+      <p>Registro operativo: descanso del trabajador. Carpeta <span className="ruta">src/estado-trabajador</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["trabajadorId", "uuid", "Sí", "trabajador"],
@@ -237,7 +238,7 @@ auth_user              sin relación con el resto`}</pre>
       ]} />
 
       <h3>estado_maquina</h3>
-      <p>Guardado. El mantenimiento de la máquina. Carpeta <span className="ruta">src/estado-maquina</span>.</p>
+      <p>Registro operativo: mantenimiento de la máquina. Carpeta <span className="ruta">src/estado-maquina</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["maquinaId", "uuid", "Sí", "Maquina"],
@@ -247,7 +248,7 @@ auth_user              sin relación con el resto`}</pre>
       ]} />
 
       <h3>indicador_sesion_minuto</h3>
-      <p>Calculado. Una fila por sesión y minuto. Se borra al finalizar la sesión. Carpeta <span className="ruta">src/indicador-sesion-minuto</span>.</p>
+      <p>Indicador calculado. Una fila por sesión y minuto. Se borra al finalizar la sesión. Carpeta <span className="ruta">src/indicador-sesion-minuto</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["sesionTrabajoId", "uuid", "Sí", "sesion_trabajo"],
@@ -269,7 +270,7 @@ auth_user              sin relación con el resto`}</pre>
       ]} />
 
       <h3>indicador_sesion</h3>
-      <p>Calculado. Se escribe al finalizar la sesión. Los ids de área, trabajador y máquina quedan copiados, sin relación TypeORM. Carpeta <span className="ruta">src/indicador-sesion</span>.</p>
+      <p>Indicador calculado. Se escribe al finalizar la sesión. Los ids de área, trabajador y máquina quedan copiados, sin relación TypeORM. Carpeta <span className="ruta">src/indicador-sesion</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["sesionTrabajoId", "uuid", "Sí", "sesion_trabajo"],
@@ -297,7 +298,7 @@ auth_user              sin relación con el resto`}</pre>
       ]} />
 
       <h3>indicador_diario_dim</h3>
-      <p>Calculado. Agregado del día. Los tres ids son opcionales y no son clave foránea. Carpeta <span className="ruta">src/indicador-diario-dim</span>.</p>
+      <p>Indicador calculado: agregado del día. Los tres ids son opcionales y no son clave foránea. Carpeta <span className="ruta">src/indicador-diario-dim</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["fecha", "date", "Sí", "—"],
@@ -323,8 +324,8 @@ auth_user              sin relación con el resto`}</pre>
 
       <h3>alerta_tipo y alerta</h3>
       <p>
-        <span className="ruta">alerta_tipo</span> es entrada: el catálogo del tipo.
-        <span className="ruta">alerta</span> es guardado: la alerta disparada. <span className="ruta">sujetoId</span> apunta, según <span className="ruta">sujetoTipo</span>, a trabajador, máquina, área u orden, sin clave foránea.
+        <span className="ruta">alerta_tipo</span> es un catálogo de tipos.
+        <span className="ruta">alerta</span> es un registro operativo de una alerta disparada. <span className="ruta">sujetoId</span> apunta, según <span className="ruta">sujetoTipo</span>, a trabajador, máquina, área u orden, sin clave foránea.
         Carpeta <span className="ruta">src/alerta</span>.
       </p>
       <Atributos filas={[
@@ -342,7 +343,7 @@ auth_user              sin relación con el resto`}</pre>
       ]} />
 
       <h3>auth_user</h3>
-      <p>Entrada del acceso al tablero. No tiene relación con trabajador. Carpeta <span className="ruta">src/auth</span>.</p>
+      <p>Catálogo de acceso al tablero. No tiene relación con trabajador. Carpeta <span className="ruta">src/auth</span>.</p>
       <Atributos filas={[
         ["id", "uuid", "Sí", "—"],
         ["username", "varchar, único", "Sí", "—"],
