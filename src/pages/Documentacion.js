@@ -283,6 +283,13 @@ Alternativa ESP32: http://IP_DEL_SERVIDOR:3000/api/<ruta>`}</pre>
     <p>Los archivos <span className="ruta">docker-compose.yml</span> y <span className="ruta">docker-compose.dev.yml</span> viven en <span className="ruta">Back/db-updater-ms</span>. Para los comandos, puertos, volumenes y precauciones operativas, consulta la <Link to="/documentacion/docker">guia Docker</Link>.</p>
     <h3>Continuidad del frontend</h3>
     <p>Para operar una copia propia, el equipo puede hacer un fork del repositorio, conectarlo a una cuenta Vercel propia y crear un nuevo proyecto desde ese fork. Antes de publicarlo debe configurar <span className="ruta">REACT_APP_API_BASE_URL</span> con la API que corresponda a su entorno. Sin esa variable, un build desplegado en Vercel usa la URL publica definida actualmente en <span className="ruta">src/api.js</span>.</p>
+    <h3>Archivo de codigo fuente</h3>
+    <p>Estas instantaneas permiten iniciar repositorios nuevos sin depender del acceso al repositorio original. Conservan el codigo fuente y los archivos de configuracion necesarios para reconstruir cada proyecto.</p>
+    <ul>
+      <li><a href="/documentacion/control-produccion-frontend-2026-10-03.zip" download>Descargar frontend production-control (ZIP)</a>. Incluye React, configuracion de compilacion y la documentacion publicada.</li>
+      <li><a href="/documentacion/control-produccion-backend-2026-10-03.zip" download>Descargar backend db-updater-ms y gateway (ZIP)</a>. Incluye NestJS, los archivos Compose, Dockerfiles y <span className="ruta">gateway/nginx.conf</span> y <span className="ruta">gateway/nginx.dev.conf</span>.</li>
+    </ul>
+    <p>Los paquetes no incluyen <span className="ruta">node_modules</span>, <span className="ruta">build</span>, <span className="ruta">dist</span>, historial Git, certificados, bases de datos ni archivos de entorno. Cada proyecto conserva su <span className="ruta">package-lock.json</span>; después de extraerlo requiere instalar dependencias y crear la configuracion <span className="ruta">.env</span> del entorno destino. El backend incluye <span className="ruta">.env.example</span> como referencia sin secretos.</p>
     <div className="nota"><strong>DATOS. </strong>TypeORM puede sincronizar entidades al iniciar cuando DB_SYNCHRONIZE esta activo. En una base con datos de planta, ese valor se cambia de manera deliberada y con respaldo.</div>
     <Pie />
   </>;
